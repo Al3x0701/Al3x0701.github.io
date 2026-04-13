@@ -22,6 +22,17 @@
 /* =========================================
    RESETEOS Y CONFIGURACIONES BÁSICAS 
    ========================================= */
+
+/*
+   🎓 LECCIÓN: overflow-x: hidden
+   Esto evita que CUALQUIER elemento que se desborde
+   horizontalmente cause scroll lateral en móviles.
+   Lo aplicamos en html Y body como "red de seguridad".
+*/
+html {
+  overflow-x: hidden;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -34,6 +45,9 @@ body {
   background-color: var(--color-secondary); /* Solid white background */
   color: var(--color-dark);
   line-height: 1.6;
+  overflow-x: hidden; /* Evita scroll horizontal en todo el sitio */
+  width: 100%; /* Nunca más ancho que la ventana */
+  max-width: 100vw; /* Doble seguridad: 100% del viewport */
 }
 
 a {
@@ -191,10 +205,21 @@ ul {
     display: flex;
   }
 
+  /*
+    🎓 LECCIÓN: transform vs right para ocultar menú
+    Antes usábamos "right: -100%" para esconder el menú fuera de pantalla.
+    Pero eso puede generar overflow horizontal en móviles.
+    
+    "transform: translateX(100%)" hace LO MISMO visualmente,
+    pero NO afecta el ancho del documento. ¡Es la forma correcta!
+    
+    También añadimos "visibility: hidden" para que el menú
+    sea inaccesible cuando está oculto (mejor accesibilidad).
+  */
   .nav-menu {
     position: fixed;
     top: 0;
-    right: -100%;
+    right: 0;
     width: 280px;
     height: 100vh;
     background-color: var(--color-secondary);
@@ -202,11 +227,15 @@ ul {
     flex-direction: column;
     justify-content: flex-start;
     padding-top: 100px;
-    transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translateX(100%); /* Se mueve fuera de pantalla SIN generar overflow */
+    visibility: hidden; /* No es interactuable cuando está oculto */
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                visibility 0.4s;
   }
 
   .nav-menu.active {
-    right: 0;
+    transform: translateX(0); /* Vuelve a su posición natural */
+    visibility: visible; /* Ahora sí es interactuable */
   }
 
   .nav-links {
@@ -248,7 +277,15 @@ ul {
   background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('assets/b5.jpeg');
   background-size: cover;
   background-position: center;
-  background-attachment: fixed;
+  /*
+    🎓 LECCIÓN: background-attachment: fixed
+    En escritorio se ve espectacular (efecto parallax).
+    Pero en iOS/móvil tiene un BUG famoso: el navegador
+    no lo soporta bien y causa que la imagen se extienda
+    a tamaños enormes, generando overflow.
+    Solución: Usarlo solo en escritorio con @media.
+  */
+  background-attachment: scroll; /* Seguro para TODOS los dispositivos */
   position: relative;
   overflow: hidden;
   padding: 80px 5% 4rem 5%;
@@ -324,7 +361,7 @@ ul {
   padding: 4rem 5% 4rem 5%; /* Reducimos el padding inferior para mejor flujo */
   background-color: transparent;
   position: relative;
-  overflow: hidden;
+  overflow: hidden; /* Contiene los brush accents decorativos dentro de la sección */
 }
 
 .about-container {
@@ -690,6 +727,7 @@ ul {
 .impact-section {
   padding: 4rem 5% 8rem 5%;
   background-color: transparent;
+  overflow: hidden; /* Evita que el mapa y marcadores se desborden en móvil */
 }
 
 .impact-container {
@@ -869,6 +907,23 @@ ul {
   }
 }
 
+/*
+   🎓 LECCIÓN: Progressive Enhancement (Mejora progresiva)
+   En pantallas grandes donde sabemos que funciona bien,
+   RE-ACTIVAMOS el efecto parallax del hero.
+   En móvil se queda con scroll (seguro).
+*/
+@media (min-width: 1025px) {
+  .hero-section {
+    background-attachment: fixed; /* Efecto parallax solo en escritorio */
+  }
+
+  /* En escritorio, permitimos que los pinceles del CTA se vean */
+  .cta-banner {
+    overflow: visible;
+  }
+}
+
 /* =========================================
    ANIMACIONES Y RESPONSIVO
    ========================================= */
@@ -907,6 +962,7 @@ ul {
   z-index: 20;
   background-color: transparent;
   text-align: left; /* Cambiado a izquierda para mayor elegancia */
+  overflow: hidden; /* Contiene los blobs de las tarjetas que tienen width: 140% */
 }
 
 .proposals-header {
@@ -1076,7 +1132,14 @@ ul {
   background-size: cover;
   background-position: center top; /* Encuadre superior para no cortar la cabeza del niño */
   border-radius: 4px;
-  overflow: visible; /* Permitimos que los pinceles sobresalgan */
+  /*
+    🎓 LECCIÓN: overflow: visible vs hidden
+    Antes era "visible" para que las pinceladas decorativas
+    sobresalieran. Pero en móvil eso causa el temido
+    scroll horizontal. Solución: las ocultamos en móvil
+    y las mostramos en escritorio.
+  */
+  overflow: hidden; /* Seguro para móvil — los pinceles se ocultan en @media */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1303,9 +1366,43 @@ ul {
     flex-direction: column;
     gap: 3rem;
   }
+
+  /*
+    🎓 LECCIÓN: En pantallas medianas y pequeñas,
+    permitimos que las pinceladas decorativas del CTA
+    sobresalgan solo en escritorio. En tablets/móvil
+    las ocultamos para evitar overflow.
+  */
+  .brush-cta-left,
+  .brush-cta-right {
+    display: none;
+  }
 }
 
 @media (max-width: 768px) {
+  /*
+    🎓 LECCIÓN: En móvil, activamos el parallax "fijo"
+    NO es necesario porque ya lo desactivamos arriba.
+    Pero aquí reforzamos las correcciones de tamaño.
+  */
+  .hero-section {
+    width: 100%; /* Ocupamos todo el ancho sin margenes laterales */
+    margin: 60px auto 15px auto; /* Reducimos el margen superior */
+    border-radius: 0; /* Sin esquinas redondeadas en pantallas pequeñas */
+    padding: 60px 5% 3rem 5%; /* Menos padding */
+    min-height: 70vh; /* Menos altura para que no sea excesivo */
+  }
+
+  .hero-title {
+    font-size: clamp(2rem, 10vw, 3.5rem); /* Más pequeño en móvil */
+    letter-spacing: -1px;
+  }
+
+  .hero-subtitle {
+    font-size: 1rem;
+    margin-bottom: 2rem;
+  }
+
   .cta-title {
     font-size: 2.2rem;
   }
@@ -1334,5 +1431,37 @@ ul {
     flex-direction: column;
     gap: 1.5rem;
     text-align: center;
+  }
+
+  /* El CTA en móvil: ancho completo y sin desbordamientos */
+  .cta-banner {
+    width: 100%;
+    border-radius: 0;
+    margin: 4rem auto;
+    padding: 5rem 1.5rem;
+  }
+
+  /* Sección Impacto: estadísticas y mapa apilados */
+  .impact-container {
+    gap: 3rem;
+  }
+
+  .impact-section .section-title {
+    font-size: 2.2rem;
+  }
+
+  /* Collage de Nosotros: más compacto en móvil */
+  .collage-grid {
+    height: 300px;
+  }
+
+  /* Escondemos los acentos de pincelada en móvil */
+  .brush-accent {
+    display: none;
+  }
+
+  /* Stories: aseguramos que las decoraciones no se desborden */
+  .story-visual::before {
+    display: none; /* Ocultamos la mancha verde decorativa en móvil */
   }
 }
