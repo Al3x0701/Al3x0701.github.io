@@ -31,13 +31,7 @@
 
 body {
   font-family: var(--font-main);
-  background-color: var(--color-secondary);
-  /* Fondo Global: Ajustamos a 0.70 para que el mapa se vea más oscuro y definido */
-  background-image: linear-gradient(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.7)), url('assets/VALLE%20FINAL.png');
-  background-attachment: fixed;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: 51%;
+  background-color: var(--color-secondary); /* Solid white background */
   color: var(--color-dark);
   line-height: 1.6;
 }
@@ -61,16 +55,17 @@ ul {
   /* Espacio entre [Logo+Nav] y [Botón] */
   align-items: center;
   padding: 0 5%;
-  background-color: transparent;
-  /* Empieza transparente */
+  background-color: var(--color-secondary);
+  /* Antes era transparente, ahora blanco desde el inicio */
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
   position: fixed;
   /* Flota sobre el contenido */
   width: 100%;
   top: 0;
   left: 0;
   z-index: 1000;
-  height: 80px;
-  /* Un poco más de aire al inicio */
+  height: 60px;
+  /* Grosor ultra-minimalista */
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -80,8 +75,8 @@ ul {
   /* Blanco con un toque traslúcido */
   backdrop-filter: blur(10px);
   /* Efecto cristalino (Glassmorphism) */
-  height: 60px;
-  /* Se vuelve más delgado al bajar */
+  height: 48px;
+  /* Altura mínima en scroll */
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
@@ -242,15 +237,21 @@ ul {
    SECCIÓN HERO (Banner Principal Premium)
    ========================================= */
 .hero-section {
-  min-height: 100vh;
+  min-height: calc(100vh - 100px); /* 75px top + 25px bottom aprox */
+  width: 96%; /* Pequeño margen a los costados */
+  margin: 75px auto 25px auto; /* 75px para dejar espacio al header (60px) */
+  border-radius: 24px; /* Esquinas redondeadas premium */
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: transparent;
-  /* ¡PUNTO CLAVE! Si el Hero es blanco, tapa el fondo del body */
+  /* Fondo con la foto b5 y un overlay oscuro para legibilidad del texto */
+  background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('assets/b5.jpeg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
   position: relative;
   overflow: hidden;
-  padding: 70px 5% 4rem 5%;
+  padding: 80px 5% 4rem 5%;
 }
 
 /* El bloque .hero-bg-map se oculta porque el mapa ahora está en el body */
@@ -261,77 +262,44 @@ ul {
 /* Contenedor Principal (Flex o Grid) */
 .hero-container {
   width: 100%;
-  display: grid;
-  grid-template-columns: 1.2fr 1fr;
-  /* Asimetría: más espacio para el texto */
-  align-items: center;
-  gap: 4rem;
+  max-width: 1200px;
+  display: block; /* Cambiamos a block para que el texto ocupe su espacio sobre el fondo */
   z-index: 10;
-  /* Por encima del mapa de fondo */
   position: relative;
 }
 
 /* Bloque de Texto (Izquierda) */
 .hero-text {
   text-align: left;
-  padding-left: 8.1rem;
-  /* Ajuste fino solicitado a la derecha */
-  margin-top: -100px;
-  /* Elevamos el bloque de texto */
+  max-width: 800px;
+  margin: 0 auto 0 0; /* Alineado a la izquierda */
   animation: fadeIn 0.8s ease-out;
 }
 
 .hero-title {
   font-family: var(--font-titles);
-  /* La fuente Serif elegante */
-  font-size: 5rem;
+  font-size: clamp(3rem, 8vw, 5.5rem); /* Tamaño fluido */
   font-weight: 900;
-  color: var(--color-dark);
+  color: var(--color-secondary); /* Texto blanco */
   line-height: 1.05;
   margin-bottom: 2rem;
   letter-spacing: -2px;
   text-transform: capitalize;
+  text-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
 }
 
 .hero-subtitle {
-  font-size: 1.15rem;
-  color: var(--color-dark);
-  margin-bottom: 3rem;
-  max-width: 480px;
+  font-size: 1.25rem;
+  color: var(--color-secondary); /* Texto blanco */
+  margin-bottom: 3.5rem;
+  max-width: 600px;
   line-height: 1.8;
-  opacity: 0.7;
+  opacity: 0.9;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
 /* Bloque Visual (Derecha) */
-.hero-visual {
-  display: flex;
-  justify-content: center;
-  animation: fadeInRight 1s ease-out;
-}
-
-.main-hero-img {
-  width: 400%;
-  /* ¡Tamaño colosal! */
-  max-width: 2500px;
-  height: auto;
-  transform: translate(-80px, -80px) rotate(-12deg);
-  /* Movida a la izquierda y arriba */
-  transition: transform 0.5s ease;
-
-  /* EFECTO DE MÁSCARA: Forzamos a que llene el ancho */
-  -webkit-mask-image: url('assets/PALMIRA%20IMG.png');
-  mask-image: url('assets/PALMIRA%20IMG.png');
-  -webkit-mask-size: 100% auto;
-  mask-size: 100% auto;
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-  -webkit-mask-position: center;
-  mask-position: center;
-
-  object-fit: cover;
-  object-position: center 50%;
-  /* Ajusta este valor para mover la foto arriba o abajo */
-}
+/* .hero-visual y .main-hero-img han sido eliminados ya que el Hero ahora usa fondo de sección completo */
 
 /* Estilo para el botón de "Donar ahora" */
 .hero-btns .cta-button {
@@ -353,7 +321,7 @@ ul {
    SECCIÓN NOSOTROS (Sobre el Movimiento)
    ========================================= */
 .about-section {
-  padding: 4rem 5% 8rem 5%; /* Reducimos el padding superior para mejor flujo */
+  padding: 4rem 5% 4rem 5%; /* Reducimos el padding inferior para mejor flujo */
   background-color: transparent;
   position: relative;
   overflow: hidden;
@@ -408,7 +376,7 @@ ul {
   grid-column: 1 / 5;
   grid-row: 3 / 8;
   z-index: 10;
-  border: 8px solid var(--color-secondary); /* Marco blanco para separar del fondo */
+  /* El marco blanco se ha eliminado por solicitud del usuario */
 }
 
 /* Imagen de Detalle (Abajo, solapada) */
@@ -720,7 +688,7 @@ ul {
    SECCIÓN IMPACTO (Estadísticas y Mapa)
    ========================================= */
 .impact-section {
-  padding: 8rem 5%;
+  padding: 4rem 5% 8rem 5%;
   background-color: transparent;
 }
 
@@ -934,7 +902,7 @@ ul {
    ========================================= */
 .proposals-section {
   padding: 3rem 5% 6rem 5%;
-  margin-top: -4rem;
+  margin-top: 0; /* Eliminamos el margen negativo para bajar la sección */
   position: relative;
   z-index: 20;
   background-color: transparent;
@@ -1099,14 +1067,14 @@ ul {
    ========================================= */
 .cta-banner {
   position: relative;
-  width: 90%;
-  max-width: 1200px;
+  width: 96%; /* Ajustado para coincidir con el ancho del Hero */
+  max-width: 1400px; /* Permitimos mayor expansión en pantallas grandes */
   max-height: 485px;
-  margin: 8rem auto 0 auto;
+  margin: 8rem auto 8rem auto; /* Añadimos 8rem abajo para separar del footer */
   padding: 8rem 2rem;
-  background-image: url("assets/Voluntariado.png");
+  background-image: url("assets/b3.jpeg"); /* Nueva imagen b3 */
   background-size: cover;
-  background-position: center;
+  background-position: center top; /* Encuadre superior para no cortar la cabeza del niño */
   border-radius: 4px;
   overflow: visible; /* Permitimos que los pinceles sobresalgan */
   display: flex;
@@ -1122,7 +1090,7 @@ ul {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.4);
+  background-color: rgba(0, 0, 0, 0.55);
   border-radius: 4px;
   z-index: 1;
 }
@@ -1201,69 +1169,15 @@ ul {
 /* =========================================
    BARRA DE CONTACTO
    ========================================= */
-.contact-bar {
-  background-color: var(--color-secondary);
-  padding: 3rem 5%;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.contact-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  gap: 4rem;
-}
-
-.contact-item {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.contact-icon {
-  font-size: 1.5rem;
-}
-
-.contact-text {
-  font-family: var(--font-titles);
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: var(--color-dark);
-}
-
-.social-links-footer {
-  margin-left: auto;
-  display: flex;
-  gap: 1.5rem;
-}
-
-.social-links-footer a {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.8rem;
-  font-weight: 700;
-  transition: all 0.3s ease;
-}
-
-.social-links-footer a:hover {
-  background-color: var(--color-dark);
-  color: white;
-}
+/* .contact-bar y relacionados han sido eliminados por solicitud del usuario */
 
 /* =========================================
    FOOTER PRINCIPAL
    ========================================= */
 .footer-main {
-  background-color: var(--color-secondary);
-  padding: 5rem 5% 3rem 5%;
-  color: var(--color-dark);
+  background-color: var(--color-dark); /* Fondo negro/gris oscuro */
+  padding: 2.5rem 5% 1.5rem 5%; /* Reducido de 5rem-3rem a 2.5rem-1.5rem */
+  color: var(--color-secondary); /* Texto blanco */
 }
 
 .footer-top {
@@ -1299,11 +1213,14 @@ ul {
 .footer-nav a {
   font-weight: 600;
   font-size: 0.95rem;
-  transition: color 0.3s ease;
+  color: var(--color-secondary);
+  opacity: 0.8;
+  transition: all 0.3s ease;
 }
 
 .footer-nav a:hover {
-  color: var(--color-primary-dark);
+  color: var(--color-primary);
+  opacity: 1;
 }
 
 .btn-black {
@@ -1336,17 +1253,48 @@ ul {
   max-width: 1200px;
   margin: 0 auto;
   padding-top: 2rem;
-  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   justify-content: space-between;
   align-items: center;
   font-size: 0.85rem;
-  opacity: 0.5;
+}
+
+.copyright {
+  opacity: 0.6;
+}
+
+/* Estilos de Redes Sociales en su nueva ubicación */
+.social-links-footer {
+  display: flex;
+  gap: 1rem;
+}
+
+.social-links-footer a {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--color-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  transition: all 0.3s ease;
+}
+
+.social-links-footer a:hover {
+  background-color: var(--color-primary);
+  color: var(--color-dark);
+  border-color: var(--color-primary);
+  transform: translateY(-3px);
 }
 
 .legal-links {
   display: flex;
-  gap: 2rem;
+  gap: 1.5rem;
+  opacity: 0.6;
 }
 
 /* RESPONSIVO PARA EL CIERRE */
