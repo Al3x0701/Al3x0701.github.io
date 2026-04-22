@@ -771,17 +771,45 @@
     @media (max-width: 768px) {
       :root { --sidebar-w: 280px; }
 
-      .sidebar { transform: translateX(-100%); }
-      .sidebar.mobile-open { transform: translateX(0); box-shadow: 8px 0 30px rgba(0,0,0,0.25); }
+      /* Sidebar: oculto por defecto, desliza desde la izquierda */
+      .sidebar {
+        transform: translateX(-100%);
+        z-index: 150;
+      }
+      .sidebar.mobile-open {
+        transform: translateX(0);
+        box-shadow: 8px 0 30px rgba(0,0,0,0.25);
+      }
 
-      .topbar { padding-left: 1rem; padding-right: 1rem; }
-      .main-content { margin-left: 0; padding: 1.2rem; }
+      /* Topbar: sin margen del sidebar */
+      .topbar {
+        padding-left: 1rem;
+        padding-right: 1rem;
+      }
+
+      /* Contenido principal: ocupa todo el ancho */
+      .main-content {
+        margin-left: 0 !important;
+        padding: 1rem;
+      }
+
+      /* Grids a 1 columna */
       .form-grid { grid-template-columns: 1fr; }
       .two-col { grid-template-columns: 1fr; }
       .stats-grid { grid-template-columns: 1fr 1fr; }
-      .user-info { display: none; }
 
-      /* Sidebar overlay */
+      /* Ocultar info del usuario en topbar */
+      .user-info { display: none; }
+      .btn-logout span { display: none; }
+
+      /* Page header en columna */
+      .page-header {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+
+      /* Overlay del sidebar */
       .sidebar-overlay {
         display: block;
         position: fixed;
@@ -798,14 +826,17 @@
     @media (max-width: 480px) {
       .stats-grid { grid-template-columns: 1fr; }
 
-      .login-box { padding: 2rem 1.5rem; }
+      .login-box { padding: 2rem 1.25rem; }
       .login-title { font-size: 1.5rem; }
 
       .topbar-breadcrumb { display: none; }
 
-      .page-header { flex-direction: column; align-items: flex-start; gap: 1rem; }
+      .card { padding: 1rem; }
 
-      .card { padding: 1.2rem; }
+      .page-header h1 { font-size: 1.4rem; }
+
+      /* Tablas con scroll horizontal */
+      table { display: block; overflow-x: auto; white-space: nowrap; }
     }
   </style>
 </head>
