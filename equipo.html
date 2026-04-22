@@ -774,12 +774,38 @@
       .sidebar { transform: translateX(-100%); }
       .sidebar.mobile-open { transform: translateX(0); box-shadow: 8px 0 30px rgba(0,0,0,0.25); }
 
-      .topbar { padding-left: 1rem; }
+      .topbar { padding-left: 1rem; padding-right: 1rem; }
       .main-content { margin-left: 0; padding: 1.2rem; }
       .form-grid { grid-template-columns: 1fr; }
       .two-col { grid-template-columns: 1fr; }
       .stats-grid { grid-template-columns: 1fr 1fr; }
       .user-info { display: none; }
+
+      /* Sidebar overlay */
+      .sidebar-overlay {
+        display: block;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.45);
+        z-index: 149;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s;
+      }
+      .sidebar-overlay.active { opacity: 1; pointer-events: auto; }
+    }
+
+    @media (max-width: 480px) {
+      .stats-grid { grid-template-columns: 1fr; }
+
+      .login-box { padding: 2rem 1.5rem; }
+      .login-title { font-size: 1.5rem; }
+
+      .topbar-breadcrumb { display: none; }
+
+      .page-header { flex-direction: column; align-items: flex-start; gap: 1rem; }
+
+      .card { padding: 1.2rem; }
     }
   </style>
 </head>
@@ -850,6 +876,9 @@
       <button class="btn-logout" onclick="doLogout()">Salir</button>
     </div>
   </header>
+
+  <!-- Overlay para cerrar sidebar en móvil -->
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
 
   <!-- Sidebar -->
   <nav class="sidebar" id="sidebar">
@@ -1860,6 +1889,8 @@
     // On mobile close sidebar
     if (window.innerWidth <= 768) {
       document.getElementById('sidebar').classList.remove('mobile-open');
+      const overlay = document.getElementById('sidebar-overlay');
+      if (overlay) overlay.classList.remove('active');
     }
   }
 
@@ -1869,7 +1900,9 @@
     const main    = document.getElementById('main-content');
 
     if (window.innerWidth <= 768) {
-      sidebar.classList.toggle('mobile-open');
+      const isOpen = sidebar.classList.toggle('mobile-open');
+      const overlay = document.getElementById('sidebar-overlay');
+      if (overlay) overlay.classList.toggle('active', isOpen);
     } else {
       sidebarOpen = !sidebarOpen;
       sidebar.classList.toggle('collapsed', !sidebarOpen);

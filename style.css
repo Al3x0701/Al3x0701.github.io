@@ -387,7 +387,7 @@ ul {
   position: absolute;
   bottom: 100px;
   right: 5%;
-  width: 540px; /* Un poco más ancho para las flechas */
+  width: min(540px, 90%);
   z-index: 20;
   display: flex;
   align-items: center;
@@ -543,6 +543,14 @@ ul {
   .hero-btns {
     justify-content: center;
   }
+
+  .hero-story-wrapper {
+    position: relative;
+    bottom: auto;
+    right: auto;
+    width: 100%;
+    margin-top: 2.5rem;
+  }
 }
 
 @media (max-width: 480px) {
@@ -551,8 +559,13 @@ ul {
     padding: 0 10px;
   }
 
-  .story-card {
-    padding: 1.5rem;
+  .hero-story-wrapper {
+    gap: 0.5rem;
+  }
+
+  .story-nav-btn {
+    width: 36px;
+    height: 36px;
   }
 }
 
@@ -1317,7 +1330,7 @@ ul {
 
 .section-title {
   font-family: var(--font-titles);
-  font-size: 3.5rem;
+  font-size: clamp(2rem, 5vw, 3.5rem);
   color: var(--color-dark);
   margin-bottom: 1.5rem;
   line-height: 1.2;
@@ -1463,7 +1476,6 @@ ul {
   /* Ajustado para coincidir con el ancho del Hero */
   max-width: 1400px;
   /* Permitimos mayor expansión en pantallas grandes */
-  max-height: 485px;
   margin: 8rem auto 8rem auto;
   /* Añadimos 8rem abajo para separar del footer */
   padding: 8rem 2rem;
@@ -1508,7 +1520,7 @@ ul {
 
 .cta-title {
   font-family: var(--font-titles);
-  font-size: 3.5rem;
+  font-size: clamp(1.8rem, 5vw, 3.5rem);
   line-height: 1.1;
   margin-bottom: 2.5rem;
   font-weight: 700;
@@ -1821,5 +1833,53 @@ ul {
   .story-visual::before {
     display: none;
     /* Ocultamos la mancha verde decorativa en móvil */
+  }
+
+  /* Hero story wrapper: apilado en móvil */
+  .hero-story-wrapper {
+    position: relative;
+    bottom: auto;
+    right: auto;
+    width: 100%;
+    margin-top: 2rem;
+    padding: 0 1rem;
+  }
+
+  /* Sección propuestas */
+  .proposals-section {
+    padding: 3rem 5% 4rem 5%;
+  }
+
+  /* Sección stories */
+  .stories-section {
+    padding: 4rem 5% 6rem 5%;
+  }
+
+  /* Footer legal links */
+  .legal-links {
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: center;
+  }
+}
+
+/* Extra pequeño: < 400px */
+@media (max-width: 400px) {
+  .hero-btns {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .hero-btns a {
+    text-align: center;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .footer-nav {
+    flex-wrap: wrap;
+    justify-content: center;
   }
 }
