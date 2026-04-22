@@ -56,9 +56,7 @@
 
     <script>
         (function() {
-            if (sessionStorage.getItem('ic_auth') === '1') {
-                document.getElementById('password-gate').style.display = 'none';
-            }
+            sessionStorage.removeItem('ic_auth');
             document.getElementById('gate-input').addEventListener('focus', function() {
                 this.style.borderColor = '#facc15';
             });
@@ -70,7 +68,6 @@
         function checkPassword() {
             var val = document.getElementById('gate-input').value;
             if (val === '158969') {
-                sessionStorage.setItem('ic_auth', '1');
                 document.getElementById('password-gate').style.display = 'none';
             } else {
                 document.getElementById('gate-error').style.display = 'block';
