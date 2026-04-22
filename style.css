@@ -1,0 +1,1825 @@
+/*
+  ¡Hola! Aquí está nuestra hoja de estilos pura.
+  Empezamos definiendo nuestras "Variables" en :root para no tener que recordar
+  cada código de color a lo largo del diseño.
+*/
+:root {
+  --color-primary: #facc15;
+  /* Amarillo brillante (Impulso) */
+  --color-primary-dark: #eab308;
+  /* Amarillo un poco más oscuro para gradientes premium */
+  --color-secondary: #ffffff;
+  /* Blanco puro (Transparencia) */
+  --color-dark: #1e293b;
+  /* Gris muy oscuro/Azulado para textos elegantes */
+  --color-background: #fafafa;
+  /* Un blanco un poquito grisáceo para dar profundidad */
+
+  --font-main: "Inter", sans-serif;
+  --font-titles: "DM Serif Display", serif;
+}
+
+/* =========================================
+   RESETEOS Y CONFIGURACIONES BÁSICAS 
+   ========================================= */
+
+/*
+   🎓 LECCIÓN: overflow-x: hidden
+   Esto evita que CUALQUIER elemento que se desborde
+   horizontalmente cause scroll lateral en móviles.
+   Lo aplicamos en html Y body como "red de seguridad".
+*/
+html {
+  overflow-x: hidden;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  /* Esto evita que los marcos rompan los tamaños exactos */
+}
+
+body {
+  font-family: var(--font-main);
+  background-color: var(--color-secondary);
+  /* Solid white background */
+  color: var(--color-dark);
+  line-height: 1.6;
+  overflow-x: hidden;
+  /* Evita scroll horizontal en todo el sitio */
+  width: 100%;
+  /* Nunca más ancho que la ventana */
+  max-width: 100vw;
+  /* Doble seguridad: 100% del viewport */
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+ul {
+  list-style: none;
+  /* Quitamos los viñetas (puntos) de las listas */
+}
+
+/* =========================================
+   BARRA DE NAVEGACIÓN (HEADER)
+   ========================================= */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  /* Espacio entre [Logo+Nav] y [Botón] */
+  align-items: center;
+  padding: 0 5%;
+  background-color: var(--color-secondary);
+  /* Antes era transparente, ahora blanco desde el inicio */
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+  position: fixed;
+  /* Flota sobre el contenido */
+  width: 100%;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  height: 60px;
+  /* Grosor ultra-minimalista */
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Estado del Navbar cuando el usuario baja (Scroll) */
+.navbar.scrolled {
+  background-color: rgba(255, 255, 255, 0.95);
+  /* Blanco con un toque traslúcido */
+  backdrop-filter: blur(10px);
+  /* Efecto cristalino (Glassmorphism) */
+  height: 48px;
+  /* Altura mínima en scroll */
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+/* 1. Zona Izquierda Agrupada (Contenedor nuevo) */
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: 2.5rem;
+  /* El espacio entre logo y links */
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+}
+
+.logo-img {
+  height: 35px;
+  width: auto;
+  transition: transform 0.3s ease;
+}
+
+/* 2. Menú de Navegación */
+.nav-links {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.nav-links li a {
+  color: var(--color-dark);
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  position: relative;
+  white-space: nowrap;
+}
+
+.nav-links li a::after {
+  content: "";
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 0%;
+  height: 2px;
+  background-color: var(--color-primary-dark);
+  transition: all 0.3s ease;
+}
+
+.nav-links li a:hover::after {
+  width: 100%;
+}
+
+/* 3. Lado Derecho */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+
+.btn-equipo {
+  color: var(--color-dark);
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 0.6rem 1.2rem;
+  border-radius: 50px;
+  border: 1.5px solid var(--color-dark);
+  transition: all 0.3s ease;
+  display: inline-block;
+}
+
+.btn-equipo:hover {
+  background-color: var(--color-dark);
+  color: var(--color-secondary);
+}
+
+/* Botón de Voluntariado Resaltado */
+.btn-primary {
+  background-color: var(--color-primary);
+  color: var(--color-dark) !important;
+  padding: 0.75rem 1.6rem;
+  border-radius: 50px;
+  font-weight: 700 !important;
+  font-size: 0.9rem;
+  box-shadow: 0 4px 12px rgba(250, 204, 21, 0.3);
+  transition: all 0.3s ease !important;
+  display: inline-block;
+}
+
+.btn-primary:hover {
+  background-color: var(--color-dark);
+  color: var(--color-secondary) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+}
+
+/* BOTÓN HAMBURGUESA (Solo para móvil) */
+.menu-toggle {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  z-index: 1100;
+  padding: 10px;
+}
+
+.menu-toggle .bar {
+  width: 28px;
+  height: 3px;
+  background-color: var(--color-dark);
+  border-radius: 5px;
+}
+
+/* =========================================
+   ESTILOS RESPONSIVOS PARA EL HEADER
+   ========================================= */
+@media (max-width: 1024px) {
+  .navbar {
+    display: flex;
+    /* En tablets volvemos a Flex para repartir espacio */
+    justify-content: space-between;
+  }
+
+  .menu-toggle {
+    display: flex;
+  }
+
+  /*
+    🎓 LECCIÓN: transform vs right para ocultar menú
+    Antes usábamos "right: -100%" para esconder el menú fuera de pantalla.
+    Pero eso puede generar overflow horizontal en móviles.
+    
+    "transform: translateX(100%)" hace LO MISMO visualmente,
+    pero NO afecta el ancho del documento. ¡Es la forma correcta!
+    
+    También añadimos "visibility: hidden" para que el menú
+    sea inaccesible cuando está oculto (mejor accesibilidad).
+  */
+  .nav-menu {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 280px;
+    height: 100vh;
+    background-color: var(--color-secondary);
+    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.1);
+    flex-direction: column;
+    justify-content: flex-start;
+    padding-top: 100px;
+    transform: translateX(100%);
+    /* Se mueve fuera de pantalla SIN generar overflow */
+    visibility: hidden;
+    /* No es interactuable cuando está oculto */
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+      visibility 0.4s;
+  }
+
+  .nav-menu.active {
+    transform: translateX(0);
+    /* Vuelve a su posición natural */
+    visibility: visible;
+    /* Ahora sí es interactuable */
+  }
+
+  .nav-links {
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  /* Ocultar botón de escritorio si es muy pequeño y dejarlo dentro del menú si prefieres */
+  .header-actions .btn-primary {
+    display: none;
+    /* Lo ocultamos en la barra para que no estorbe */
+  }
+
+  .mobile-only {
+    display: block !important;
+    /* Lo mostramos dentro del menú lateral */
+  }
+}
+
+/* Ocultar móvil-only en escritorio */
+.mobile-only {
+  display: none;
+}
+
+
+
+/* =========================================
+   SECCIÓN HERO (Banner Principal Premium)
+   ========================================= */
+/* =========================================
+   SECCIÓN HERO (Banner Principal Premium)
+   ========================================= */
+.hero-section {
+  min-height: calc(100vh - 100px);
+  /* 75px top + 25px bottom aprox */
+  width: 96%;
+  /* Pequeño margen a los costados */
+  margin: 75px auto 25px auto;
+  /* 75px para dejar espacio al header (60px) */
+  border-radius: 24px;
+  /* Esquinas redondeadas premium */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Fondo con la foto b5 y un overlay oscuro para legibilidad del texto */
+  background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('assets/b5.jpeg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: scroll;
+  /* Seguro para TODOS los dispositivos */
+  position: relative;
+  overflow: hidden;
+  padding: 80px 5% 4rem 5%;
+}
+
+/* Contenedor Principal */
+.hero-container {
+  width: 100%;
+  max-width: 1200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 500px;
+  z-index: 10;
+  position: relative;
+}
+
+/* Bloque de Texto (Izquierda) */
+.hero-text {
+  text-align: left;
+  animation: fadeIn 0.8s ease-out forwards;
+}
+
+.hero-title {
+  font-family: var(--font-titles);
+  font-size: clamp(3rem, 8vw, 5.5rem);
+  /* Tamaño fluido */
+  font-weight: 900;
+  color: var(--color-secondary);
+  /* Texto blanco */
+  line-height: 1.05;
+  margin-bottom: 2rem;
+  letter-spacing: -2px;
+  text-transform: capitalize;
+  text-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+.hero-subtitle {
+  font-size: 1.25rem;
+  color: var(--color-secondary);
+  /* Texto blanco */
+  margin-bottom: 3.5rem;
+  max-width: 600px;
+  line-height: 1.8;
+  opacity: 0.9;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.hero-btns {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.btn-outline {
+  padding: 0.75rem 1.8rem;
+  border-radius: 50px;
+  border: 2px solid var(--color-secondary);
+  color: var(--color-secondary);
+  font-weight: 700;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  display: inline-block;
+  text-align: center;
+}
+
+.btn-outline:hover {
+  background-color: var(--color-secondary);
+  color: var(--color-dark);
+  transform: translateY(-2px);
+}
+
+/* Columna Derecha: Carrusel de Relatos con Flechas (Fade) */
+.hero-story-wrapper {
+  position: absolute;
+  bottom: 100px;
+  right: 5%;
+  width: 540px; /* Un poco más ancho para las flechas */
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Tarjeta de Relato (General - Usada en la sección de Historias abajo) */
+.story-card {
+  background: white;
+  border-radius: 4px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  overflow: hidden;
+}
+
+.story-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+}
+
+.hero-story-wrapper .story-carousel {
+  flex: 1;
+  position: relative;
+  height: 220px;
+  overflow: hidden; /* IMPORTANTE: Para que no se vean las tarjetas que salen */
+}
+
+.hero-story-wrapper .story-card {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 1.8rem;
+  border-radius: 20px;
+  color: var(--color-secondary);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  transform: translateX(100%); /* Por defecto fuera a la derecha */
+  transition: all 0.8s cubic-bezier(0.65, 0, 0.35, 1); /* Más lento y suave */
+}
+
+.hero-story-wrapper .story-card.active {
+  opacity: 1;
+  transform: translateX(0);
+  z-index: 10;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* Estado cuando una tarjeta sale hacia la izquierda */
+.hero-story-wrapper .story-card.slide-out-left {
+  opacity: 0;
+  transform: translateX(-100%);
+}
+
+/* Estado cuando una tarjeta sale hacia la derecha */
+.hero-story-wrapper .story-card.slide-out-right {
+  opacity: 0;
+  transform: translateX(100%);
+}
+
+/* Estado inicial cuando una tarjeta entra desde la izquierda */
+.hero-story-wrapper .story-card.slide-in-left {
+  opacity: 0;
+  transform: translateX(-100%);
+}
+
+/* Botones de Navegación */
+.story-nav-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--color-secondary);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(5px);
+}
+
+.story-nav-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: var(--color-primary);
+  transform: scale(1.1);
+}
+
+.story-nav-btn svg {
+  width: 24px;
+  height: 24px;
+}
+
+.card-badge-mini {
+  background-color: var(--color-primary);
+  color: var(--color-dark);
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.65rem;
+  font-weight: 800;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+  letter-spacing: 1px;
+}
+
+.card-story-name {
+  font-family: var(--font-titles);
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.card-story-text {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  opacity: 0.9;
+  margin-bottom: 1.2rem;
+  font-style: italic;
+}
+
+.card-story-location {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+
+
+/* Adaptación para pantallas pequeñas */
+@media (max-width: 992px) {
+  .hero-carousel-wrapper {
+    position: relative;
+    bottom: 0;
+    right: 0;
+    margin: 3rem auto 0 auto;
+    max-width: 350px;
+    height: 220px;
+    justify-content: center;
+  }
+
+  .hero-text {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  .hero-btns {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-carousel-wrapper {
+    max-width: 100%;
+    padding: 0 10px;
+  }
+
+  .story-card {
+    padding: 1.5rem;
+  }
+}
+
+/* Indicador de Scroll */
+.scroll-down-wrapper {
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: var(--color-secondary);
+  z-index: 20;
+  opacity: 0.6;
+  transition: opacity 0.3s ease;
+}
+
+.scroll-down-wrapper:hover {
+  opacity: 1;
+}
+
+.scroll-text {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  font-weight: 700;
+}
+
+.mouse-icon {
+  width: 26px;
+  height: 42px;
+  border: 2px solid var(--color-secondary);
+  border-radius: 15px;
+  position: relative;
+}
+
+.mouse-icon .wheel {
+  width: 3px;
+  height: 8px;
+  background-color: var(--color-secondary);
+  position: absolute;
+  top: 7px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 2px;
+  animation: scrollMouse 2s infinite;
+}
+
+/* Animaciones */
+@keyframes scrollMouse {
+  0% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(15px);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* =========================================
+   SECCIÓN NOSOTROS (Sobre el Movimiento)
+   ========================================= */
+.about-section {
+  padding: 4rem 5% 4rem 5%;
+  /* Reducimos el padding inferior para mejor flujo */
+  background-color: transparent;
+  position: relative;
+  overflow: hidden;
+  /* Contiene los brush accents decorativos dentro de la sección */
+}
+
+.about-container {
+  max-width: 1300px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  /* Asimetría: más espacio para el collage */
+  gap: 5rem;
+  align-items: center;
+}
+
+/* 1. EL COLLAGE DE IMÁGENES (Uso de CSS Grid avanzado) */
+.about-visuals {
+  position: relative;
+}
+
+.collage-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  grid-template-rows: repeat(12, 1fr);
+  height: 600px;
+  position: relative;
+}
+
+.collage-item {
+  position: relative;
+  z-index: 5;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  transition: transform 0.4s ease;
+}
+
+.collage-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Imagen Principal (Ocupa el centro-derecha del visual) */
+.main-img {
+  grid-column: 4 / 11;
+  grid-row: 1 / 11;
+  z-index: 5;
+}
+
+/* Imagen Secundaria (Arriba a la izquierda, solapada) */
+.side-img {
+  grid-column: 1 / 5;
+  grid-row: 3 / 8;
+  z-index: 10;
+  /* El marco blanco se ha eliminado por solicitud del usuario */
+}
+
+/* Imagen de Detalle (Abajo, solapada) */
+.detail-img {
+  grid-column: 6 / 12;
+  grid-row: 8 / 13;
+  z-index: 10;
+}
+
+/* 2. ACENTOS ARTÍSTICOS (Pinceladas) */
+.brush-accent {
+  position: absolute;
+  background-size: contain;
+  background-repeat: no-repeat;
+  z-index: 1;
+  /* Por debajo de las fotos */
+  pointer-events: none;
+}
+
+.accent-1 {
+  background-image: url("brush_strokes_decoration_1775867024935.png");
+  top: -5%;
+  right: 15%;
+  width: 250px;
+  height: 250px;
+  transform: rotate(15deg);
+  opacity: 0.8;
+}
+
+.accent-2 {
+  background-image: url("brush_strokes_decoration_1775867024935.png");
+  bottom: 0%;
+  left: 5%;
+  width: 200px;
+  height: 200px;
+  transform: rotate(-160deg) scaleX(-1);
+  /* Reflejada y rotada */
+  filter: hue-rotate(90deg);
+  /* Cambiamos el tono para variar el color */
+  opacity: 0.6;
+}
+
+/* 3. CONTENIDO Y TEXTO */
+.about-content {
+  text-align: left;
+}
+
+.about-text {
+  margin: 2.5rem 0;
+}
+
+.about-text p {
+  font-size: 1.05rem;
+  color: var(--color-dark);
+  opacity: 0.8;
+  margin-bottom: 1.5rem;
+  line-height: 1.8;
+}
+
+.about-actions {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  margin-top: 3rem;
+}
+
+.link-more {
+  font-weight: 700;
+  color: var(--color-dark);
+  font-size: 0.95rem;
+  transition: transform 0.3s ease;
+}
+
+.link-more:hover {
+  transform: translateX(5px);
+}
+
+.btn-dark {
+  background-color: var(--color-dark);
+  color: var(--color-secondary);
+  padding: 0.8rem 2rem;
+  border-radius: 5px;
+  /* Un poco más cuadrado y serio para esta sección */
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-dark:hover {
+  background-color: var(--color-primary-dark);
+  color: var(--color-dark);
+}
+
+/* RESPONSIVO PARA NOSOTROS */
+@media (max-width: 1024px) {
+  .about-container {
+    grid-template-columns: 1fr;
+    gap: 4rem;
+  }
+
+  .collage-grid {
+    height: 500px;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .about-section {
+    padding: 4rem 5%;
+  }
+
+  .collage-grid {
+    height: 400px;
+  }
+
+  .about-actions {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.5rem;
+  }
+}
+
+/* =========================================
+   SECCIÓN HISTORIAS (Testimonios de Impacto)
+   ========================================= */
+.stories-section {
+  padding: 6rem 5% 10rem 5%;
+  background-color: transparent;
+}
+
+.stories-container {
+  max-width: 1300px;
+  margin: 0 auto;
+}
+
+/* 1. CABECERA CON NAVEGACIÓN */
+.stories-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 5rem;
+  gap: 2rem;
+}
+
+.stories-header .section-title {
+  margin-bottom: 0;
+  text-align: left;
+}
+
+/* El resaltado de pincelada en el título */
+.highlight {
+  position: relative;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.highlight::after {
+  content: "";
+  position: absolute;
+  bottom: 5px;
+  left: -10px;
+  width: calc(100% + 20px);
+  height: 25px;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 50' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M10,25 C100,10 300,40 390,25' stroke='%23facc15' stroke-width='15' fill='none' stroke-linecap='round' opacity='0.6'/%3E%3C/svg%3E");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  z-index: -1;
+  transform: rotate(-1deg);
+}
+
+.stories-nav {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 10px;
+}
+
+.nav-btn {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background-color: var(--color-secondary);
+  color: var(--color-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.nav-btn:hover {
+  background-color: var(--color-dark);
+  color: var(--color-secondary);
+  border-color: var(--color-dark);
+}
+
+.nav-btn svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* 2. REJILLA DE TARJETAS DE HISTORIAS */
+.stories-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4rem;
+}
+
+.stories-grid .story-card {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.story-visual {
+  width: 100%;
+  margin-bottom: 2rem;
+  position: relative;
+}
+
+/* Mancha verde decorativa detrás de la imagen */
+.story-visual::before {
+  content: "";
+  position: absolute;
+  top: 10%;
+  right: -15px;
+  width: 80px;
+  height: 120px;
+  background-image: url("brush_strokes_decoration_1775867024935.png");
+  background-size: contain;
+  background-repeat: no-repeat;
+  z-index: -1;
+  filter: hue-rotate(85deg) brightness(0.9);
+  opacity: 0.7;
+}
+
+.story-visual img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  /* Cuadrado perfecto */
+  object-fit: cover;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
+  border-radius: 4px;
+  /* Un toque casi imperceptible de redondeo */
+}
+
+.story-name {
+  font-family: var(--font-titles);
+  font-size: 1.5rem;
+  color: var(--color-dark);
+  margin-bottom: 0.3rem;
+}
+
+.story-meta {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-primary-dark);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  display: block;
+  margin-bottom: 1.2rem;
+}
+
+.story-desc {
+  font-size: 0.95rem;
+  color: var(--color-dark);
+  opacity: 0.7;
+  line-height: 1.7;
+  margin-bottom: 1.5rem;
+  flex-grow: 1;
+  /* Empuja el enlace hacia abajo */
+}
+
+.link-story {
+  font-weight: 600;
+  color: var(--color-dark);
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: transform 0.3s ease;
+  display: inline-block;
+}
+
+.link-story:hover {
+  transform: translateX(5px);
+}
+
+/* RESPONSIVO HISTORIAS */
+@media (max-width: 1024px) {
+  .stories-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 3rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .stories-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .stories-nav {
+    margin-top: 1.5rem;
+  }
+
+  .stories-header .section-title {
+    font-size: 2.2rem;
+  }
+
+  .stories-grid {
+    grid-template-columns: 1fr;
+    gap: 4rem;
+  }
+}
+
+/* =========================================
+   SECCIÓN IMPACTO (Estadísticas y Mapa)
+   ========================================= */
+.impact-section {
+  padding: 4rem 5% 8rem 5%;
+  background-color: transparent;
+  overflow: hidden;
+  /* Evita que el mapa y marcadores se desborden en móvil */
+}
+
+.impact-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+  /* Damos un poco más de peso a la derecha para el mapa */
+  gap: 4rem;
+  align-items: center;
+}
+
+/* 1. CIFRAS DE IMPACTO (Izquierda) */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 3rem;
+  margin-top: 4rem;
+}
+
+.stat-item {
+  position: relative;
+  padding-top: 2rem;
+}
+
+/* El círculo decorativo de color detrás del número */
+.stat-item::before {
+  content: "";
+  position: absolute;
+  top: 10px;
+  left: -10px;
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  opacity: 0.3;
+  z-index: -1;
+}
+
+.st-green::before {
+  background-color: #22c55e;
+}
+
+.st-blue::before {
+  background-color: #3b82f6;
+}
+
+.st-pink::before {
+  background-color: #ec4899;
+}
+
+.st-yellow::before {
+  background-color: var(--color-primary);
+}
+
+.stat-number {
+  font-family: var(--font-titles);
+  font-size: 3rem;
+  color: var(--color-dark);
+  line-height: 1;
+  margin-bottom: 0.8rem;
+  font-weight: 800;
+}
+
+.stat-number small {
+  font-size: 1.2rem;
+  margin-left: 2px;
+}
+
+.stat-desc {
+  font-size: 0.95rem;
+  color: var(--color-dark);
+  opacity: 0.7;
+  max-width: 220px;
+}
+
+/* 2. MAPA DE PALMIRA CON MARCADORES (Derecha) */
+.impact-visual {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.map-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 750px;
+  /* Aumentado de 550px a 750px */
+}
+
+/* 2. EL MAPA CON MÁSCARA DE COLOR (Técnica Pro) */
+.map-artistic-mask {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1.1 / 1;
+  /* Usamos la imagen de pinceladas como "fondo" para que la textura sea real */
+  background-image: url("brush_strokes_decoration_1775867024935.png");
+  background-size: cover;
+  background-position: center;
+  background-color: #facc15;
+  /* Color base por si la imagen no cubre todo */
+
+  /* La máscara recortará esas pinceladas con la silueta de Palmira */
+  -webkit-mask-image: url("assets/palmira%202.png");
+  mask-image: url("assets/palmira%202.png");
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  position: relative;
+}
+
+/* Ocultamos la imagen original pero mantenemos su espacio si fuera necesario (opcional) */
+.palmira-map-img {
+  width: 100%;
+  height: auto;
+  opacity: 0;
+  /* Solo la usamos como referencia de tamaño o accesible */
+  display: block;
+}
+
+/* El Marcador: Círculo blanco con punto de color */
+.map-marker {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  background-color: #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translate(-50%, -50%);
+  /* Centrado exacto sobre el punto % */
+  transition: all 0.3s ease;
+  z-index: 10;
+  /* Aseguramos que estén por encima del mapa */
+}
+
+.map-marker:hover {
+  transform: translate(-50%, -50%) scale(1.4);
+  z-index: 100;
+}
+
+/* El punto de color interno del marcador */
+.map-marker::after {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.m-green::after {
+  background-color: #22c55e;
+}
+
+.m-blue::after {
+  background-color: #3b82f6;
+}
+
+.m-pink::after {
+  background-color: #ec4899;
+}
+
+.m-yellow::after {
+  background-color: var(--color-primary);
+}
+
+/* RESPONSIVO IMPACTO */
+@media (max-width: 1024px) {
+  .impact-container {
+    grid-template-columns: 1fr;
+    gap: 5rem;
+    text-align: center;
+  }
+
+  .impact-info {
+    order: 1;
+  }
+
+  .impact-visual {
+    order: 2;
+  }
+
+  .stats-grid {
+    justify-content: center;
+  }
+
+  .stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+@media (max-width: 768px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+
+  .stat-number {
+    font-size: 2.5rem;
+  }
+}
+
+/*
+   🎓 LECCIÓN: Progressive Enhancement (Mejora progresiva)
+   En pantallas grandes donde sabemos que funciona bien,
+   RE-ACTIVAMOS el efecto parallax del hero.
+   En móvil se queda con scroll (seguro).
+*/
+@media (min-width: 1025px) {
+  .hero-section {
+    background-attachment: fixed;
+    /* Efecto parallax solo en escritorio */
+  }
+
+  /* En escritorio, permitimos que los pinceles del CTA se vean */
+  .cta-banner {
+    overflow: visible;
+  }
+}
+
+/* =========================================
+   ANIMACIONES Y RESPONSIVO
+   ========================================= */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInRight {
+  from {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* =========================================
+   SECCIÓN DE PROPUESTAS (Pilares)
+   ========================================= */
+.proposals-section {
+  padding: 3rem 5% 6rem 5%;
+  margin-top: 0;
+  /* Eliminamos el margen negativo para bajar la sección */
+  position: relative;
+  z-index: 20;
+  background-color: transparent;
+  text-align: left;
+  /* Cambiado a izquierda para mayor elegancia */
+  overflow: hidden;
+  /* Contiene los blobs de las tarjetas que tienen width: 140% */
+}
+
+.proposals-header {
+  margin-bottom: 5rem;
+  max-width: 700px;
+  margin-left: auto;
+  /* Centrado */
+  margin-right: auto;
+  text-align: center;
+  /* Texto centrado */
+  animation: fadeIn 1s ease-out;
+}
+
+.section-tag {
+  color: var(--color-primary-dark);
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+  display: block;
+}
+
+.section-title {
+  font-family: var(--font-titles);
+  font-size: 3.5rem;
+  color: var(--color-dark);
+  margin-bottom: 1.5rem;
+  line-height: 1.2;
+}
+
+.section-subtitle {
+  font-size: 1.1rem;
+  color: var(--color-dark);
+  opacity: 0.7;
+  line-height: 1.8;
+}
+
+/* Rejilla de Tarjetas */
+.proposals-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 3rem;
+  /* Aumentamos el espacio */
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Tarjeta Minimalista (Nuevo Diseño) */
+.proposal-card {
+  background-color: transparent;
+  /* Fondo limpio */
+  padding: 2rem 1rem;
+  border-radius: 0;
+  box-shadow: none;
+  /* Sin sombra por defecto */
+  transition: all 0.4s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  /* Alineación a la izquierda */
+  position: relative;
+  border: none;
+  overflow: visible;
+}
+
+/* El "Blob" / Mancha de fondo orgánica */
+.proposal-card::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 140%;
+  height: 120%;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill='%23F5F1E9' d='M44.7,-76.4C58.2,-69.2,70.1,-59.1,79.5,-46.5C88.8,-33.9,95.6,-18.8,94.2,-4.2C92.8,10.4,83.2,24.5,73.4,37.1C63.6,49.7,53.7,60.8,41.5,68.7C29.3,76.7,14.7,81.3,0.1,81.2C-14.5,81.1,-28.9,76.2,-41.7,68.5C-54.4,60.8,-65.4,50.3,-73.4,37.7C-81.4,25.2,-86.4,10.6,-86.7,-4.1C-87,-18.8,-82.7,-33.6,-74.6,-46.3C-66.5,-59,-54.6,-69.5,-41.2,-76.8C-27.8,-84.1,-13.9,-88.2,0.1,-88.4C14.2,-88.6,28.3,-84.9,44.7,-76.4Z' transform='translate(100 100)' /%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  transform: translate(-60%, -50%) scale(0.8);
+  opacity: 0;
+  transition: all 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
+  z-index: -1;
+  pointer-events: none;
+}
+
+.proposal-card:hover::before {
+  opacity: 1;
+  transform: translate(-55%, -50%) scale(1.1) rotate(5deg);
+}
+
+.card-icon {
+  margin-bottom: 2rem;
+  color: var(--color-dark);
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  /* Icono a la izquierda */
+  transition: transform 0.3s ease;
+}
+
+.proposal-card:hover .card-icon {
+  transform: translateY(-5px);
+}
+
+.icon-yellow {
+  color: var(--color-primary-dark);
+  filter: drop-shadow(0 2px 4px rgba(234, 179, 8, 0.2));
+}
+
+.card-title {
+  font-family: var(--font-titles);
+  font-size: 1.6rem;
+  margin-bottom: 1.2rem;
+  color: var(--color-dark);
+  position: relative;
+  display: inline-block;
+}
+
+/* Línea sutil bajo el título al hacer hover */
+.card-title::after {
+  content: "";
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background-color: var(--color-dark);
+  transition: width 0.3s ease;
+}
+
+.proposal-card:hover .card-title::after {
+  width: 100%;
+}
+
+.card-text {
+  font-size: 1rem;
+  color: var(--color-dark);
+  opacity: 0.8;
+  line-height: 1.7;
+}
+
+/* Ajustes Responsivos para las tarjetas */
+@media (max-width: 1200px) {
+  .proposals-grid {
+    grid-template-columns: repeat(2, 1fr);
+    /* 2 Columnas en tablets */
+  }
+}
+
+@media (max-width: 768px) {
+  .proposals-grid {
+    grid-template-columns: 1fr;
+    /* 1 Columna en móviles */
+  }
+
+  .section-title {
+    font-size: 2.5rem;
+  }
+}
+
+/* =========================================
+   SECCIÓN CTA (Join our action - Referencia Kalypsia)
+   ========================================= */
+.cta-banner {
+  position: relative;
+  width: 96%;
+  /* Ajustado para coincidir con el ancho del Hero */
+  max-width: 1400px;
+  /* Permitimos mayor expansión en pantallas grandes */
+  max-height: 485px;
+  margin: 8rem auto 8rem auto;
+  /* Añadimos 8rem abajo para separar del footer */
+  padding: 8rem 2rem;
+  background-image: url("assets/b3.jpeg");
+  /* Nueva imagen b3 */
+  background-size: cover;
+  background-position: center top;
+  /* Encuadre superior para no cortar la cabeza del niño */
+  border-radius: 4px;
+  /*
+    🎓 LECCIÓN: overflow: visible vs hidden
+    Antes era "visible" para que las pinceladas decorativas
+    sobresalieran. Pero en móvil eso causa el temido
+    scroll horizontal. Solución: las ocultamos en móvil
+    y las mostramos en escritorio.
+  */
+  overflow: hidden;
+  /* Seguro para móvil — los pinceles se ocultan en @media */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: var(--color-secondary);
+}
+
+.cta-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.55);
+  border-radius: 4px;
+  z-index: 1;
+}
+
+.cta-content {
+  position: relative;
+  z-index: 10;
+  max-width: 700px;
+}
+
+.cta-title {
+  font-family: var(--font-titles);
+  font-size: 3.5rem;
+  line-height: 1.1;
+  margin-bottom: 2.5rem;
+  font-weight: 700;
+  text-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.cta-buttons {
+  display: flex;
+  gap: 1.5rem;
+  justify-content: center;
+}
+
+/* Botones específicos de la sección CTA */
+.btn-orange {
+  background-color: #f59e0b;
+  /* Naranja Kalypsia */
+  color: white;
+  padding: 1rem 2.2rem;
+  border-radius: 4px;
+  font-weight: 700;
+  transition: transform 0.3s ease, background 0.3s ease;
+}
+
+.btn-green-cta {
+  background-color: #84cc16;
+  /* Verde Kalypsia */
+  color: white;
+  padding: 1rem 2.2rem;
+  border-radius: 4px;
+  font-weight: 700;
+  transition: transform 0.3s ease, background 0.3s ease;
+}
+
+.btn-orange:hover,
+.btn-green-cta:hover {
+  transform: translateY(-3px);
+  filter: brightness(1.1);
+}
+
+/* ACENTOS DE PINCELADA LATERALES */
+.brush-cta-left,
+.brush-cta-right {
+  position: absolute;
+  width: 180px;
+  height: 180px;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill='%23facc15' d='M44.7,-76.4C58.2,-69.2,70.1,-59.1,79.5,-46.5C88.8,-33.9,95.6,-18.8,94.2,-4.2C92.8,10.4,83.2,24.5,73.4,37.1C63.6,49.7,53.7,60.8,41.5,68.7C29.3,76.7,14.7,81.3,0.1,81.2C-14.5,81.1,-28.9,76.2,-41.7,68.5C-54.4,60.8,-65.4,50.3,-73.4,37.7C-81.4,25.2,-86.4,10.6,-86.7,-4.1C-87,-18.8,-82.7,-33.6,-74.6,-46.3C-66.5,-59,-54.6,-69.5,-41.2,-76.8C-27.8,-84.1,-13.9,-88.2,0.1,-88.4C14.2,-88.6,28.3,-84.9,44.7,-76.4Z' transform='translate(100 100)' /%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+  z-index: -1;
+  opacity: 0.9;
+}
+
+.brush-cta-left {
+  left: -90px;
+  top: 50%;
+  transform: translateY(-50%) rotate(-15deg);
+  filter: hue-rotate(45deg);
+  /* Ajuste para que se vea más verde/amarillo */
+}
+
+.brush-cta-right {
+  right: -90px;
+  top: 50%;
+  transform: translateY(-50%) rotate(165deg);
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill='%2384cc16' d='M44.7,-76.4C58.2,-69.2,70.1,-59.1,79.5,-46.5C88.8,-33.9,95.6,-18.8,94.2,-4.2C92.8,10.4,83.2,24.5,73.4,37.1C63.6,49.7,53.7,60.8,41.5,68.7C29.3,76.7,14.7,81.3,0.1,81.2C-14.5,81.1,-28.9,76.2,-41.7,68.5C-54.4,60.8,-65.4,50.3,-73.4,37.7C-81.4,25.2,-86.4,10.6,-86.7,-4.1C-87,-18.8,-82.7,-33.6,-74.6,-46.3C-66.5,-59,-54.6,-69.5,-41.2,-76.8C-27.8,-84.1,-13.9,-88.2,0.1,-88.4C14.2,-88.6,28.3,-84.9,44.7,-76.4Z' transform='translate(100 100)' /%3E%3C/svg%3E");
+}
+
+/* =========================================
+   BARRA DE CONTACTO
+   ========================================= */
+/* .contact-bar y relacionados han sido eliminados por solicitud del usuario */
+
+/* =========================================
+   FOOTER PRINCIPAL
+   ========================================= */
+.footer-main {
+  background-color: var(--color-dark);
+  /* Fondo negro/gris oscuro */
+  padding: 2.5rem 5% 1.5rem 5%;
+  /* Reducido de 5rem-3rem a 2.5rem-1.5rem */
+  color: var(--color-secondary);
+  /* Texto blanco */
+}
+
+.footer-top {
+  max-width: 1200px;
+  margin: 0 auto 4rem auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.footer-logo {
+  height: 40px;
+  width: auto;
+}
+
+.brand-name {
+  font-family: var(--font-titles);
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.footer-nav {
+  display: flex;
+  gap: 2.5rem;
+}
+
+.footer-nav a {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--color-secondary);
+  opacity: 0.8;
+  transition: all 0.3s ease;
+}
+
+.footer-nav a:hover {
+  color: var(--color-primary);
+  opacity: 1;
+}
+
+.btn-black {
+  background-color: #000;
+  color: white;
+  padding: 0.8rem 1.8rem;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  transition: opacity 0.3s ease;
+}
+
+.btn-black:hover {
+  opacity: 0.8;
+}
+
+.footer-body {
+  max-width: 1200px;
+  margin: 0 auto 4rem auto;
+}
+
+.footer-body p {
+  font-size: 0.95rem;
+  opacity: 0.6;
+  max-width: 800px;
+  line-height: 1.8;
+}
+
+.footer-bottom {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+}
+
+.copyright {
+  opacity: 0.6;
+}
+
+/* Estilos de Redes Sociales en su nueva ubicación */
+.social-links-footer {
+  display: flex;
+  gap: 1rem;
+}
+
+.social-links-footer a {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--color-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  transition: all 0.3s ease;
+}
+
+.social-links-footer a:hover {
+  background-color: var(--color-primary);
+  color: var(--color-dark);
+  border-color: var(--color-primary);
+  transform: translateY(-3px);
+}
+
+.legal-links {
+  display: flex;
+  gap: 1.5rem;
+  opacity: 0.6;
+}
+
+/* RESPONSIVO PARA EL CIERRE */
+@media (max-width: 1024px) {
+  .footer-top {
+    flex-direction: column;
+    gap: 3rem;
+  }
+
+  /*
+    🎓 LECCIÓN: En pantallas medianas y pequeñas,
+    permitimos que las pinceladas decorativas del CTA
+    sobresalgan solo en escritorio. En tablets/móvil
+    las ocultamos para evitar overflow.
+  */
+  .brush-cta-left,
+  .brush-cta-right {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+
+  /*
+    🎓 LECCIÓN: En móvil, activamos el parallax "fijo"
+    NO es necesario porque ya lo desactivamos arriba.
+    Pero aquí reforzamos las correcciones de tamaño.
+  */
+  .hero-section {
+    width: 100%;
+    /* Ocupamos todo el ancho sin margenes laterales */
+    margin: 60px auto 15px auto;
+    /* Reducimos el margen superior */
+    border-radius: 0;
+    /* Sin esquinas redondeadas en pantallas pequeñas */
+    padding: 60px 5% 3rem 5%;
+    /* Menos padding */
+    min-height: 70vh;
+    /* Menos altura para que no sea excesivo */
+  }
+
+  .hero-title {
+    font-size: clamp(2rem, 10vw, 3.5rem);
+    /* Más pequeño en móvil */
+    letter-spacing: -1px;
+  }
+
+  .hero-subtitle {
+    font-size: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .cta-title {
+    font-size: 2.2rem;
+  }
+
+  .cta-buttons {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .contact-container {
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .social-links-footer {
+    margin-left: 0;
+  }
+
+  .footer-nav {
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  .footer-bottom {
+    flex-direction: column;
+    gap: 1.5rem;
+    text-align: center;
+  }
+
+  /* El CTA en móvil: ancho completo y sin desbordamientos */
+  .cta-banner {
+    width: 100%;
+    border-radius: 0;
+    margin: 4rem auto;
+    padding: 5rem 1.5rem;
+  }
+
+  /* Sección Impacto: estadísticas y mapa apilados */
+  .impact-container {
+    gap: 3rem;
+  }
+
+  .impact-section .section-title {
+    font-size: 2.2rem;
+  }
+
+  /* Collage de Nosotros: más compacto en móvil */
+  .collage-grid {
+    height: 300px;
+  }
+
+  /* Escondemos los acentos de pincelada en móvil */
+  .brush-accent {
+    display: none;
+  }
+
+  /* Stories: aseguramos que las decoraciones no se desborden */
+  .story-visual::before {
+    display: none;
+    /* Ocultamos la mancha verde decorativa en móvil */
+  }
+}

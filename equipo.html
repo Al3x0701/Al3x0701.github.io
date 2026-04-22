@@ -1,0 +1,1943 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Centro de Operaciones — Impulso Ciudadano</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* =============================================
+       VARIABLES Y RESET
+    ============================================= */
+    :root {
+      --magenta: #D63FA8;
+      --magenta-dark: #b22d8c;
+      --magenta-light: rgba(214,63,168,0.10);
+      --yellow: #facc15;
+      --yellow-dark: #d4a90e;
+      --yellow-light: rgba(250,204,21,0.12);
+
+      /* Fondos claros — inspirado en el dashboard de referencia */
+      --bg-page: #f4f5f7;
+      --bg-card: #ffffff;
+      --bg-card-hover: #f9fafb;
+
+      /* Sidebar oscuro */
+      --sidebar-bg: #1a1d27;
+      --sidebar-text: rgba(255,255,255,0.55);
+      --sidebar-text-hover: rgba(255,255,255,0.9);
+      --sidebar-border: rgba(255,255,255,0.06);
+
+      /* Bordes y sombras */
+      --border: #e8eaed;
+      --border-focus: #facc15;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+
+      /* Textos */
+      --text-primary: #1a1d27;
+      --text-secondary: #6b7280;
+      --text-muted: #9ca3af;
+
+      /* Semánticos */
+      --green: #16a34a;
+      --green-bg: #f0fdf4;
+      --red: #dc2626;
+      --red-bg: #fef2f2;
+      --amber: #d97706;
+      --amber-bg: #fffbeb;
+      --blue: #2563eb;
+      --blue-bg: #eff6ff;
+
+      --sidebar-w: 240px;
+      --topbar-h: 60px;
+      --font-title: 'Playfair Display', serif;
+      --font-body: 'Barlow', sans-serif;
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg-page);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    a { text-decoration: none; color: inherit; }
+    ul { list-style: none; }
+    button { font-family: var(--font-body); cursor: pointer; border: none; background: none; }
+
+    /* =============================================
+       LOGIN PAGE
+    ============================================= */
+    #login-page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      background: var(--sidebar-bg);
+      position: relative;
+      overflow: hidden;
+    }
+
+    #login-page::before {
+      content: '';
+      position: absolute;
+      top: -150px; right: -150px;
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(214,63,168,0.18) 0%, transparent 65%);
+      pointer-events: none;
+    }
+
+    #login-page::after {
+      content: '';
+      position: absolute;
+      bottom: -150px; left: -150px;
+      width: 450px; height: 450px;
+      background: radial-gradient(circle, rgba(250,204,21,0.12) 0%, transparent 65%);
+      pointer-events: none;
+    }
+
+    .login-box {
+      background: #ffffff;
+      border-radius: 20px;
+      padding: 3rem;
+      width: 100%;
+      max-width: 420px;
+      position: relative;
+      z-index: 1;
+      box-shadow: var(--shadow-md);
+    }
+
+    .login-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 2rem;
+    }
+
+    .login-logo img {
+      height: 36px;
+      width: auto;
+    }
+
+    .login-badge {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--yellow-dark);
+      background: var(--yellow-light);
+      border: 1px solid rgba(250,204,21,0.4);
+      padding: 0.3rem 0.7rem;
+      border-radius: 50px;
+    }
+
+    .login-title {
+      font-family: var(--font-title);
+      font-size: 1.9rem;
+      color: var(--text-primary);
+      margin-bottom: 0.4rem;
+      line-height: 1.2;
+    }
+
+    .login-subtitle {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-bottom: 2rem;
+    }
+
+    .form-group { margin-bottom: 1.1rem; }
+
+    .form-group label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 0.45rem;
+    }
+
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%;
+      background: var(--bg-page);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 0.8rem 1rem;
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      font-size: 0.95rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+      border-color: var(--yellow);
+      box-shadow: 0 0 0 3px rgba(250,204,21,0.15);
+      background: #fff;
+    }
+
+    .form-group select option { background: #fff; color: var(--text-primary); }
+    .form-group textarea { resize: vertical; min-height: 100px; }
+
+    .btn-login {
+      width: 100%;
+      background: var(--yellow);
+      color: var(--text-primary);
+      font-weight: 700;
+      font-size: 0.95rem;
+      padding: 0.9rem;
+      border-radius: 10px;
+      margin-top: 0.5rem;
+      transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+      letter-spacing: 0.02em;
+      box-shadow: 0 2px 8px rgba(250,204,21,0.35);
+    }
+
+    .btn-login:hover { background: var(--yellow-dark); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(250,204,21,0.4); }
+    .btn-login:active { transform: translateY(0); }
+
+    .login-demo-hint {
+      margin-top: 1.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .login-demo-hint strong { color: var(--text-secondary); }
+
+    .demo-roles {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+
+    .demo-role-btn {
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.35rem 0.9rem;
+      border-radius: 50px;
+      border: 1.5px solid var(--border);
+      color: var(--text-secondary);
+      background: transparent;
+      transition: all 0.18s;
+    }
+
+    .demo-role-btn:hover {
+      border-color: var(--yellow);
+      color: var(--yellow-dark);
+      background: var(--yellow-light);
+    }
+
+    .login-error {
+      display: none;
+      background: var(--red-bg);
+      border: 1px solid rgba(220,38,38,0.25);
+      color: var(--red);
+      font-size: 0.85rem;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+    }
+
+    /* =============================================
+       APP SHELL
+    ============================================= */
+    #app { display: none; min-height: 100vh; }
+
+    /* Topbar */
+    .topbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: var(--topbar-h);
+      background: #ffffff;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 1.5rem 0 calc(var(--sidebar-w) + 1.5rem);
+      z-index: 100;
+      transition: padding-left 0.3s;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .topbar.sidebar-collapsed { padding-left: 1.5rem; }
+
+    .topbar-left { display: flex; align-items: center; gap: 1rem; }
+
+    .topbar-menu-btn {
+      color: var(--text-secondary);
+      width: 36px; height: 36px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 8px;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .topbar-menu-btn:hover { background: var(--bg-page); color: var(--text-primary); }
+
+    .topbar-breadcrumb { font-size: 0.85rem; color: var(--text-muted); }
+    .topbar-breadcrumb span { color: var(--text-primary); font-weight: 700; }
+
+    .topbar-right { display: flex; align-items: center; gap: 1rem; }
+    .topbar-user { display: flex; align-items: center; gap: 0.65rem; }
+
+    .user-avatar {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      background: var(--yellow);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.8rem; font-weight: 700;
+      color: var(--text-primary);
+      box-shadow: 0 0 0 2px rgba(250,204,21,0.35);
+    }
+
+    .user-info { display: flex; flex-direction: column; }
+
+    .user-name { font-size: 0.85rem; font-weight: 700; color: var(--text-primary); line-height: 1.2; }
+
+    .user-role-badge {
+      font-size: 0.63rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--magenta);
+    }
+
+    .btn-logout {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      padding: 0.4rem 0.85rem;
+      border-radius: 8px;
+      border: 1.5px solid var(--border);
+      transition: all 0.2s;
+      background: transparent;
+    }
+
+    .btn-logout:hover { color: var(--red); border-color: rgba(220,38,38,0.35); background: var(--red-bg); }
+
+    /* =============================================
+       SIDEBAR — oscuro, estilo dashboard referencia
+    ============================================= */
+    .sidebar {
+      position: fixed;
+      top: 0; left: 0;
+      width: var(--sidebar-w);
+      height: 100vh;
+      background: var(--sidebar-bg);
+      overflow-y: auto;
+      padding: 0;
+      z-index: 110;
+      transition: transform 0.3s;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar.collapsed { transform: translateX(-100%); }
+
+    /* Logo dentro del sidebar */
+    .sidebar-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 1.1rem 1.4rem;
+      border-bottom: 1px solid var(--sidebar-border);
+      height: var(--topbar-h);
+      flex-shrink: 0;
+    }
+
+    .sidebar-logo img {
+      height: 30px;
+      width: auto;
+      filter: brightness(0) invert(1);
+    }
+
+    .sidebar-logo-text {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: rgba(255,255,255,0.5);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .sidebar-nav { flex: 1; padding: 1rem 0; overflow-y: auto; }
+
+    .sidebar-section { margin-bottom: 0.25rem; }
+
+    .sidebar-section-label {
+      font-size: 0.62rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: rgba(255,255,255,0.28);
+      padding: 0.9rem 1.4rem 0.35rem;
+    }
+
+    .sidebar-item {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      padding: 0.6rem 0.9rem 0.6rem 1.4rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--sidebar-text);
+      cursor: pointer;
+      transition: all 0.15s;
+      position: relative;
+      border-radius: 0;
+      margin: 0 0.6rem;
+      border-radius: 10px;
+    }
+
+    .sidebar-item:hover {
+      background: rgba(255,255,255,0.06);
+      color: var(--sidebar-text-hover);
+    }
+
+    /* Píldora activa — inspirado en la imagen de referencia */
+    .sidebar-item.active {
+      background: var(--yellow);
+      color: #1a1d27;
+      font-weight: 700;
+    }
+
+    .sidebar-item.active svg { opacity: 1; color: #1a1d27; }
+
+    .sidebar-item svg {
+      width: 17px; height: 17px;
+      flex-shrink: 0;
+      opacity: 0.6;
+    }
+
+    .sidebar-badge {
+      margin-left: auto;
+      background: var(--red);
+      color: white;
+      font-size: 0.63rem;
+      font-weight: 700;
+      padding: 0.1rem 0.45rem;
+      border-radius: 50px;
+      min-width: 18px;
+      text-align: center;
+    }
+
+    .sidebar-item.active .sidebar-badge {
+      background: rgba(26,29,39,0.2);
+      color: #1a1d27;
+    }
+
+    /* Main content */
+    .main-content {
+      margin-top: var(--topbar-h);
+      margin-left: var(--sidebar-w);
+      padding: 2rem 2rem;
+      min-height: calc(100vh - var(--topbar-h));
+      transition: margin-left 0.3s;
+      background: var(--bg-page);
+    }
+
+    .main-content.sidebar-collapsed { margin-left: 0; }
+
+    /* =============================================
+       SHARED COMPONENTS
+    ============================================= */
+    .page-header { margin-bottom: 1.75rem; }
+
+    .page-header h1 {
+      font-family: var(--font-title);
+      font-size: 1.75rem;
+      color: var(--text-primary);
+      margin-bottom: 0.25rem;
+      font-weight: 700;
+    }
+
+    .page-header p { font-size: 0.875rem; color: var(--text-secondary); }
+
+    /* Stats grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border-radius: 14px;
+      padding: 1.35rem 1.4rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border);
+      transition: box-shadow 0.2s, transform 0.2s;
+    }
+
+    .stat-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+
+    .stat-icon {
+      width: 42px; height: 42px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .stat-icon.magenta { background: var(--yellow-light); color: var(--yellow-dark); }
+    .stat-icon.green   { background: var(--green-bg);     color: var(--green); }
+    .stat-icon.amber   { background: var(--amber-bg);     color: var(--amber); }
+    .stat-icon.red     { background: var(--red-bg);       color: var(--red); }
+    .stat-icon.blue    { background: var(--blue-bg);      color: var(--blue); }
+    .stat-icon svg { width: 20px; height: 20px; }
+
+    .stat-info { flex: 1; }
+
+    .stat-value {
+      font-size: 1.65rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.1;
+    }
+
+    .stat-label {
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      margin-top: 0.2rem;
+    }
+
+    /* Card */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.4rem 1.5rem;
+      margin-bottom: 1.25rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .card-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .card-title svg { width: 17px; height: 17px; color: var(--magenta); }
+
+    /* Table */
+    .table-wrap { overflow-x: auto; border-radius: 10px; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+
+    thead th {
+      background: var(--bg-page);
+      color: var(--text-muted);
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      padding: 0.7rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    tbody tr {
+      border-bottom: 1px solid #f3f4f6;
+      transition: background 0.12s;
+    }
+
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #fafafa; }
+
+    tbody td {
+      padding: 0.85rem 1rem;
+      color: var(--text-secondary);
+      vertical-align: middle;
+    }
+
+    tbody td:first-child { color: var(--text-primary); font-weight: 600; }
+
+    /* Badges */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.22rem 0.65rem;
+      border-radius: 50px;
+    }
+
+    .badge::before {
+      content: '';
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .badge-pendiente { background: var(--amber-bg); color: var(--amber); }
+    .badge-aprobado  { background: var(--green-bg);  color: var(--green); }
+    .badge-rechazado { background: var(--red-bg);    color: var(--red); }
+    .badge-owner     { background: var(--yellow-light); color: var(--yellow-dark); }
+    .badge-admin     { background: var(--magenta-light); color: var(--magenta); }
+    .badge-lider     { background: var(--blue-bg);   color: var(--blue); }
+    .badge-amigo     { background: var(--green-bg);  color: var(--green); }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.84rem;
+      font-weight: 600;
+      padding: 0.52rem 1.1rem;
+      border-radius: 8px;
+      transition: all 0.18s;
+      cursor: pointer;
+      border: 1.5px solid transparent;
+      font-family: var(--font-body);
+    }
+
+    .btn svg { width: 14px; height: 14px; }
+
+    .btn-primary { background: var(--yellow); color: var(--text-primary); border-color: var(--yellow); box-shadow: 0 1px 4px rgba(250,204,21,0.3); }
+    .btn-primary:hover { background: var(--yellow-dark); border-color: var(--yellow-dark); }
+
+    .btn-outline { border-color: var(--border); color: var(--text-secondary); background: transparent; }
+    .btn-outline:hover { border-color: var(--yellow); color: var(--yellow-dark); background: var(--yellow-light); }
+
+    .btn-success { background: var(--green-bg); color: var(--green); border-color: rgba(22,163,74,0.25); }
+    .btn-success:hover { background: #dcfce7; }
+
+    .btn-danger { background: var(--red-bg); color: var(--red); border-color: rgba(220,38,38,0.25); }
+    .btn-danger:hover { background: #fee2e2; }
+
+    .btn-sm { font-size: 0.77rem; padding: 0.3rem 0.7rem; }
+
+    /* Toolbar */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 1.1rem;
+      flex-wrap: wrap;
+    }
+
+    .toolbar-left { display: flex; align-items: center; gap: 0.65rem; flex-wrap: wrap; }
+    .toolbar-right { display: flex; align-items: center; gap: 0.65rem; }
+
+    .search-input {
+      background: var(--bg-page);
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 0.52rem 1rem;
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      font-size: 0.86rem;
+      width: 220px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .search-input:focus { border-color: var(--yellow); background: #fff; }
+    .search-input::placeholder { color: var(--text-muted); }
+
+    .filter-select {
+      background: var(--bg-page);
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 0.52rem 0.9rem;
+      color: var(--text-secondary);
+      font-family: var(--font-body);
+      font-size: 0.86rem;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .filter-select:focus { border-color: var(--yellow); background: #fff; }
+    .filter-select option { background: #fff; color: var(--text-primary); }
+
+    /* Empty state */
+    .empty-state { text-align: center; padding: 3rem 2rem; color: var(--text-muted); }
+    .empty-state svg { width: 44px; height: 44px; margin: 0 auto 1rem; opacity: 0.25; display: block; }
+    .empty-state p { font-size: 0.875rem; }
+
+    /* Form layout 2-cols */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .form-grid .form-group.full { grid-column: 1 / -1; }
+
+    /* Upload zone */
+    .upload-zone {
+      border: 2px dashed #d1d5db;
+      border-radius: 12px;
+      padding: 2.5rem;
+      text-align: center;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .upload-zone:hover {
+      border-color: var(--yellow);
+      background: var(--yellow-light);
+      color: var(--yellow-dark);
+    }
+
+    .upload-zone svg { width: 34px; height: 34px; margin: 0 auto 0.75rem; display: block; }
+    .upload-zone p { font-size: 0.9rem; font-weight: 600; }
+    .upload-zone span { font-size: 0.8rem; }
+
+    /* Progress */
+    .progress-bar-wrap {
+      background: #f3f4f6;
+      border-radius: 50px;
+      height: 7px;
+      overflow: hidden;
+      margin: 0.5rem 0;
+    }
+
+    .progress-bar {
+      height: 100%;
+      border-radius: 50px;
+      background: linear-gradient(90deg, var(--yellow), #fde047);
+      transition: width 0.5s ease;
+    }
+
+    /* Alert */
+    .alert {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      padding: 0.9rem 1.1rem;
+      border-radius: 10px;
+      margin-bottom: 1.1rem;
+      font-size: 0.86rem;
+    }
+
+    .alert svg { width: 17px; height: 17px; flex-shrink: 0; margin-top: 1px; }
+
+    .alert-warning { background: var(--amber-bg); border: 1px solid rgba(217,119,6,0.2); color: var(--amber); }
+    .alert-info    { background: var(--blue-bg);  border: 1px solid rgba(37,99,235,0.2); color: var(--blue); }
+    .alert-success { background: var(--green-bg); border: 1px solid rgba(22,163,74,0.2); color: var(--green); }
+
+    /* Section divider */
+    .section-divider { height: 1px; background: var(--border); margin: 1.25rem 0; }
+
+    /* 2-col layout */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+
+    /* Status dots */
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; margin-right: 0.4rem; }
+    .dot-green { background: var(--green); }
+    .dot-amber { background: var(--amber); }
+    .dot-red   { background: var(--red); }
+
+    /* Views */
+    .view { display: none; }
+    .view.active { display: block; }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 1.5rem; right: 1.5rem;
+      background: var(--sidebar-bg);
+      border-radius: 12px;
+      padding: 1rem 1.4rem;
+      font-size: 0.86rem;
+      color: #fff;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+      z-index: 999;
+      transform: translateX(120%);
+      transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+      max-width: 300px;
+      border-left: 3px solid var(--yellow);
+    }
+
+    .toast.show { transform: translateX(0); }
+    .toast .toast-title { font-weight: 700; margin-bottom: 0.2rem; color: #fff; }
+    .toast .toast-msg { color: rgba(255,255,255,0.6); font-size: 0.81rem; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      :root { --sidebar-w: 280px; }
+
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.mobile-open { transform: translateX(0); box-shadow: 8px 0 30px rgba(0,0,0,0.25); }
+
+      .topbar { padding-left: 1rem; }
+      .main-content { margin-left: 0; padding: 1.2rem; }
+      .form-grid { grid-template-columns: 1fr; }
+      .two-col { grid-template-columns: 1fr; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .user-info { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ====================================================
+     LOGIN PAGE
+==================================================== -->
+<div id="login-page">
+  <div class="login-box">
+    <div class="login-logo">
+      <img src="assets/logo.png" alt="Impulso Ciudadano" />
+      <span class="login-badge">Equipo</span>
+    </div>
+
+    <h1 class="login-title">Centro de Operaciones</h1>
+    <p class="login-subtitle">Acceso exclusivo para el equipo de Impulso Ciudadano</p>
+
+    <div class="login-error" id="login-error">
+      Credenciales incorrectas. Intenta de nuevo.
+    </div>
+
+    <div class="form-group">
+      <label>Correo electrónico</label>
+      <input type="email" id="login-email" placeholder="tu@correo.com" />
+    </div>
+
+    <div class="form-group">
+      <label>Contraseña</label>
+      <input type="password" id="login-password" placeholder="••••••••" />
+    </div>
+
+    <button class="btn-login" onclick="doLogin()">Ingresar al sistema</button>
+
+    <div class="login-demo-hint">
+      <strong>Demo — Selecciona un rol para explorar:</strong>
+      <div class="demo-roles">
+        <button class="demo-role-btn" onclick="demoLogin('owner')">Owner</button>
+        <button class="demo-role-btn" onclick="demoLogin('admin')">Admin</button>
+        <button class="demo-role-btn" onclick="demoLogin('lider')">Líder</button>
+        <button class="demo-role-btn" onclick="demoLogin('amigo')">Amigo</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====================================================
+     APP SHELL
+==================================================== -->
+<div id="app">
+
+  <!-- Topbar -->
+  <header class="topbar" id="topbar">
+    <div class="topbar-left">
+      <button class="topbar-menu-btn" onclick="toggleSidebar()" title="Menú">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <span class="topbar-breadcrumb">Impulso Ciudadano · <span id="topbar-section">Dashboard</span></span>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-user">
+        <div class="user-avatar" id="user-avatar">IC</div>
+        <div class="user-info">
+          <span class="user-name" id="user-name">Usuario</span>
+          <span class="user-role-badge" id="user-role-label">—</span>
+        </div>
+      </div>
+      <button class="btn-logout" onclick="doLogout()">Salir</button>
+    </div>
+  </header>
+
+  <!-- Sidebar -->
+  <nav class="sidebar" id="sidebar">
+
+    <!-- Sección INICIO (todos los roles) -->
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Principal</div>
+      <div class="sidebar-item active" onclick="showView('dashboard', this)" data-roles="owner,admin,lider,amigo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </div>
+      <div class="sidebar-item" onclick="showView('perfil', this)" data-roles="owner,admin,lider,amigo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        Mi Perfil
+      </div>
+    </div>
+
+    <!-- Sección LISTAS (Líder y Amigo) -->
+    <div class="sidebar-section" id="nav-lista">
+      <div class="sidebar-section-label">Mis Listas</div>
+      <div class="sidebar-item" onclick="showView('mi-lista', this)" data-roles="lider,amigo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+        Mi Lista de Reuniones
+      </div>
+      <div class="sidebar-item" onclick="showView('mi-lista-votantes', this)" data-roles="lider,amigo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Mi Lista de Votantes
+      </div>
+    </div>
+
+    <!-- Sección ADMINISTRACIÓN (Admin y Owner) -->
+    <div class="sidebar-section" id="nav-admin">
+      <div class="sidebar-section-label">Administración</div>
+      <div class="sidebar-item" onclick="showView('aprobaciones', this)" data-roles="owner,admin">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><circle cx="12" cy="12" r="10"/></svg>
+        Aprobación de Listas
+        <span class="sidebar-badge" id="badge-aprobaciones">7</span>
+      </div>
+      <div class="sidebar-item" onclick="showView('consolidado', this)" data-roles="owner,admin">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/></svg>
+        Consolidados
+      </div>
+      <div class="sidebar-item" onclick="showView('solicitudes', this)" data-roles="owner,admin">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        Solicitudes Ciudadanas
+        <span class="sidebar-badge" id="badge-solicitudes">12</span>
+      </div>
+      <div class="sidebar-item" onclick="showView('noticias', this)" data-roles="owner,admin">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 22h16a2 2 0 002-2V4a2 2 0 00-2-2H8a2 2 0 00-2 2v16a2 2 0 002 2z"/><path d="M14 2v4a2 2 0 002 2h4"/></svg>
+        Noticias y Eventos
+      </div>
+      <div class="sidebar-item" onclick="showView('usuarios', this)" data-roles="owner,admin">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        Gestión de Usuarios
+      </div>
+    </div>
+
+    <!-- Sección SISTEMA (solo Owner) -->
+    <div class="sidebar-section" id="nav-owner">
+      <div class="sidebar-section-label">Sistema</div>
+      <div class="sidebar-item" onclick="showView('auditoria', this)" data-roles="owner">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Log de Auditoría
+      </div>
+    </div>
+
+  </nav>
+
+  <!-- Main Content -->
+  <main class="main-content" id="main-content">
+
+    <!-- ====== DASHBOARD ====== -->
+    <div class="view active" id="view-dashboard">
+      <div class="page-header">
+        <h1 id="dashboard-greeting">Bienvenido</h1>
+        <p id="dashboard-subtitle">Centro de Operaciones — Impulso Ciudadano</p>
+      </div>
+
+      <!-- Stats para Admin/Owner -->
+      <div id="stats-admin" class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon magenta">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+          </div>
+          <div class="stat-info">
+            <div class="stat-value">48</div>
+            <div class="stat-label">Líderes y Amigos activos</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+          </div>
+          <div class="stat-info">
+            <div class="stat-value">1,247</div>
+            <div class="stat-label">Registros aprobados</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon amber">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          </div>
+          <div class="stat-info">
+            <div class="stat-value">7</div>
+            <div class="stat-label">Listas pendientes de revisión</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon red">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+          </div>
+          <div class="stat-info">
+            <div class="stat-value">12</div>
+            <div class="stat-label">Solicitudes ciudadanas</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats para Líder/Amigo -->
+      <div id="stats-lider" class="stats-grid" style="display:none">
+        <div class="stat-card">
+          <div class="stat-icon magenta">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/></svg>
+          </div>
+          <div class="stat-info">
+            <div class="stat-value">34</div>
+            <div class="stat-label">Registros en mi lista</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>
+          </div>
+          <div class="stat-info">
+            <div class="stat-value">28</div>
+            <div class="stat-label">Aprobados</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon amber">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/></svg>
+          </div>
+          <div class="stat-info">
+            <div class="stat-value">4</div>
+            <div class="stat-label">Pendientes de revisión</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon red">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          </div>
+          <div class="stat-info">
+            <div class="stat-value">2</div>
+            <div class="stat-label">Rechazados (corregir)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Accesos rápidos -->
+      <div class="two-col">
+        <div class="card" id="quick-admin">
+          <div class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/></svg>
+            Actividad reciente
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Líder / Amigo</th>
+                <th>Lista</th>
+                <th>Estado</th>
+                <th>Fecha</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Carlos Rodríguez</td>
+                <td>Reuniones (12 reg.)</td>
+                <td><span class="badge badge-pendiente">Pendiente</span></td>
+                <td>Hoy</td>
+              </tr>
+              <tr>
+                <td>Marcela Torres</td>
+                <td>Votantes (8 reg.)</td>
+                <td><span class="badge badge-pendiente">Pendiente</span></td>
+                <td>Hoy</td>
+              </tr>
+              <tr>
+                <td>Jorge Muñoz</td>
+                <td>Reuniones (5 reg.)</td>
+                <td><span class="badge badge-aprobado">Aprobado</span></td>
+                <td>Ayer</td>
+              </tr>
+              <tr>
+                <td>Luisa Vargas</td>
+                <td>Votantes (20 reg.)</td>
+                <td><span class="badge badge-rechazado">Rechazado</span></td>
+                <td>Ayer</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card" id="quick-lider">
+          <div class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            Estado de mis registros
+          </div>
+          <div class="alert alert-warning" style="margin-bottom:1rem">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <div>Tienes <strong>2 registros rechazados</strong>. Revisa los comentarios del Admin y corrige antes de reenviar.</div>
+          </div>
+          <div class="progress-bar-wrap">
+            <div class="progress-bar" style="width: 82%"></div>
+          </div>
+          <p style="font-size:0.8rem; color:var(--text-muted); margin-top:0.4rem">28 de 34 registros aprobados (82%)</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== MI LISTA DE REUNIONES ====== -->
+    <div class="view" id="view-mi-lista">
+      <div class="page-header">
+        <h1>Mi Lista de Reuniones</h1>
+        <p>Registra y gestiona los asistentes a tus reuniones. Cada registro queda en estado Pendiente hasta que el Admin lo apruebe.</p>
+      </div>
+
+      <div class="alert alert-info">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <div>Tienes <strong>4 registros pendientes</strong> de aprobación y <strong>2 rechazados</strong> que requieren corrección.</div>
+      </div>
+
+      <div class="two-col">
+        <!-- Formulario registro manual -->
+        <div class="card">
+          <div class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Registrar asistente
+          </div>
+          <div class="form-group">
+            <label>Nombre completo *</label>
+            <input type="text" placeholder="Ej. Ana María Gómez" />
+          </div>
+          <div class="form-group">
+            <label>Cédula *</label>
+            <input type="text" placeholder="Número de cédula" />
+          </div>
+          <div class="form-group">
+            <label>Teléfono</label>
+            <input type="tel" placeholder="3XXXXXXXXX" />
+          </div>
+          <div class="form-group">
+            <label>Municipio</label>
+            <input type="text" placeholder="Ej. Palmira" />
+          </div>
+          <div class="form-group">
+            <label>Fecha de reunión</label>
+            <input type="date" />
+          </div>
+          <div class="form-group">
+            <label>Amigo referido *</label>
+            <input type="text" placeholder="Nombre del líder o amigo" />
+          </div>
+          <div style="display:flex; gap:0.75rem; margin-top:0.5rem">
+            <button class="btn btn-primary" onclick="showToast('Registro guardado','El asistente queda en estado Pendiente.')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17,21 17,13 7,13 7,21"/><polyline points="7,3 7,8 15,8"/></svg>
+              Guardar registro
+            </button>
+            <button class="btn btn-outline">Limpiar</button>
+          </div>
+        </div>
+
+        <!-- Carga masiva -->
+        <div class="card">
+          <div class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16,16 12,12 8,16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>
+            Carga masiva Excel / CSV
+          </div>
+          <div class="upload-zone" onclick="showToast('Función disponible','En la versión final selecciona tu archivo Excel o CSV.')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16,16 12,12 8,16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>
+            <p>Arrastra tu archivo aquí</p>
+            <span>o haz clic para seleccionar — .xlsx / .csv</span>
+          </div>
+          <div class="section-divider"></div>
+          <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:0.75rem">Descarga la plantilla con el formato correcto:</p>
+          <button class="btn btn-outline" onclick="showToast('Descarga lista','La plantilla Excel se descargará automáticamente.')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Descargar plantilla
+          </button>
+        </div>
+      </div>
+
+      <!-- Tabla de registros -->
+      <div class="card">
+        <div class="toolbar">
+          <div class="toolbar-left">
+            <div class="card-title" style="margin-bottom:0">Mis registros</div>
+            <input class="search-input" type="text" placeholder="Buscar por nombre o cédula..." />
+            <select class="filter-select">
+              <option>Todos los estados</option>
+              <option>Pendiente</option>
+              <option>Aprobado</option>
+              <option>Rechazado</option>
+            </select>
+          </div>
+          <div class="toolbar-right">
+            <button class="btn btn-outline btn-sm">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Exportar
+            </button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Cédula</th>
+                <th>Municipio</th>
+                <th>Fecha reunión</th>
+                <th>Estado</th>
+                <th>Comentario</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Ana María Gómez</td>
+                <td>12345678</td>
+                <td>Palmira</td>
+                <td>18 abr 2026</td>
+                <td><span class="badge badge-aprobado">Aprobado</span></td>
+                <td>—</td>
+                <td></td>
+              </tr>
+              <tr>
+                <td>Pedro Hernández</td>
+                <td>87654321</td>
+                <td>Palmira</td>
+                <td>18 abr 2026</td>
+                <td><span class="badge badge-aprobado">Aprobado</span></td>
+                <td>—</td>
+                <td></td>
+              </tr>
+              <tr>
+                <td>María Castro</td>
+                <td>11223344</td>
+                <td>Cali</td>
+                <td>20 abr 2026</td>
+                <td><span class="badge badge-pendiente">Pendiente</span></td>
+                <td>—</td>
+                <td></td>
+              </tr>
+              <tr>
+                <td>Luis Ríos</td>
+                <td>44332211</td>
+                <td>Palmira</td>
+                <td>20 abr 2026</td>
+                <td><span class="badge badge-rechazado">Rechazado</span></td>
+                <td style="color:var(--red); font-size:0.8rem">Cédula inválida</td>
+                <td><button class="btn btn-outline btn-sm" onclick="showToast('Editar registro','Corrección habilitada.')">Corregir</button></td>
+              </tr>
+              <tr>
+                <td>Sofía Moreno</td>
+                <td>99887766</td>
+                <td>Buga</td>
+                <td>21 abr 2026</td>
+                <td><span class="badge badge-pendiente">Pendiente</span></td>
+                <td>—</td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== MI LISTA DE VOTANTES ====== -->
+    <div class="view" id="view-mi-lista-votantes">
+      <div class="page-header">
+        <h1>Mi Lista de Votantes</h1>
+        <p>Registra votantes con su puesto y mesa de votación. Quedan en estado Pendiente hasta aprobación del Admin.</p>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <div class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Registrar votante
+          </div>
+          <div class="form-grid">
+            <div class="form-group"><label>Nombre completo *</label><input type="text" placeholder="Ej. Juan Pérez"/></div>
+            <div class="form-group"><label>Cédula *</label><input type="text" placeholder="Número de cédula"/></div>
+            <div class="form-group"><label>Teléfono</label><input type="tel" placeholder="3XXXXXXXXX"/></div>
+            <div class="form-group"><label>Municipio *</label><input type="text" placeholder="Ej. Palmira"/></div>
+            <div class="form-group"><label>Puesto de votación *</label><input type="text" placeholder="Ej. Colegio San Juan Bosco"/></div>
+            <div class="form-group"><label>Mesa *</label><input type="text" placeholder="Ej. 005"/></div>
+            <div class="form-group full"><label>Amigo referido *</label><input type="text" placeholder="Nombre del líder o amigo"/></div>
+          </div>
+          <div style="display:flex; gap:0.75rem; margin-top:0.5rem">
+            <button class="btn btn-primary" onclick="showToast('Votante registrado','Queda en estado Pendiente.')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/></svg>
+              Guardar
+            </button>
+            <button class="btn btn-outline">Limpiar</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16,16 12,12 8,16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>
+            Carga masiva
+          </div>
+          <div class="upload-zone" onclick="showToast('Función disponible','Selecciona tu archivo Excel o CSV.')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16,16 12,12 8,16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>
+            <p>Arrastra tu archivo aquí</p>
+            <span>.xlsx / .csv con columnas: Nombre, Cédula, Teléfono, Puesto, Mesa, Municipio</span>
+          </div>
+          <div class="section-divider"></div>
+          <button class="btn btn-outline" onclick="showToast('Descargando plantilla','El archivo se descargará.')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Descargar plantilla votantes
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== APROBACIONES ====== -->
+    <div class="view" id="view-aprobaciones">
+      <div class="page-header">
+        <h1>Aprobación de Listas</h1>
+        <p>Revisa y aprueba o rechaza los registros enviados por los Líderes y Amigos.</p>
+      </div>
+
+      <div class="alert alert-warning">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <div><strong>7 listas pendientes</strong> de revisión. Las listas aprobadas se sincronizan automáticamente con Google Sheets.</div>
+      </div>
+
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <input class="search-input" type="text" placeholder="Buscar por nombre o cédula..." />
+          <select class="filter-select">
+            <option>Todos los líderes</option>
+            <option>Carlos Rodríguez</option>
+            <option>Marcela Torres</option>
+            <option>Jorge Muñoz</option>
+          </select>
+          <select class="filter-select">
+            <option>Reuniones y Votantes</option>
+            <option>Solo Reuniones</option>
+            <option>Solo Votantes</option>
+          </select>
+        </div>
+        <div class="toolbar-right">
+          <button class="btn btn-success btn-sm" onclick="showToast('Aprobación masiva','Todos los registros filtrados aprobados y sincronizados con Google Sheets.')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/></svg>
+            Aprobar todos
+          </button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th><input type="checkbox" /></th>
+                <th>Nombre</th>
+                <th>Cédula</th>
+                <th>Municipio</th>
+                <th>Tipo</th>
+                <th>Subido por</th>
+                <th>Fecha</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><input type="checkbox" /></td>
+                <td>Ana Lucía Bermúdez</td>
+                <td>10234567</td>
+                <td>Palmira</td>
+                <td><span style="font-size:0.78rem; color:var(--text-muted)">Reunión</span></td>
+                <td>Carlos Rodríguez</td>
+                <td>Hoy 9:32am</td>
+                <td><span class="badge badge-pendiente">Pendiente</span></td>
+                <td>
+                  <div style="display:flex; gap:0.4rem">
+                    <button class="btn btn-success btn-sm" onclick="approveRow(this)">✓ Aprobar</button>
+                    <button class="btn btn-danger btn-sm" onclick="rejectRow(this)">✗ Rechazar</button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td><input type="checkbox" /></td>
+                <td>Ricardo Salcedo</td>
+                <td>20345678</td>
+                <td>Palmira</td>
+                <td><span style="font-size:0.78rem; color:var(--text-muted)">Reunión</span></td>
+                <td>Carlos Rodríguez</td>
+                <td>Hoy 9:32am</td>
+                <td><span class="badge badge-pendiente">Pendiente</span></td>
+                <td>
+                  <div style="display:flex; gap:0.4rem">
+                    <button class="btn btn-success btn-sm" onclick="approveRow(this)">✓ Aprobar</button>
+                    <button class="btn btn-danger btn-sm" onclick="rejectRow(this)">✗ Rechazar</button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td><input type="checkbox" /></td>
+                <td>Patricia Loaiza</td>
+                <td>30456789</td>
+                <td>Cali</td>
+                <td><span style="font-size:0.78rem; color:var(--text-muted)">Votante</span></td>
+                <td>Marcela Torres</td>
+                <td>Hoy 8:15am</td>
+                <td><span class="badge badge-pendiente">Pendiente</span></td>
+                <td>
+                  <div style="display:flex; gap:0.4rem">
+                    <button class="btn btn-success btn-sm" onclick="approveRow(this)">✓ Aprobar</button>
+                    <button class="btn btn-danger btn-sm" onclick="rejectRow(this)">✗ Rechazar</button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td><input type="checkbox" /></td>
+                <td>Héctor Montoya</td>
+                <td>40567890</td>
+                <td>Buga</td>
+                <td><span style="font-size:0.78rem; color:var(--text-muted)">Votante</span></td>
+                <td>Marcela Torres</td>
+                <td>Hoy 8:15am</td>
+                <td><span class="badge badge-pendiente">Pendiente</span></td>
+                <td>
+                  <div style="display:flex; gap:0.4rem">
+                    <button class="btn btn-success btn-sm" onclick="approveRow(this)">✓ Aprobar</button>
+                    <button class="btn btn-danger btn-sm" onclick="rejectRow(this)">✗ Rechazar</button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== CONSOLIDADOS ====== -->
+    <div class="view" id="view-consolidado">
+      <div class="page-header">
+        <h1>Consolidados Generales</h1>
+        <p>Vista unificada de todos los registros aprobados por el equipo.</p>
+      </div>
+
+      <div class="stats-grid" style="margin-bottom:1.5rem">
+        <div class="stat-card">
+          <div class="stat-icon magenta">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+          </div>
+          <div class="stat-info"><div class="stat-value">784</div><div class="stat-label">Total reuniones aprobadas</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </div>
+          <div class="stat-info"><div class="stat-value">463</div><div class="stat-label">Total votantes aprobados</div></div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div style="display:flex; gap:0.5rem; margin-bottom:1.2rem">
+        <button class="btn btn-primary btn-sm" id="tab-reuniones" onclick="switchTab('reuniones')">Reuniones (784)</button>
+        <button class="btn btn-outline btn-sm" id="tab-votantes" onclick="switchTab('votantes')">Votantes (463)</button>
+      </div>
+
+      <div class="card">
+        <div class="toolbar">
+          <div class="toolbar-left">
+            <input class="search-input" type="text" placeholder="Buscar nombre o cédula..." />
+            <select class="filter-select">
+              <option>Todos los municipios</option>
+              <option>Palmira</option>
+              <option>Cali</option>
+              <option>Buga</option>
+              <option>Tuluá</option>
+            </select>
+            <select class="filter-select">
+              <option>Todos los líderes</option>
+              <option>Carlos Rodríguez</option>
+              <option>Marcela Torres</option>
+              <option>Jorge Muñoz</option>
+            </select>
+          </div>
+          <div class="toolbar-right">
+            <button class="btn btn-outline btn-sm" onclick="showToast('Exportando...','El archivo Excel se generará en segundos.')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Exportar Excel
+            </button>
+          </div>
+        </div>
+        <div class="table-wrap" id="consolidado-table-reuniones">
+          <table>
+            <thead>
+              <tr><th>Nombre</th><th>Cédula</th><th>Teléfono</th><th>Municipio</th><th>Fecha Reunión</th><th>Referido por</th><th>Aprobado</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Ana Lucía Bermúdez</td><td>10234567</td><td>3001112233</td><td>Palmira</td><td>18 abr 2026</td><td>Carlos Rodríguez</td><td>Hoy</td></tr>
+              <tr><td>Ricardo Salcedo</td><td>20345678</td><td>3004445566</td><td>Palmira</td><td>18 abr 2026</td><td>Carlos Rodríguez</td><td>Hoy</td></tr>
+              <tr><td>Jorge Muñoz</td><td>30111222</td><td>3007778899</td><td>Cali</td><td>17 abr 2026</td><td>Jorge Muñoz</td><td>Ayer</td></tr>
+              <tr><td>Sandra Pizarro</td><td>40222333</td><td>—</td><td>Palmira</td><td>15 abr 2026</td><td>Marcela Torres</td><td>15 abr</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="table-wrap" id="consolidado-table-votantes" style="display:none">
+          <table>
+            <thead>
+              <tr><th>Nombre</th><th>Cédula</th><th>Teléfono</th><th>Puesto</th><th>Mesa</th><th>Municipio</th><th>Referido por</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Patricia Loaiza</td><td>30456789</td><td>3009998877</td><td>Col. San Juan Bosco</td><td>005</td><td>Cali</td><td>Marcela Torres</td></tr>
+              <tr><td>Héctor Montoya</td><td>40567890</td><td>3012223344</td><td>Col. Técnico Industrial</td><td>012</td><td>Buga</td><td>Marcela Torres</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== SOLICITUDES CIUDADANAS ====== -->
+    <div class="view" id="view-solicitudes">
+      <div class="page-header">
+        <h1>Solicitudes Ciudadanas</h1>
+        <p>Solicitudes recibidas desde el formulario público del sitio web.</p>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-icon red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div><div class="stat-info"><div class="stat-value">12</div><div class="stat-label">Pendientes</div></div></div>
+        <div class="stat-card"><div class="stat-icon amber"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/></svg></div><div class="stat-info"><div class="stat-value">5</div><div class="stat-label">En revisión</div></div></div>
+        <div class="stat-card"><div class="stat-icon green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg></div><div class="stat-info"><div class="stat-value">38</div><div class="stat-label">Resueltas</div></div></div>
+      </div>
+
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <input class="search-input" type="text" placeholder="Buscar..." />
+          <select class="filter-select"><option>Todas las categorías</option><option>Solicitud</option><option>Queja</option><option>Denuncia</option><option>Sugerencia</option></select>
+          <select class="filter-select"><option>Todos los estados</option><option>Pendiente</option><option>En revisión</option><option>Resuelto</option></select>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Nombre</th><th>Municipio</th><th>Categoría</th><th>Mensaje</th><th>Fecha</th><th>Estado</th><th>Cambiar</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Carmen Ríos</td>
+                <td>Palmira</td>
+                <td>Queja</td>
+                <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:0.82rem; color:var(--text-muted)">"La vía del barrio está en pésimo estado..."</td>
+                <td>Hoy</td>
+                <td><span class="badge badge-pendiente">Pendiente</span></td>
+                <td>
+                  <select class="filter-select" style="font-size:0.78rem; padding:0.3rem 0.6rem" onchange="showToast('Estado actualizado','El cambio se guardó en Supabase.')">
+                    <option>Pendiente</option><option>En revisión</option><option>Resuelto</option>
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <td>Felipe Ortega</td>
+                <td>Buga</td>
+                <td>Solicitud</td>
+                <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:0.82rem; color:var(--text-muted)">"Necesitamos apoyo para la jornada de salud..."</td>
+                <td>Hoy</td>
+                <td><span class="badge badge-pendiente">Pendiente</span></td>
+                <td>
+                  <select class="filter-select" style="font-size:0.78rem; padding:0.3rem 0.6rem" onchange="showToast('Estado actualizado','Guardado.')">
+                    <option>Pendiente</option><option>En revisión</option><option>Resuelto</option>
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <td>Laura Medina</td>
+                <td>Cali</td>
+                <td>Sugerencia</td>
+                <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:0.82rem; color:var(--text-muted)">"Sería bueno organizar talleres en el barrio..."</td>
+                <td>Ayer</td>
+                <td><span class="badge" style="background:rgba(59,130,246,0.12); color:#60a5fa">En revisión</span></td>
+                <td>
+                  <select class="filter-select" style="font-size:0.78rem; padding:0.3rem 0.6rem" onchange="showToast('Estado actualizado','Guardado.')">
+                    <option>Pendiente</option><option selected>En revisión</option><option>Resuelto</option>
+                  </select>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== NOTICIAS Y EVENTOS ====== -->
+    <div class="view" id="view-noticias">
+      <div class="page-header">
+        <h1>Noticias y Eventos</h1>
+        <p>Gestiona el contenido que aparece en el sitio público. Los cambios se reflejan inmediatamente.</p>
+      </div>
+
+      <div class="two-col">
+        <div class="card">
+          <div class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Nueva noticia / comunicado
+          </div>
+          <div class="form-group"><label>Título *</label><input type="text" placeholder="Ej. Impulso Ciudadano realiza jornada en Palmira" /></div>
+          <div class="form-group"><label>Categoría</label>
+            <select><option>Noticia</option><option>Comunicado</option></select>
+          </div>
+          <div class="form-group"><label>Fecha de publicación</label><input type="date" /></div>
+          <div class="form-group"><label>Resumen</label><textarea placeholder="Breve descripción para la tarjeta en el sitio público..."></textarea></div>
+          <button class="btn btn-primary" onclick="showToast('Noticia publicada','Ya visible en el sitio público.')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg>
+            Publicar
+          </button>
+        </div>
+        <div class="card">
+          <div class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Nuevo evento
+          </div>
+          <div class="form-group"><label>Título *</label><input type="text" placeholder="Ej. Caminata ciudadana por Palmira" /></div>
+          <div class="form-group"><label>Fecha del evento</label><input type="date" /></div>
+          <div class="form-group"><label>Hora</label><input type="time" /></div>
+          <div class="form-group"><label>Lugar</label><input type="text" placeholder="Ej. Parque Bolívar, Palmira" /></div>
+          <div class="form-group"><label>Municipio</label><input type="text" placeholder="Ej. Palmira" /></div>
+          <div class="form-group"><label>Descripción</label><textarea placeholder="Describe el evento..."></textarea></div>
+          <button class="btn btn-primary" onclick="showToast('Evento publicado','Ya visible en el sitio público.')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg>
+            Publicar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== GESTIÓN DE USUARIOS ====== -->
+    <div class="view" id="view-usuarios">
+      <div class="page-header">
+        <h1>Gestión de Usuarios</h1>
+        <p>Crea, edita y desactiva usuarios del sistema. El Owner puede eliminar permanentemente; el Admin solo puede desactivar.</p>
+      </div>
+
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <input class="search-input" type="text" placeholder="Buscar por nombre..." />
+          <select class="filter-select"><option>Todos los roles</option><option>Admin</option><option>Líder</option><option>Amigo</option></select>
+          <select class="filter-select"><option>Activos e inactivos</option><option>Solo activos</option><option>Solo inactivos</option></select>
+        </div>
+        <div class="toolbar-right">
+          <button class="btn btn-primary btn-sm" onclick="showToast('Nuevo usuario','Formulario de creación disponible en la versión final.')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Nuevo usuario
+          </button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Nombre</th><th>Email</th><th>Rol</th><th>Subcategoría</th><th>Municipio</th><th>Estado</th><th>Acciones</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Carlos Rodríguez</td>
+                <td style="color:var(--text-muted); font-size:0.82rem">carlos@impulso.co</td>
+                <td><span class="badge badge-lider">Líder</span></td>
+                <td style="font-size:0.82rem; color:var(--text-muted)">Líder Social</td>
+                <td>Palmira</td>
+                <td><span class="status-dot dot-green"></span>Activo</td>
+                <td><div style="display:flex; gap:0.4rem"><button class="btn btn-outline btn-sm" onclick="showToast('Editar usuario','Formulario de edición disponible.')">Editar</button><button class="btn btn-danger btn-sm" onclick="showToast('Usuario desactivado','El usuario ya no puede ingresar.')">Desactivar</button></div></td>
+              </tr>
+              <tr>
+                <td>Marcela Torres</td>
+                <td style="color:var(--text-muted); font-size:0.82rem">marcela@impulso.co</td>
+                <td><span class="badge badge-amigo">Amigo</span></td>
+                <td style="font-size:0.82rem; color:var(--text-muted)">—</td>
+                <td>Cali</td>
+                <td><span class="status-dot dot-green"></span>Activo</td>
+                <td><div style="display:flex; gap:0.4rem"><button class="btn btn-outline btn-sm" onclick="showToast('Editar usuario','Formulario de edición disponible.')">Editar</button><button class="btn btn-danger btn-sm" onclick="showToast('Usuario desactivado','El usuario ya no puede ingresar.')">Desactivar</button></div></td>
+              </tr>
+              <tr>
+                <td>Jorge Muñoz</td>
+                <td style="color:var(--text-muted); font-size:0.82rem">jorge@impulso.co</td>
+                <td><span class="badge badge-lider">Líder</span></td>
+                <td style="font-size:0.82rem; color:var(--text-muted)">Líder General</td>
+                <td>Buga</td>
+                <td><span class="status-dot dot-amber"></span>Inactivo</td>
+                <td><div style="display:flex; gap:0.4rem"><button class="btn btn-outline btn-sm" onclick="showToast('Editar usuario','Formulario de edición disponible.')">Editar</button><button class="btn btn-success btn-sm" onclick="showToast('Usuario activado','El usuario ya puede ingresar.')">Activar</button></div></td>
+              </tr>
+              <tr>
+                <td>Laura Arias</td>
+                <td style="color:var(--text-muted); font-size:0.82rem">laura@impulso.co</td>
+                <td><span class="badge badge-admin">Admin</span></td>
+                <td style="font-size:0.82rem; color:var(--text-muted)">—</td>
+                <td>Palmira</td>
+                <td><span class="status-dot dot-green"></span>Activo</td>
+                <td><div style="display:flex; gap:0.4rem"><button class="btn btn-outline btn-sm" onclick="showToast('Editar usuario','Formulario de edición disponible.')">Editar</button><button class="btn btn-danger btn-sm" onclick="showToast('Acción restringida','Solo el Owner puede desactivar a un Admin.')">Desactivar</button></div></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== PERFIL ====== -->
+    <div class="view" id="view-perfil">
+      <div class="page-header">
+        <h1>Mi Perfil</h1>
+        <p>Información de tu cuenta y configuración de acceso.</p>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <div class="card-title">Datos de la cuenta</div>
+          <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1.5rem">
+            <div style="width:64px; height:64px; border-radius:50%; background:var(--yellow); display:flex; align-items:center; justify-content:center; font-size:1.4rem; font-weight:700; color:#0d0f18;" id="perfil-avatar">IC</div>
+            <div>
+              <div style="font-size:1.1rem; font-weight:700; color:var(--text-primary)" id="perfil-nombre">Usuario</div>
+              <div id="perfil-rol-badge"></div>
+            </div>
+          </div>
+          <div class="form-group"><label>Nombre completo</label><input type="text" id="perfil-input-nombre" /></div>
+          <div class="form-group"><label>Email</label><input type="email" id="perfil-input-email" /></div>
+          <div class="form-group"><label>Teléfono</label><input type="tel" placeholder="3XXXXXXXXX" /></div>
+          <div class="form-group"><label>Municipio</label><input type="text" placeholder="Ej. Palmira" /></div>
+          <button class="btn btn-primary" onclick="showToast('Perfil actualizado','Los cambios se guardaron.')">Guardar cambios</button>
+        </div>
+        <div class="card">
+          <div class="card-title">Cambiar contraseña</div>
+          <div class="form-group"><label>Contraseña actual</label><input type="password" placeholder="••••••••" /></div>
+          <div class="form-group"><label>Nueva contraseña</label><input type="password" placeholder="••••••••" /></div>
+          <div class="form-group"><label>Confirmar nueva contraseña</label><input type="password" placeholder="••••••••" /></div>
+          <button class="btn btn-outline" onclick="showToast('Contraseña actualizada','Tu nueva contraseña está activa.')">Actualizar contraseña</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== LOG DE AUDITORÍA ====== -->
+    <div class="view" id="view-auditoria">
+      <div class="page-header">
+        <h1>Log de Auditoría</h1>
+        <p>Registro completo de todas las acciones realizadas en el sistema.</p>
+      </div>
+      <div class="card">
+        <div class="toolbar">
+          <div class="toolbar-left">
+            <input class="search-input" type="text" placeholder="Buscar acción o usuario..." />
+            <select class="filter-select"><option>Todas las acciones</option><option>Aprobación</option><option>Rechazo</option><option>Login</option><option>Edición</option></select>
+          </div>
+          <div class="toolbar-right">
+            <button class="btn btn-outline btn-sm" onclick="showToast('Exportando log','El archivo se generará en segundos.')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Exportar log
+            </button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Fecha</th><th>Usuario</th><th>Rol</th><th>Acción</th><th>Detalle</th><th>IP</th></tr></thead>
+            <tbody>
+              <tr><td>Hoy 10:42</td><td>Laura Arias</td><td><span class="badge badge-admin">Admin</span></td><td style="color:var(--green)">APROBACIÓN</td><td style="font-size:0.82rem; color:var(--text-muted)">Lista de Carlos Rodríguez aprobada (12 reg.)</td><td style="font-size:0.78rem; color:var(--text-muted)">190.X.X.X</td></tr>
+              <tr><td>Hoy 9:55</td><td>Carlos Rodríguez</td><td><span class="badge badge-lider">Líder</span></td><td style="color:var(--text-secondary)">CARGA</td><td style="font-size:0.82rem; color:var(--text-muted)">12 registros cargados en lista reuniones</td><td style="font-size:0.78rem; color:var(--text-muted)">190.X.X.X</td></tr>
+              <tr><td>Hoy 9:32</td><td>Laura Arias</td><td><span class="badge badge-admin">Admin</span></td><td style="color:var(--red)">RECHAZO</td><td style="font-size:0.82rem; color:var(--text-muted)">Registro Luis Ríos rechazado — cédula inválida</td><td style="font-size:0.78rem; color:var(--text-muted)">190.X.X.X</td></tr>
+              <tr><td>Ayer 16:10</td><td>owner@praxiscol.com</td><td><span class="badge badge-owner">Owner</span></td><td style="color:var(--text-secondary)">USUARIO</td><td style="font-size:0.82rem; color:var(--text-muted)">Usuario Marcela Torres creado — rol Amigo</td><td style="font-size:0.78rem; color:var(--text-muted)">190.X.X.X</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <div class="toast-title" id="toast-title">Título</div>
+  <div class="toast-msg" id="toast-msg">Mensaje</div>
+</div>
+
+<script>
+  // =============================================
+  // DEMO DATA
+  // =============================================
+  const DEMO_USERS = {
+    owner: { name: 'Praxis Enterprise', email: 'owner@praxiscol.com', role: 'owner', roleLabel: 'Owner', initials: 'PE' },
+    admin: { name: 'Laura Arias',       email: 'laura@impulso.co',    role: 'admin', roleLabel: 'Admin', initials: 'LA' },
+    lider: { name: 'Carlos Rodríguez',  email: 'carlos@impulso.co',   role: 'lider', roleLabel: 'Líder Social', initials: 'CR' },
+    amigo: { name: 'Marcela Torres',    email: 'marcela@impulso.co',  role: 'amigo', roleLabel: 'Amigo', initials: 'MT' }
+  };
+
+  let currentUser = null;
+  let sidebarOpen = true;
+
+  // =============================================
+  // AUTH
+  // =============================================
+  function doLogin() {
+    const email = document.getElementById('login-email').value.trim();
+    const pass  = document.getElementById('login-password').value;
+
+    // Buscar por email en demo
+    const user = Object.values(DEMO_USERS).find(u => u.email === email);
+    if (user && pass.length >= 4) {
+      loadApp(user);
+    } else {
+      const err = document.getElementById('login-error');
+      err.style.display = 'block';
+      setTimeout(() => err.style.display = 'none', 3000);
+    }
+  }
+
+  function demoLogin(role) {
+    loadApp(DEMO_USERS[role]);
+  }
+
+  function doLogout() {
+    currentUser = null;
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('login-page').style.display = 'flex';
+  }
+
+  function loadApp(user) {
+    currentUser = user;
+    document.getElementById('login-page').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+
+    // Topbar user info
+    document.getElementById('user-name').textContent = user.name;
+    document.getElementById('user-role-label').textContent = user.roleLabel;
+    document.getElementById('user-avatar').textContent = user.initials;
+
+    // Perfil
+    document.getElementById('perfil-avatar').textContent = user.initials;
+    document.getElementById('perfil-nombre').textContent = user.name;
+    document.getElementById('perfil-input-nombre').value = user.name;
+    document.getElementById('perfil-input-email').value = user.email;
+
+    // Role badge in perfil
+    const roleBadge = document.getElementById('perfil-rol-badge');
+    const cls = { owner:'badge-owner', admin:'badge-admin', lider:'badge-lider', amigo:'badge-amigo' };
+    roleBadge.innerHTML = `<span class="badge ${cls[user.role]}" style="font-size:0.75rem">${user.roleLabel}</span>`;
+
+    // Render sidebar según rol
+    renderSidebar(user.role);
+
+    // Show/hide dashboard stats
+    const isAdminRole = user.role === 'owner' || user.role === 'admin';
+    document.getElementById('stats-admin').style.display = isAdminRole ? 'grid' : 'none';
+    document.getElementById('stats-lider').style.display = !isAdminRole ? 'grid' : 'none';
+    document.getElementById('quick-admin').style.display = isAdminRole ? 'block' : 'none';
+    document.getElementById('quick-lider').style.display = !isAdminRole ? 'block' : 'none';
+
+    // Greeting
+    document.getElementById('dashboard-greeting').textContent = `Hola, ${user.name.split(' ')[0]}`;
+
+    showView('dashboard', null);
+  }
+
+  function renderSidebar(role) {
+    const items = document.querySelectorAll('.sidebar-item');
+    items.forEach(item => {
+      const roles = item.dataset.roles.split(',');
+      item.style.display = roles.includes(role) ? 'flex' : 'none';
+    });
+
+    // Show/hide sidebar sections
+    const isAdminRole = role === 'owner' || role === 'admin';
+    document.getElementById('nav-lista').style.display  = !isAdminRole ? 'block' : 'none';
+    document.getElementById('nav-admin').style.display  = isAdminRole ? 'block' : 'none';
+    document.getElementById('nav-owner').style.display  = role === 'owner' ? 'block' : 'none';
+  }
+
+  // =============================================
+  // NAVIGATION
+  // =============================================
+  function showView(viewId, sidebarEl) {
+    // Views
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    const v = document.getElementById('view-' + viewId);
+    if (v) v.classList.add('active');
+
+    // Sidebar active state
+    document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
+    if (sidebarEl) sidebarEl.classList.add('active');
+
+    // Topbar breadcrumb
+    const names = {
+      dashboard: 'Dashboard',
+      'mi-lista': 'Mi Lista de Reuniones',
+      'mi-lista-votantes': 'Mi Lista de Votantes',
+      aprobaciones: 'Aprobación de Listas',
+      consolidado: 'Consolidados',
+      solicitudes: 'Solicitudes Ciudadanas',
+      noticias: 'Noticias y Eventos',
+      usuarios: 'Gestión de Usuarios',
+      perfil: 'Mi Perfil',
+      auditoria: 'Log de Auditoría'
+    };
+    document.getElementById('topbar-section').textContent = names[viewId] || viewId;
+
+    // On mobile close sidebar
+    if (window.innerWidth <= 768) {
+      document.getElementById('sidebar').classList.remove('mobile-open');
+    }
+  }
+
+  function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const topbar  = document.getElementById('topbar');
+    const main    = document.getElementById('main-content');
+
+    if (window.innerWidth <= 768) {
+      sidebar.classList.toggle('mobile-open');
+    } else {
+      sidebarOpen = !sidebarOpen;
+      sidebar.classList.toggle('collapsed', !sidebarOpen);
+      topbar.classList.toggle('sidebar-collapsed', !sidebarOpen);
+      main.classList.toggle('sidebar-collapsed', !sidebarOpen);
+    }
+  }
+
+  // =============================================
+  // CONSOLIDADO TABS
+  // =============================================
+  function switchTab(tab) {
+    const isReu = tab === 'reuniones';
+    document.getElementById('consolidado-table-reuniones').style.display = isReu ? '' : 'none';
+    document.getElementById('consolidado-table-votantes').style.display  = isReu ? 'none' : '';
+    document.getElementById('tab-reuniones').className = 'btn btn-sm ' + (isReu ? 'btn-primary' : 'btn-outline');
+    document.getElementById('tab-votantes').className  = 'btn btn-sm ' + (!isReu ? 'btn-primary' : 'btn-outline');
+  }
+
+  // =============================================
+  // APROBACIONES
+  // =============================================
+  function approveRow(btn) {
+    const row = btn.closest('tr');
+    row.querySelector('.badge').className = 'badge badge-aprobado';
+    row.querySelector('.badge').textContent = 'Aprobado';
+    btn.closest('div').innerHTML = '<span style="font-size:0.8rem; color:var(--green)">✓ Aprobado</span>';
+    updateBadgeCount('badge-aprobaciones', -1);
+    showToast('Lista aprobada', 'Registro enviado al consolidado y sincronizado con Google Sheets.');
+  }
+
+  function rejectRow(btn) {
+    const row = btn.closest('tr');
+    const reason = prompt('Motivo del rechazo (será enviado al Líder):') || 'Sin especificar';
+    row.querySelector('.badge').className = 'badge badge-rechazado';
+    row.querySelector('.badge').textContent = 'Rechazado';
+    btn.closest('div').innerHTML = `<span style="font-size:0.78rem; color:var(--red)">${reason}</span>`;
+    updateBadgeCount('badge-aprobaciones', -1);
+    showToast('Registro rechazado', `El Líder será notificado: "${reason}"`);
+  }
+
+  function updateBadgeCount(id, delta) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const n = Math.max(0, parseInt(el.textContent) + delta);
+    el.textContent = n;
+    if (n === 0) el.style.display = 'none';
+  }
+
+  // =============================================
+  // TOAST
+  // =============================================
+  let toastTimer;
+  function showToast(title, msg) {
+    const t = document.getElementById('toast');
+    document.getElementById('toast-title').textContent = title;
+    document.getElementById('toast-msg').textContent   = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 3500);
+  }
+
+  // Enter en login
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && document.getElementById('login-page').style.display !== 'none') {
+      doLogin();
+    }
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <!-- Esto es vital para el SEO básico y para que acepte tildes/eñes -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Impulso Ciudadano | Valle del Cauca</title>
+    <meta name="description" content="Página oficial de Impulso Ciudadano. El cambio y futuro del Valle del Cauca.">
+
+    <!-- Enlazamos nuestra hoja de estilos "CSS en su sitio" -->
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Google Fonts: DM Serif Display para títulos y Inter para cuerpo -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+
+    <!-- 1. BARRA DE NAVEGACIÓN (HEADER) -->
+    <header class="navbar" id="navbar">
+        <!-- Contenedor para agrupar Logo y Links a la IZQUIERDA -->
+        <div class="nav-left">
+            <div class="logo-container">
+                <a href="index.html">
+                    <img src="assets/logo.png" alt="Logo Impulso Ciudadano" class="logo-img">
+                </a>
+            </div>
+
+            <nav class="nav-menu" id="nav-menu">
+                <ul class="nav-links">
+                    <li><a href="#inicio">Inicio</a></li>
+                    <li><a href="#nosotros">Nosotros</a></li>
+                    <li><a href="#propuestas">Propuestas</a></li>
+                    <li><a href="#noticias">Noticias</a></li>
+                    <li><a href="#contacto">Contacto</a></li>
+                    <li class="mobile-only"><a href="#voluntariado" class="btn-primary">Voluntariado</a></li>
+                </ul>
+            </nav>
+        </div>
+
+        <!-- LADO DERECHO: Botón de llamada a la acción y Menú Móvil -->
+        <div class="header-actions">
+            <a href="equipo.html" class="btn-equipo" target="_blank" rel="noopener">Equipo</a>
+            <a href="#voluntariado" class="btn-primary">Voluntariado</a>
+            <button class="menu-toggle" id="menu-toggle" aria-label="Abrir menú">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </button>
+        </div>
+    </header>
+
+    <!-- 2. SECCIÓN PRINCIPAL (HERO) -->
+    <section class="hero-section" id="inicio">
+        <div class="hero-container">
+            <!-- Columna Izquierda: Texto -->
+            <div class="hero-text">
+                <h1 class="hero-title">el impulso que <br>lo cambia todo</h1>
+                <p class="hero-subtitle">
+                    Transformamos el Valle del Cauca con acciones reales, transparencia y el compromiso de construir un
+                    futuro donde cada ciudadano cuente.
+                </p>
+                <div class="hero-btns">
+                    <a href="#voluntariado" class="btn-primary">Únete al Movimiento</a>
+                    <a href="#propuestas" class="btn-outline">Ver Propuestas</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Relatos Dinámicos (Premium Carousel) -->
+        <div class="hero-story-wrapper">
+            <button class="story-nav-btn prev" id="story-prev" aria-label="Relato anterior">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+            
+            <div class="story-carousel" id="hero-story-carousel">
+                <!-- Relato 1 -->
+                <div class="story-card active">
+                    <div class="card-badge-mini">IMPACTO REAL</div>
+                    <h4 class="card-story-name">Doña Rosa</h4>
+                    <p class="card-story-text">"Gracias al comedor comunitario, 50 niños de mi barrio ahora tienen una comida digna cada día."</p>
+                    <span class="card-story-location">Palmira, Valle</span>
+                </div>
+                <!-- Relato 2 -->
+                <div class="story-card">
+                    <div class="card-badge-mini">EDUCACIÓN</div>
+                    <h4 class="card-story-name">Julián</h4>
+                    <p class="card-story-text">"Aprendí a programar y ahora trabajo para una empresa de tecnología. El cambio es posible."</p>
+                    <span class="card-story-location">Cali, Valle</span>
+                </div>
+                <!-- Relato 3 -->
+                <div class="story-card">
+                    <div class="card-badge-mini">AGUA POTABLE</div>
+                    <h4 class="card-story-name">Marta</h4>
+                    <p class="card-story-text">"Por primera vez en 20 años, tenemos agua limpia en nuestras casas. Gracias Impulso."</p>
+                    <span class="card-story-location">Buenaventura</span>
+                </div>
+                <!-- Relato 4 -->
+                <div class="story-card">
+                    <div class="card-badge-mini">PROGRESO</div>
+                    <h4 class="card-story-name">Samuel</h4>
+                    <p class="card-story-text">"Mi negocio de calzado ahora genera empleo para 5 familias gracias a las mentorías."</p>
+                    <span class="card-story-location">Tuluá, Valle</span>
+                </div>
+                <!-- Relato 5 -->
+                <div class="story-card">
+                    <div class="card-badge-mini">SALUD</div>
+                    <h4 class="card-story-name">Elena</h4>
+                    <p class="card-story-text">"La brigada de salud llegó hasta nuestra vereda. Mis hijos por fin recibieron sus vacunas."</p>
+                    <span class="card-story-location">Buga, Valle</span>
+                </div>
+            </div>
+
+            <button class="story-nav-btn next" id="story-next" aria-label="Relato siguiente">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+            </button>
+        </div>
+
+        <!-- Indicador de Scroll Animado -->
+        <div class="scroll-down-wrapper">
+            <span class="scroll-text">Descubre más</span>
+            <div class="mouse-icon">
+                <div class="wheel"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3. SECCIÓN DE PROPUESTAS (Marcamos la Diferencia) -->
+    <section class="proposals-section" id="propuestas">
+        <div class="proposals-header">
+            <span class="section-tag">NUESTRAS PROPUESTAS</span>
+            <h2 class="section-title">Marcamos la Diferencia</h2>
+            <p class="section-subtitle">
+                Nuestro compromiso es con resultados reales. Trabajamos cada día para construir
+                un Valle del Cauca más justo, seguro y con oportunidades para todos.
+            </p>
+        </div>
+
+        <div class="proposals-grid">
+            <!-- Tarjeta 1: Seguridad -->
+            <div class="proposal-card">
+                <div class="card-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="icon-yellow">
+                        <path
+                            d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 3.5 1 8a7 7 0 0 1-7.7 8.1c-1.1.9-1.3 1.9-1.3 1.9z">
+                        </path>
+                    </svg>
+                </div>
+                <h3 class="card-title">Trabajo Ambiental</h3>
+                <p class="card-text">Preservamos nuestra biodiversidad vallecaucana con proyectos de reforestación y
+                    gestión sostenible.</p>
+            </div>
+
+            <!-- Tarjeta 2: Educación -->
+            <div class="proposal-card">
+                <div class="card-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="icon-yellow">
+                        <path
+                            d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z">
+                        </path>
+                    </svg>
+                </div>
+                <h3 class="card-title">Protección Animal</h3>
+                <p class="card-text">Garantizamos el bienestar de quienes no tienen voz con programas de esterilización
+                    y refugios dignos.</p>
+            </div>
+
+            <!-- Tarjeta 3: Impacto Real -->
+            <div class="proposal-card">
+                <div class="card-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="icon-yellow">
+                        <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                    </svg>
+                </div>
+                <h3 class="card-title">Apoyo a los Empresarios</h3>
+                <p class="card-text">Fomentamos el crecimiento local reduciendo trámites y creando redes de mentoría
+                    para emprendedores.</p>
+            </div>
+
+            <!-- Tarjeta 4: Red Social -->
+            <div class="proposal-card">
+                <div class="card-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="icon-yellow">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <circle cx="17" cy="7" r="4"></circle>
+                    </svg>
+                </div>
+                <h3 class="card-title">Desarrollo Comunitario</h3>
+                <p class="card-text">Fortalecemos el tejido social liderando obras decididas por la misma comunidad en
+                    sus barrios.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 4. SECCIÓN NOSOTROS (Sobre el Movimiento) -->
+    <section class="about-section" id="nosotros">
+        <!-- ... (Contenido anterior se mantiene) ... -->
+        <div class="about-container">
+            <!-- Columna Izquierda: Collage de Imágenes con Acentos Artísticos -->
+            <div class="about-visuals">
+                <div class="collage-grid">
+                    <!-- Imagen Principal (Vertical) -->
+                    <div class="collage-item main-img">
+                        <!-- Imagen Principal: El corazón del equipo y su liderazgo -->
+                        <img src="assets/img1.jpg" alt="Liderazgo y equipo de Impulso Ciudadano en acción">
+                    </div>
+                    <!-- Imagen Secundaria (Cuadrada Izquierda) -->
+                    <div class="collage-item side-img">
+                        <!-- Imagen Secundaria: Niños participando en actividades comunitarias -->
+                        <img src="assets/b2.jpeg"
+                            alt="Niños beneficiados por los programas sociales de Impulso Ciudadano">
+                    </div>
+                    <!-- Imagen Terciaria (Detalle Abajo) -->
+                    <div class="collage-item detail-img">
+                        <!-- Imagen de Detalle: Resultados tangibles del trabajo social -->
+                        <img src="assets/img3.jpg" alt="Proyectos sociales completados y resultados directos">
+                    </div>
+                    <!-- Acentos de Pincelada (Decoración) -->
+                    <div class="brush-accent accent-1"></div>
+                    <div class="brush-accent accent-2"></div>
+                </div>
+            </div>
+
+            <!-- Columna Derecha: El Relato y Acción -->
+            <div class="about-content">
+                <span class="section-tag">NUESTRA TRAYECTORIA</span>
+                <h2 class="section-title">¿Qué hemos logrado <br>con tu ayuda?</h2>
+
+                <div class="about-text">
+                    <p>
+                        En Impulso Ciudadano creemos que el cambio no se espera, se construye. Gracias al apoyo de miles
+                        de vallecaucanos, hemos logrado transformar realidades en los sectores más vulnerables de
+                        nuestra región.
+                    </p>
+                    <p>
+                        No se trata solo de entregar recursos, sino de empoderar a las comunidades para que sean las
+                        protagonistas de su propio progreso. Cada proyecto, cada sonrisa y cada vida transformada es un
+                        paso más hacia el Valle que soñamos.
+                    </p>
+                    <p>
+                        Nuestro compromiso es firme: transparencia absoluta, resultados tangibles y un trabajo
+                        incansable por la justicia social y la equidad en cada rincón de nuestro departamento.
+                    </p>
+                </div>
+
+                <div class="about-actions">
+                    <a href="#nosotros" class="link-more">Conócenos más →</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 5. SECCIÓN IMPACTO (Cifras y Mapa de Palmira) -->
+    <section class="impact-section" id="impacto">
+        <div class="impact-container">
+            <!-- Lado Izquierdo: Título y Cifras -->
+            <div class="impact-info">
+                <h2 class="section-title">Estamos donde otros <br><span class="highlight">necesitan</span> ayuda</h2>
+
+                <div class="stats-grid">
+                    <!-- Stat 1 -->
+                    <div class="stat-item st-green">
+                        <div class="stat-number">16,000<small>kg</small></div>
+                        <p class="stat-desc">Cada año donamos más de 16 toneladas de alimentos en zonas críticas.</p>
+                    </div>
+                    <!-- Stat 2 -->
+                    <div class="stat-item st-blue">
+                        <div class="stat-number">2mln<small>L</small></div>
+                        <p class="stat-desc">Instalamos sistemas de filtración para más de 2 millones de litros de agua.
+                        </p>
+                    </div>
+                    <!-- Stat 3 -->
+                    <div class="stat-item st-pink">
+                        <div class="stat-number">1,694</div>
+                        <p class="stat-desc">Voluntarios de todo el mundo y locales nos ayudan a realizar nuestra labor.
+                        </p>
+                    </div>
+                    <!-- Stat 4 -->
+                    <div class="stat-item st-yellow">
+                        <div class="stat-number">830</div>
+                        <p class="stat-desc">Profesores voluntarios imparten educación gratuita todos los días.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lado Derecho: Mapa de Palmira Artístico -->
+            <div class="impact-visual">
+                <div class="map-wrapper">
+                    <!-- Usamos la nueva imagen 'palmira 2' con una clase para aplicar colores dinámicamente -->
+                    <div class="map-artistic-mask">
+                        <img src="assets/palmira%202.png" alt="Mapa de impacto en Palmira" class="palmira-map-img">
+                    </div>
+
+                    <!-- Marcadores en el mapa (Bajados un poco para encajar en Palmira) -->
+                    <div class="map-marker m-green" style="top: 55%; left: 25%;"></div>
+                    <div class="map-marker m-blue" style="top: 60%; left: 40%;"></div>
+                    <div class="map-marker m-pink" style="top: 52%; left: 55%;"></div>
+                    <div class="map-marker m-yellow" style="top: 63%; left: 70%;"></div>
+                    <div class="map-marker m-green" style="top: 50%; left: 35%;"></div>
+                    <div class="map-marker m-blue" style="top: 65%; left: 60%;"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 6. SECCIÓN HISTORIAS (Testimonios de Impacto) -->
+    <section class="stories-section" id="noticias">
+        <!-- ... (Contenido anterior se mantiene) ... -->
+        <div class="stories-container">
+            <!-- Encabezado con Navegación -->
+            <div class="stories-header">
+                <h2 class="section-title">Conoce las <span class="highlight">historias</span> de quienes <br>ya hemos
+                    ayudado</h2>
+                <div class="stories-nav">
+                    <button class="nav-btn prev" aria-label="Anterior">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M15 18l-6-6 6-6" />
+                        </svg>
+                    </button>
+                    <button class="nav-btn next" aria-label="Siguiente">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 18l6-6-6-6" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Rejilla de Historias -->
+            <div class="stories-grid">
+                <!-- Historia 1 -->
+                <article class="story-card">
+                    <div class="story-visual">
+                        <img src="assets/c1.jpg" alt="Mateo">
+                    </div>
+                    <div class="story-info">
+                        <h3 class="story-name">Mateo</h3>
+                        <span class="story-meta">8 años | Cali</span>
+                        <p class="story-desc">
+                            Gracias al programa de educación digital en Siloé, Mateo ahora sueña con ser programador.
+                            "Aprendí que puedo crear cosas increíbles".
+                        </p>
+                        <a href="#historias" class="link-story">Leer historia →</a>
+                    </div>
+                </article>
+
+                <!-- Historia 2 -->
+                <article class="story-card">
+                    <div class="story-visual">
+                        <img src="assets/c2.png" alt="Doña Elena">
+                    </div>
+                    <div class="story-info">
+                        <h3 class="story-name">Doña Elena</h3>
+                        <span class="story-meta">65 años | Buenaventura</span>
+                        <p class="story-desc">
+                            Lideresa de su barrio, hoy gestiona el primer comedor comunitario sostenible alimentado por
+                            energía solar en su zona.
+                        </p>
+                        <a href="#historias" class="link-story">Leer historia →</a>
+                    </div>
+                </article>
+
+                <!-- Historia 3 -->
+                <article class="story-card">
+                    <div class="story-visual">
+                        <img src="assets/c3.jpg" alt="Andrés">
+                    </div>
+                    <div class="story-info">
+                        <h3 class="story-name">Andrés</h3>
+                        <span class="story-meta">22 años | Palmira</span>
+                        <p class="story-desc">
+                            Pasó de la informalidad a liderar una cooperativa de reciclaje técnico que hoy emplea a 15
+                            jóvenes de su comunidad.
+                        </p>
+                        <a href="#historias" class="link-story">Leer historia →</a>
+                    </div>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <!-- 7. SECCIÓN CTA (Llamada a la Acción) -->
+    <section class="cta-banner" id="voluntariado">
+        <div class="cta-overlay"></div>
+        <div class="cta-content">
+            <h2 class="cta-title">¡Únete a nuestra acción!<br>Todos pueden ayudar.</h2>
+            <div class="cta-buttons">
+                <a href="#unete" class="btn-green-cta">Sé un voluntario</a>
+            </div>
+        </div>
+        <!-- Acentos de Pincelada Decorativos -->
+        <div class="brush-cta-left"></div>
+        <div class="brush-cta-right"></div>
+    </section>
+
+    <!-- 9. FOOTER PROFESIONAL -->
+    <footer class="footer-main">
+        <div class="footer-top">
+            <div class="footer-brand">
+                <img src="assets/logo.png" alt="Logo Impulso Ciudadano" class="footer-logo">
+                <span class="brand-name">Impulso Ciudadano</span>
+            </div>
+            <nav class="footer-nav">
+                <a href="#nosotros">Nosotros</a>
+                <a href="#descubrir">Descubrir</a>
+                <a href="#quienes">Quiénes ayudamos</a>
+                <a href="#contacto">Contacto</a>
+            </nav>
+        </div>
+        <div class="footer-body">
+            <p>Impulso Ciudadano es un movimiento comprometido con la transformación social del Valle del Cauca.
+                Trabajamos mano a mano con las comunidades para construir un futuro más equitativo, transparente y lleno
+                de oportunidades para todos los ciudadanos.</p>
+        </div>
+        <div class="footer-bottom">
+            <p class="copyright">© 2026 Impulso Ciudadano. Todos los derechos reservados.</p>
+
+            <!-- Redes Sociales reubicadas aquí para mayor limpieza -->
+            <div class="social-links-footer">
+                <a href="#" aria-label="Facebook">FB</a>
+                <a href="#" aria-label="Twitter">TW</a>
+                <a href="#" aria-label="Instagram">IG</a>
+            </div>
+
+            <div class="legal-links">
+                <a href="#">Política de Privacidad</a>
+                <a href="#">Cookies</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Enlazamos nuestro JavaScript al final para que cargue súper rápido -->
+    <script src="script.js"></script>
+</body>
+
+</html>
