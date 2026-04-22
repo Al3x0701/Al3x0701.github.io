@@ -19,6 +19,67 @@
 
 <body>
 
+    <!-- PANTALLA DE ACCESO -->
+    <div id="password-gate" style="
+        position: fixed; inset: 0; z-index: 99999;
+        background: #1e293b;
+        display: flex; align-items: center; justify-content: center;
+        font-family: 'Inter', sans-serif;
+    ">
+        <div style="
+            background: #fff; border-radius: 20px; padding: 3rem 2.5rem;
+            width: 100%; max-width: 400px; text-align: center;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.3);
+        ">
+            <img src="assets/logo.png" alt="Impulso Ciudadano" style="height: 48px; margin-bottom: 1.5rem;">
+            <h2 style="font-family: 'DM Serif Display', serif; font-size: 1.8rem; color: #1e293b; margin-bottom: 0.5rem;">Sitio en construcción</h2>
+            <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 2rem;">Ingresa la contraseña para continuar.</p>
+            <input id="gate-input" type="password" placeholder="Contraseña" style="
+                width: 100%; padding: 0.85rem 1rem; border: 1.5px solid #e2e8f0;
+                border-radius: 10px; font-size: 1rem; outline: none;
+                margin-bottom: 1rem; font-family: inherit; box-sizing: border-box;
+                transition: border-color 0.2s;
+            " onkeydown="if(event.key==='Enter') checkPassword()">
+            <div id="gate-error" style="color: #ef4444; font-size: 0.85rem; margin-bottom: 0.75rem; display: none;">
+                Contraseña incorrecta. Intenta de nuevo.
+            </div>
+            <button onclick="checkPassword()" style="
+                width: 100%; background: #facc15; color: #1e293b;
+                border: none; border-radius: 10px; padding: 0.9rem;
+                font-size: 1rem; font-weight: 700; cursor: pointer;
+                font-family: inherit; transition: background 0.2s;
+            " onmouseover="this.style.background='#eab308'" onmouseout="this.style.background='#facc15'">
+                Entrar
+            </button>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            if (sessionStorage.getItem('ic_auth') === '1') {
+                document.getElementById('password-gate').style.display = 'none';
+            }
+            document.getElementById('gate-input').addEventListener('focus', function() {
+                this.style.borderColor = '#facc15';
+            });
+            document.getElementById('gate-input').addEventListener('blur', function() {
+                this.style.borderColor = '#e2e8f0';
+            });
+        })();
+
+        function checkPassword() {
+            var val = document.getElementById('gate-input').value;
+            if (val === '158969') {
+                sessionStorage.setItem('ic_auth', '1');
+                document.getElementById('password-gate').style.display = 'none';
+            } else {
+                document.getElementById('gate-error').style.display = 'block';
+                document.getElementById('gate-input').value = '';
+                document.getElementById('gate-input').focus();
+            }
+        }
+    </script>
+
     <!-- 1. BARRA DE NAVEGACIÓN (HEADER) -->
     <header class="navbar" id="navbar">
         <!-- Contenedor para agrupar Logo y Links a la IZQUIERDA -->
