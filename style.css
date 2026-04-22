@@ -545,11 +545,7 @@ ul {
   }
 
   .hero-story-wrapper {
-    position: relative;
-    bottom: auto;
-    right: auto;
-    width: 100%;
-    margin-top: 2.5rem;
+    display: none;
   }
 }
 
@@ -1761,15 +1757,32 @@ ul {
     /* Menos altura para que no sea excesivo */
   }
 
+  .hero-text {
+    text-align: center;
+  }
+
   .hero-title {
-    font-size: clamp(2rem, 10vw, 3.5rem);
-    /* Más pequeño en móvil */
+    font-size: clamp(2rem, 9vw, 3rem);
     letter-spacing: -1px;
   }
 
   .hero-subtitle {
     font-size: 1rem;
     margin-bottom: 2rem;
+    max-width: 100%;
+  }
+
+  .hero-btns {
+    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .hero-btns a {
+    width: 100%;
+    max-width: 280px;
+    text-align: center;
   }
 
   .cta-title {
@@ -1835,14 +1848,9 @@ ul {
     /* Ocultamos la mancha verde decorativa en móvil */
   }
 
-  /* Hero story wrapper: apilado en móvil */
+  /* Hero story wrapper: oculto en móvil */
   .hero-story-wrapper {
-    position: relative;
-    bottom: auto;
-    right: auto;
-    width: 100%;
-    margin-top: 2rem;
-    padding: 0 1rem;
+    display: none;
   }
 
   /* Sección propuestas */
