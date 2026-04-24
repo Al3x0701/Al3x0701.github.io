@@ -1650,6 +1650,11 @@ select {
   font-weight: 600;
 }
 
+/* KPI de 3 columnas (Solicitudes) */
+.kpi-fila.kpi-3col {
+  grid-template-columns: repeat(3, 1fr);
+}
+
 /* ==============================================
    OVERLAY SIDEBAR MÓVIL
 ============================================== */
@@ -1780,25 +1785,37 @@ select {
     flex-shrink: 0;
   }
 
+  /* KPI 3 columnas → 1 columna en móvil */
+  .kpi-fila.kpi-3col {
+    grid-template-columns: 1fr;
+  }
+
   /* Tablas */
   .tabla-contenedor {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
   }
   .tabla {
-    font-size: 0.8rem;
-    min-width: 520px;
+    font-size: 0.78rem;
+    min-width: 480px;
   }
   .tabla thead th,
   .tabla tbody td {
-    padding: 0.75rem 0.85rem;
+    padding: 0.6rem 0.75rem;
+    white-space: nowrap;
   }
 
-  /* Botones de formulario */
-  .btn-submit-fila {
+  /* Botones submit de formularios → full width */
+  form > .btn,
+  form > button[type="submit"],
+  .tarjeta > form > .btn,
+  .tarjeta > form > button[type="submit"] {
     width: 100%;
   }
-  .btn-submit-fila .btn {
+
+  /* Input suelto en filtros-barra */
+  .filtros-barra > input[type="text"],
+  .filtros-barra > input[type="search"] {
     width: 100%;
   }
 
@@ -1828,7 +1845,8 @@ select {
   .kpi-fila {
     grid-template-columns: 1fr;
   }
-  .kpi-fila.kpi-compacto {
+  .kpi-fila.kpi-compacto,
+  .kpi-fila.kpi-3col {
     grid-template-columns: 1fr 1fr;
   }
 

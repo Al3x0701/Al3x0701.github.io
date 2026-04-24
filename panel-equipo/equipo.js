@@ -1216,7 +1216,6 @@ async function cargarMapa() {
       subdomains: 'abcd',
       maxZoom: 14,
     }).addTo(mapaLeaflet)
-
   } else {
     const capasAEliminar = []
     mapaLeaflet.eachLayer(layer => {
@@ -1285,6 +1284,9 @@ async function cargarMapa() {
     }).addTo(mapaLeaflet)
       .bindPopup(`<div class="mapa-popup-titulo">${ev.titulo || 'Evento'}</div><div class="mapa-popup-fecha">${fecha} · ${ev.municipio}</div>`)
   })
+
+  // Recalcular tamaño por si el contenedor estaba oculto al inicializar
+  setTimeout(() => mapaLeaflet.invalidateSize(), 150)
 }
 
 function mostrarSeleccionMapa(coords, color) {
