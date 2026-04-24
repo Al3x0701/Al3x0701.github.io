@@ -1,0 +1,215 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "NOMBRE": "Cali", "CODIGO": "76001" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-76.65,3.32],[-76.38,3.32],[-76.38,3.58],[-76.65,3.58],[-76.65,3.32]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "NOMBRE": "Palmira", "CODIGO": "76520" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-76.42,3.42],[-76.18,3.42],[-76.18,3.65],[-76.42,3.65],[-76.42,3.42]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "NOMBRE": "Buenaventura", "CODIGO": "76109" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-77.45,3.50],[-76.72,3.50],[-76.72,4.25],[-77.45,4.25],[-77.45,3.50]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "NOMBRE": "Tuluá", "CODIGO": "76834" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-76.32,3.97],[-76.05,3.97],[-76.05,4.20],[-76.32,4.20],[-76.32,3.97]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "NOMBRE": "Cartago", "CODIGO": "76147" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-76.03,4.65],[-75.79,4.65],[-75.79,4.83],[-76.03,4.83],[-76.03,4.65]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "NOMBRE": "Buga", "CODIGO": "76111" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-76.43,3.80],[-76.17,3.80],[-76.17,4.00],[-76.43,4.00],[-76.43,3.80]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "NOMBRE": "Yumbo", "CODIGO": "76892" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-76.57,3.51],[-76.43,3.51],[-76.43,3.67],[-76.57,3.67],[-76.57,3.51]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "NOMBRE": "Jamundí", "CODIGO": "76364" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-76.65,3.10],[-76.40,3.10],[-76.40,3.33],[-76.65,3.33],[-76.65,3.10]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "NOMBRE": "Florida", "CODIGO": "76248" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-76.33,3.21],[-76.13,3.21],[-76.13,3.44],[-76.33,3.44],[-76.33,3.21]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "NOMBRE": "Candelaria", "CODIGO": "76130" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-76.43,3.32],[-76.23,3.32],[-76.23,3.49],[-76.43,3.49],[-76.43,3.32]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "NOMBRE": "Pradera", "CODIGO": "76563" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-76.33,3.32],[-76.13,3.32],[-76.13,3.52],[-76.33,3.52],[-76.33,3.32]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "NOMBRE": "El Cerrito", "CODIGO": "76233" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-76.42,3.60],[-76.20,3.60],[-76.20,3.79],[-76.42,3.79],[-76.42,3.60]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "NOMBRE": "Guacarí", "CODIGO": "76306" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-76.42,3.71],[-76.26,3.71],[-76.26,3.84],[-76.42,3.84],[-76.42,3.71]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "NOMBRE": "Ginebra", "CODIGO": "76275" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-76.36,3.67],[-76.20,3.67],[-76.20,3.81],[-76.36,3.81],[-76.36,3.67]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "NOMBRE": "San Pedro", "CODIGO": "76670" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-76.53,3.88],[-76.35,3.88],[-76.35,4.04],[-76.53,4.04],[-76.53,3.88]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "NOMBRE": "Bugalagrande", "CODIGO": "76113" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-76.26,4.12],[-76.07,4.12],[-76.07,4.30],[-76.26,4.30],[-76.26,4.12]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "NOMBRE": "Zarzal", "CODIGO": "76895" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-76.18,4.30],[-75.97,4.30],[-75.97,4.48],[-76.18,4.48],[-76.18,4.30]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "NOMBRE": "La Unión", "CODIGO": "76400" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-76.22,4.43],[-76.00,4.43],[-76.00,4.61],[-76.22,4.61],[-76.22,4.43]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "NOMBRE": "Roldanillo", "CODIGO": "76622" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-76.25,4.32],[-76.07,4.32],[-76.07,4.51],[-76.25,4.51],[-76.25,4.32]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "NOMBRE": "Toro", "CODIGO": "76828" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-76.19,4.51],[-75.99,4.51],[-75.99,4.67],[-76.19,4.67],[-76.19,4.51]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "NOMBRE": "Versalles", "CODIGO": "76869" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-76.33,4.49],[-76.15,4.49],[-76.15,4.66],[-76.33,4.66],[-76.33,4.49]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "NOMBRE": "El Dovio", "CODIGO": "76243" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-76.42,4.43],[-76.22,4.43],[-76.22,4.60],[-76.42,4.60],[-76.42,4.43]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "NOMBRE": "Trujillo", "CODIGO": "76832" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-76.43,4.16],[-76.25,4.16],[-76.25,4.32],[-76.43,4.32],[-76.43,4.16]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "NOMBRE": "Riofrío", "CODIGO": "76606" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-76.44,4.00],[-76.26,4.00],[-76.26,4.17],[-76.44,4.17],[-76.44,4.00]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "NOMBRE": "Yotoco", "CODIGO": "76890" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-76.51,3.80],[-76.33,3.80],[-76.33,3.96],[-76.51,3.96],[-76.51,3.80]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "NOMBRE": "Calima", "CODIGO": "76126" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-76.63,3.83],[-76.44,3.83],[-76.44,4.00],[-76.63,4.00],[-76.63,3.83]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "NOMBRE": "Dagua", "CODIGO": "76233" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-76.80,3.56],[-76.60,3.56],[-76.60,3.76],[-76.80,3.76],[-76.80,3.56]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "NOMBRE": "La Cumbre", "CODIGO": "76377" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-76.67,3.58],[-76.52,3.58],[-76.52,3.71],[-76.67,3.71],[-76.67,3.58]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "NOMBRE": "Vijes", "CODIGO": "76871" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-76.58,3.63],[-76.44,3.63],[-76.44,3.74],[-76.58,3.74],[-76.58,3.63]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "NOMBRE": "Restrepo", "CODIGO": "76606" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-76.62,3.76],[-76.46,3.76],[-76.46,3.88],[-76.62,3.88],[-76.62,3.76]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "NOMBRE": "El Águila", "CODIGO": "76238" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-76.07,4.83],[-75.88,4.83],[-75.88,4.98],[-76.07,4.98],[-76.07,4.83]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "NOMBRE": "Ansermanuevo", "CODIGO": "76020" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-76.08,4.72],[-75.90,4.72],[-75.90,4.88],[-76.08,4.88],[-76.08,4.72]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "NOMBRE": "El Cairo", "CODIGO": "76230" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-76.35,4.82],[-76.17,4.82],[-76.17,4.98],[-76.35,4.98],[-76.35,4.82]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "NOMBRE": "Obando", "CODIGO": "76497" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-76.09,4.49],[-75.91,4.49],[-75.91,4.65],[-76.09,4.65],[-76.09,4.49]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "NOMBRE": "La Victoria", "CODIGO": "76403" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-76.04,4.45],[-75.87,4.45],[-75.87,4.59],[-76.04,4.59],[-76.04,4.45]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "NOMBRE": "Ulloa", "CODIGO": "76845" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-76.04,4.65],[-75.88,4.65],[-75.88,4.77],[-76.04,4.77],[-76.04,4.65]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "NOMBRE": "Alcalá", "CODIGO": "76020" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-75.87,4.62],[-75.70,4.62],[-75.70,4.73],[-75.87,4.73],[-75.87,4.62]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "NOMBRE": "Caicedonia", "CODIGO": "76122" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-75.95,4.24],[-75.73,4.24],[-75.73,4.42],[-75.95,4.42],[-75.95,4.24]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "NOMBRE": "Sevilla", "CODIGO": "76736" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-76.03,4.19],[-75.83,4.19],[-75.83,4.35],[-76.03,4.35],[-76.03,4.19]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "NOMBRE": "Andalucía", "CODIGO": "76016" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-76.26,4.08],[-76.07,4.08],[-76.07,4.22],[-76.26,4.22],[-76.26,4.08]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "NOMBRE": "Argelia", "CODIGO": "76036" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-76.05,4.00],[-75.90,4.00],[-75.90,4.14],[-76.05,4.14],[-76.05,4.00]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "NOMBRE": "Bolívar", "CODIGO": "76100" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-76.37,4.27],[-76.20,4.27],[-76.20,4.43],[-76.37,4.43],[-76.37,4.27]]] }
+    }
+  ]
+}

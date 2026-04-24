@@ -1243,52 +1243,592 @@ select {
   font-size: 0.78rem;
 }
 
+
 /* ==============================================
-   RESPONSIVO — MÓVIL
+   MAPA ELECTORAL
+============================================== */
+.mapa-layout {
+  display: flex;
+  gap: 1.25rem;
+  align-items: flex-start;
+}
+
+.mapa-contenedor {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0 !important;
+  overflow: hidden;
+}
+
+#mapa-leaflet {
+  height: 520px;
+  width: 100%;
+  border-radius: var(--radio) var(--radio) 0 0;
+  z-index: 0;
+}
+
+.mapa-leyenda {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1.25rem;
+  flex-wrap: wrap;
+}
+
+.mapa-leyenda-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--texto-sec);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.mapa-leyenda-escala {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  color: var(--texto-sec);
+}
+
+.mapa-leyenda-color {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1px solid rgba(0,0,0,0.08);
+  margin-left: 0.5rem;
+}
+
+.mapa-panel {
+  width: 300px;
+  flex-shrink: 0;
+  display: none;
+  padding: 1.25rem;
+}
+
+.mapa-panel.visible {
+  display: block;
+}
+
+.mapa-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1.5px solid var(--borde);
+}
+
+.mapa-panel-header h3 {
+  font-family: var(--fuente-titulo);
+  font-size: 1.15rem;
+  color: var(--texto);
+  margin: 0;
+}
+
+.mapa-panel-cerrar {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  color: var(--texto-muted);
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+
+.mapa-panel-cerrar:hover {
+  background: var(--borde);
+  color: var(--texto);
+}
+
+.mapa-stat {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid var(--borde);
+  font-size: 0.875rem;
+}
+
+.mapa-stat:last-child {
+  border-bottom: none;
+}
+
+.mapa-stat-label {
+  color: var(--texto-sec);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.mapa-stat-valor {
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.mapa-stat-valor.aprobado { color: var(--exito); }
+.mapa-stat-valor.pendiente { color: var(--aviso); }
+
+.mapa-eventos-lista {
+  margin-top: 1rem;
+}
+
+.mapa-eventos-titulo {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--texto-muted);
+  margin-bottom: 0.6rem;
+}
+
+.mapa-evento-item {
+  background: rgba(250,204,21,0.08);
+  border: 1px solid rgba(250,204,21,0.2);
+  border-radius: var(--radio-sm);
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.4rem;
+  font-size: 0.8rem;
+}
+
+.mapa-evento-item strong {
+  display: block;
+  color: var(--texto);
+  margin-bottom: 0.15rem;
+}
+
+.mapa-evento-item span {
+  color: var(--texto-muted);
+}
+
+.mapa-panel-seccion {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1.5px solid var(--borde);
+}
+
+.mapa-panel-seccion-titulo {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--texto-muted);
+  margin-bottom: 0.6rem;
+}
+
+/* Eliminar sombra cuadrada de marcadores Leaflet */
+.leaflet-marker-shadow {
+  display: none !important;
+}
+
+.leaflet-marker-icon {
+  background: none !important;
+  border: none !important;
+}
+
+/* Popup de Leaflet personalizado */
+.leaflet-popup-content-wrapper {
+  border-radius: 12px !important;
+  box-shadow: var(--sombra-premium) !important;
+  font-family: var(--fuente) !important;
+}
+
+.leaflet-popup-content {
+  font-size: 0.85rem !important;
+  color: var(--texto) !important;
+  margin: 0.75rem 1rem !important;
+}
+
+.mapa-popup-titulo {
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.mapa-popup-fecha {
+  color: var(--texto-muted);
+  font-size: 0.78rem;
+}
+
+/* Dashboard — tarjetas de desglose */
+.dash-tarjeta .tarjeta-encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.dash-tarjeta-titulo-grupo {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.dash-tarjeta-icono {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.dash-badge-total {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--texto-muted);
+  background: rgba(0,0,0,0.04);
+  border: 1px solid var(--borde);
+  border-radius: 20px;
+  padding: 0.25rem 0.75rem;
+  letter-spacing: 0.02em;
+}
+
+/* Barras de progreso rediseñadas */
+.barra-item {
+  margin-bottom: 1.1rem;
+}
+
+.barra-item:last-child {
+  margin-bottom: 0;
+}
+
+.barra-fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.45rem;
+}
+
+.barra-label-grupo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.barra-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.barra-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--texto-sec);
+}
+
+.barra-valores {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.barra-num {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.barra-pct {
+  font-size: 0.78rem;
+  color: var(--texto-muted);
+  font-weight: 400;
+}
+
+.barra-fondo {
+  height: 8px;
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.barra-relleno {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* KPIs compactos para el mapa */
+.kpi-fila.kpi-compacto .kpi {
+  padding: 1.1rem 1.25rem;
+  gap: 0.45rem;
+}
+
+.kpi-fila.kpi-compacto .kpi-valor {
+  font-size: 1.9rem;
+}
+
+.kpi-fila.kpi-compacto .kpi-icono {
+  width: 34px;
+  height: 34px;
+}
+
+/* Ondas de selección al hacer clic en municipio */
+.mapa-seleccion {
+  position: relative;
+  width: 48px;
+  height: 48px;
+}
+
+.mapa-seleccion-onda {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  opacity: 0;
+  animation: mapa-seleccion-pulse 1.4s ease-out infinite;
+}
+
+.mapa-seleccion-punto {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+@keyframes mapa-seleccion-pulse {
+  0%   { transform: scale(0.3); opacity: 0.7; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+/* Ondas de actividad */
+.mapa-onda-wrap {
+  position: relative;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.mapa-onda {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  opacity: 0;
+  animation: mapa-onda-pulse 2s ease-out infinite;
+}
+
+@keyframes mapa-onda-pulse {
+  0%   { transform: scale(0.6); opacity: 0.55; }
+  100% { transform: scale(1.9); opacity: 0; }
+}
+
+.mapa-tooltip {
+  background: var(--color-dark) !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 8px !important;
+  font-family: var(--fuente) !important;
+  font-size: 0.78rem !important;
+  font-weight: 600 !important;
+  padding: 0.3rem 0.6rem !important;
+  box-shadow: var(--sombra) !important;
+}
+
+.mapa-tooltip::before {
+  border-top-color: var(--color-dark) !important;
+}
+
+/* ==============================================
+   OVERLAY SIDEBAR MÓVIL
+============================================== */
+#sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 149;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+#sidebar-overlay.visible {
+  display: block;
+}
+
+/* ==============================================
+   RESPONSIVE — 900px (tablet landscape / mapa)
+============================================== */
+@media (max-width: 900px) {
+  .mapa-layout {
+    flex-direction: column;
+  }
+  .mapa-panel {
+    width: 100%;
+  }
+}
+
+/* ==============================================
+   RESPONSIVE — 768px (tablet / móvil)
 ============================================== */
 @media (max-width: 768px) {
+  /* Sidebar */
   #sidebar {
     transform: translateX(-100%);
   }
-
   #sidebar.abierto {
     transform: translateX(0);
     box-shadow: 12px 0 40px rgba(0, 0, 0, 0.4);
   }
 
+  /* Topbar */
   #topbar {
     left: 0;
     padding: 0 1rem;
   }
+  #topbar-titulo {
+    font-size: 0.9rem;
+    max-width: 160px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  #btn-logout {
+    font-size: 0.78rem;
+    padding: 0.4rem 0.8rem;
+  }
 
+  /* Área principal */
   #area-principal {
     margin-left: 0;
   }
-
   #contenido {
     padding: 1rem;
   }
 
+  /* Tipografía de página */
+  .pagina-titulo {
+    font-size: 1.5rem;
+  }
+
+  /* KPIs */
   .kpi-fila {
     grid-template-columns: 1fr 1fr;
   }
+  .kpi {
+    padding: 1.25rem;
+  }
+  .kpi-valor {
+    font-size: 2.2rem;
+  }
+  .kpi-fila.kpi-compacto .kpi-valor {
+    font-size: 1.6rem;
+  }
 
+  /* Grillas */
   .dos-columnas {
     grid-template-columns: 1fr;
   }
-
   .form-grilla {
     grid-template-columns: 1fr;
   }
 
+  /* Filtros */
   .filtros-barra {
     flex-direction: column;
     align-items: stretch;
+    gap: 0.75rem;
+  }
+  .filtros-controles {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .filtros-controles select,
+  .filtros-controles input[type="text"],
+  .filtros-controles input[type="date"],
+  .filtros-controles button {
+    width: 100%;
+  }
+  .filtros-barra input[type="text"] {
+    width: 100%;
+  }
+
+  /* Pestañas */
+  .pestanas {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+    padding-bottom: 0.25rem;
+    scrollbar-width: none;
+  }
+  .pestanas::-webkit-scrollbar {
+    display: none;
+  }
+  .pestana {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* Tablas */
+  .tabla-contenedor {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .tabla {
+    font-size: 0.8rem;
+    min-width: 520px;
+  }
+  .tabla thead th,
+  .tabla tbody td {
+    padding: 0.75rem 0.85rem;
+  }
+
+  /* Botones de formulario */
+  .btn-submit-fila {
+    width: 100%;
+  }
+  .btn-submit-fila .btn {
+    width: 100%;
+  }
+
+  /* Mapa */
+  #mapa-leaflet {
+    height: 360px;
+  }
+  .mapa-leyenda-escala {
+    flex-wrap: wrap;
+    gap: 0.3rem;
+  }
+
+  /* Dashboard tarjetas */
+  .dash-tarjeta-titulo-grupo {
+    gap: 0.4rem;
   }
 }
 
+/* ==============================================
+   RESPONSIVE — 480px (móvil pequeño)
+============================================== */
 @media (max-width: 480px) {
+  #contenido {
+    padding: 0.75rem;
+  }
+
   .kpi-fila {
     grid-template-columns: 1fr;
+  }
+  .kpi-fila.kpi-compacto {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .pagina-titulo {
+    font-size: 1.3rem;
+  }
+
+  .tarjeta {
+    padding: 1rem;
+  }
+
+  #mapa-leaflet {
+    height: 280px;
+  }
+
+  .acciones-grupo {
+    flex-direction: column;
+    gap: 0.4rem;
   }
 }

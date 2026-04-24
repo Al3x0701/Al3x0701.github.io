@@ -16,6 +16,8 @@ let perfilActual = null   // datos de la tabla usuarios
 let tabActiva = {}     // pestaña activa por sección
 let datosReuniones = []     // caché de reuniones (consolidados)
 let datosVotantes = []     // caché de votantes (consolidados)
+let mapaLeaflet = null       // instancia Leaflet (se inicializa una sola vez)
+let mapaSeleccion = null     // marcador de selección activo
 
 
 /* ==============================================
@@ -163,6 +165,7 @@ function iniciarNavegacion() {
       navegarA(item.dataset.seccion)
       // Cerrar menú en móvil
       document.getElementById('sidebar').classList.remove('abierto')
+      document.getElementById('sidebar-overlay').classList.remove('visible')
     })
   })
 }
@@ -214,6 +217,7 @@ async function cargarSeccion(seccion) {
     case 'noticias': await cargarNoticias(); break
     case 'usuarios': await cargarUsuarios(); break
     case 'auditoria': await cargarAuditoria(); break
+    case 'mapa': await cargarMapa(); break
   }
 }
 
@@ -223,8 +227,17 @@ async function cargarSeccion(seccion) {
 ============================================== */
 
 function iniciarMenuMovil() {
+  const sidebar  = document.getElementById('sidebar')
+  const overlay  = document.getElementById('sidebar-overlay')
+
   document.getElementById('btn-menu').addEventListener('click', () => {
-    document.getElementById('sidebar').classList.toggle('abierto')
+    sidebar.classList.toggle('abierto')
+    overlay.classList.toggle('visible')
+  })
+
+  overlay.addEventListener('click', () => {
+    sidebar.classList.remove('abierto')
+    overlay.classList.remove('visible')
   })
 }
 
@@ -305,20 +318,26 @@ async function cargarDashboard() {
 
 function htmlBarras(apro, pend, rech, total) {
   const items = [
-    { label: 'Aprobados', valor: apro, color: '#16a34a' },
-    { label: 'Pendientes', valor: pend, color: '#f59e0b' },
-    { label: 'Rechazados', valor: rech, color: '#dc2626' },
+    { label: 'Aprobados', valor: apro, color: '#10b981', bg: 'rgba(16,185,129,0.1)' },
+    { label: 'Pendientes', valor: pend, color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
+    { label: 'Rechazados', valor: rech, color: '#ef4444', bg: 'rgba(239,68,68,0.1)' },
   ]
 
-  return items.map(({ label, valor, color }) => {
+  return items.map(({ label, valor, color, bg }) => {
     const pct = total > 0 ? Math.round((valor / total) * 100) : 0
     return `
       <div class="barra-item">
         <div class="barra-fila">
-          <span style="color:var(--texto-sec);font-weight:500">${label}</span>
-          <span style="font-weight:700;color:${color}">${valor} <span style="color:var(--texto-muted);font-weight:400">(${pct}%)</span></span>
+          <div class="barra-label-grupo">
+            <span class="barra-dot" style="background:${color}"></span>
+            <span class="barra-label">${label}</span>
+          </div>
+          <div class="barra-valores">
+            <span class="barra-num" style="color:${color}">${valor}</span>
+            <span class="barra-pct">${pct}%</span>
+          </div>
         </div>
-        <div class="barra-fondo">
+        <div class="barra-fondo" style="background:${bg}">
           <div class="barra-relleno" style="width:${pct}%;background:${color}"></div>
         </div>
       </div>`
@@ -1077,6 +1096,266 @@ function _exportarAuditoriaXLSX(items) {
   const libro = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(libro, hoja, 'Auditoría')
   XLSX.writeFile(libro, `auditoria_${hoy()}.xlsx`)
+}
+
+
+/* ==============================================
+   MAPA ELECTORAL
+============================================== */
+
+// Centroides de los 42 municipios del Valle del Cauca
+const CENTROIDES_VDC = {
+  'cali':             [3.4516, -76.5320],
+  'palmira':          [3.5393, -76.3036],
+  'buenaventura':     [3.8802, -77.0311],
+  'tulua':            [4.0843, -76.1982],
+  'cartago':          [4.7459, -75.9119],
+  'buga':             [3.9002, -76.2996],
+  'yumbo':            [3.5886, -76.4953],
+  'jamundi':          [3.2629, -76.5387],
+  'florida':          [3.3283, -76.2356],
+  'candelaria':       [3.4085, -76.3418],
+  'pradera':          [3.4213, -76.2443],
+  'el cerrito':       [3.6953, -76.2954],
+  'guacari':          [3.7706, -76.3380],
+  'ginebra':          [3.7427, -76.2745],
+  'san pedro':        [3.9613, -76.4017],
+  'bugalagrande':     [4.2060, -76.1597],
+  'zarzal':           [4.3886, -76.0713],
+  'la union':         [4.5300, -76.1015],
+  'roldanillo':       [4.4172, -76.1538],
+  'toro':             [4.5990, -76.0802],
+  'versalles':        [4.5800, -76.2386],
+  'el dovio':         [4.5213, -76.2990],
+  'trujillo':         [4.2353, -76.3270],
+  'riofrio':          [4.0918, -76.3507],
+  'yotoco':           [3.8687, -76.3951],
+  'calima':           [3.9279, -76.5192],
+  'dagua':            [3.6573, -76.6894],
+  'la cumbre':        [3.6430, -76.5638],
+  'vijes':            [3.6911, -76.4613],
+  'restrepo':         [3.8227, -76.5303],
+  'el aguila':        [4.9163, -75.9705],
+  'ansermanuevo':     [4.8042, -75.9842],
+  'el cairo':         [4.8958, -76.2418],
+  'obando':           [4.5782, -75.9781],
+  'la victoria':      [4.5238, -75.9070],
+  'ulloa':            [4.7064, -75.9353],
+  'alcala':           [4.6742, -75.7762],
+  'caicedonia':       [4.3309, -75.8291],
+  'sevilla':          [4.2680, -75.9377],
+  'andalucia':        [4.1523, -76.1668],
+  'argelia':          [4.0677, -75.9892],
+  'bolivar':          [4.3432, -76.2281],
+}
+
+function normMunicipio(nombre) {
+  if (!nombre) return ''
+  return nombre.trim().toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/guadalajara de /g, '')
+    .replace(/santiago de /g, '')
+}
+
+function colorIntensidad(valor) {
+  if (!valor || valor === 0) return '#f1f5f9'
+  if (valor <= 10)  return '#fef9c3'
+  if (valor <= 30)  return '#facc15'
+  if (valor <= 60)  return '#f97316'
+  return '#dc2626'
+}
+
+async function cargarMapa() {
+  // 1. Fetch paralelo
+  const [
+    { data: reuniones },
+    { data: votantes },
+    { data: eventos },
+    { data: solicitudes },
+  ] = await Promise.all([
+    db.from('lista_reuniones').select('municipio, estado'),
+    db.from('lista_votantes').select('municipio, estado'),
+    db.from('noticias_eventos').select('titulo, municipio, fecha_evento').eq('tipo', 'evento'),
+    db.from('solicitudes').select('municipio, estado, tipo'),
+  ])
+
+  // 2. Agregar por municipio
+  const stats = {}
+  const agregar = (arr, tipo) => {
+    ;(arr || []).forEach(x => {
+      const k = normMunicipio(x.municipio)
+      if (!k) return
+      if (!stats[k]) stats[k] = { nombre: x.municipio?.trim(), reuniones: [], votantes: [], eventos: [], solicitudes: [] }
+      stats[k][tipo].push(x)
+    })
+  }
+  agregar(reuniones, 'reuniones')
+  agregar(votantes, 'votantes')
+  agregar(eventos, 'eventos')
+  agregar(solicitudes, 'solicitudes')
+
+  // 3. KPIs globales
+  const totalR = (reuniones || []).length
+  const totalV = (votantes || []).length
+  const totalE = (eventos || []).length
+  const totalS = (solicitudes || []).length
+  const muniActivos = Object.keys(stats).filter(k => stats[k].reuniones.length + stats[k].votantes.length > 0).length
+
+  document.getElementById('mapa-kpi-total').textContent       = totalR + totalV
+  document.getElementById('mapa-kpi-municipios').textContent  = muniActivos
+  document.getElementById('mapa-kpi-eventos').textContent     = totalE
+  document.getElementById('mapa-kpi-solicitudes').textContent = totalS
+
+  // 4. Inicializar Leaflet solo una vez
+  if (!mapaLeaflet) {
+    mapaLeaflet = L.map('mapa-leaflet', { zoomControl: true, scrollWheelZoom: false })
+      .setView([4.0, -76.3], 8)
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
+      subdomains: 'abcd',
+      maxZoom: 14,
+    }).addTo(mapaLeaflet)
+
+  } else {
+    const capasAEliminar = []
+    mapaLeaflet.eachLayer(layer => {
+      if (layer instanceof L.Circle || layer instanceof L.CircleMarker || layer instanceof L.Marker) {
+        capasAEliminar.push(layer)
+      }
+    })
+    capasAEliminar.forEach(l => mapaLeaflet.removeLayer(l))
+  }
+
+  // 5. Círculos por municipio coloreados por intensidad
+  Object.entries(CENTROIDES_VDC).forEach(([k, coords]) => {
+    const nombreMunicipio = k.replace(/(^|\s)\S/g, l => l.toUpperCase())
+    const s = stats[k] || { nombre: nombreMunicipio, reuniones: [], votantes: [], eventos: [], solicitudes: [] }
+    const intensidad = s.reuniones.length + s.votantes.length
+    const radio = intensidad === 0 ? 4000 : Math.min(4000 + intensidad * 400, 18000)
+    const color = colorIntensidad(intensidad)
+
+    // Círculo base con borde de color para mayor contraste
+    const borderColor = intensidad === 0 ? '#94a3b8' : color
+    const circle = L.circle(coords, {
+      radius: radio,
+      fillColor: color,
+      fillOpacity: intensidad === 0 ? 0.45 : 0.85,
+      color: borderColor,
+      weight: intensidad === 0 ? 1 : 2,
+    }).addTo(mapaLeaflet)
+
+    const nombre = s.nombre || nombreMunicipio
+    circle.on('click', () => {
+      mostrarPanelMapa(nombre, s)
+      mostrarSeleccionMapa(coords, color)
+    })
+    circle.on('mouseover', () => circle.setStyle({ fillOpacity: 1, weight: 3 }))
+    circle.on('mouseout',  () => circle.setStyle({ fillOpacity: intensidad === 0 ? 0.45 : 0.85, weight: intensidad === 0 ? 1 : 2 }))
+    circle.bindTooltip(nombre, { permanent: false, direction: 'top', className: 'mapa-tooltip' })
+
+    // Ondas animadas en municipios con actividad media-alta
+    if (intensidad >= 10) {
+      const tamOndaPx = intensidad >= 61 ? 38 : intensidad >= 31 ? 30 : 22
+      const ondaIcon = L.divIcon({
+        html: `<div class="mapa-onda-wrap" style="width:${tamOndaPx * 2}px;height:${tamOndaPx * 2}px">
+                 <div class="mapa-onda" style="background:${color};animation-delay:0s"></div>
+                 <div class="mapa-onda" style="background:${color};animation-delay:0.6s"></div>
+               </div>`,
+        className: '',
+        iconSize: [tamOndaPx * 2, tamOndaPx * 2],
+        iconAnchor: [tamOndaPx, tamOndaPx],
+      })
+      L.marker(coords, { icon: ondaIcon, interactive: false, zIndexOffset: -100 }).addTo(mapaLeaflet)
+    }
+  })
+
+  // 6. Marcadores de eventos (círculo pequeño morado encima)
+  ;(eventos || []).forEach(ev => {
+    const k = normMunicipio(ev.municipio)
+    const coords = CENTROIDES_VDC[k]
+    if (!coords) return
+    const fecha = ev.fecha_evento ? formatFecha(ev.fecha_evento).split(',')[0] : 'Sin fecha'
+    L.circleMarker(coords, {
+      radius: 6,
+      fillColor: '#6366f1',
+      fillOpacity: 1,
+      color: '#fff',
+      weight: 2,
+    }).addTo(mapaLeaflet)
+      .bindPopup(`<div class="mapa-popup-titulo">${ev.titulo || 'Evento'}</div><div class="mapa-popup-fecha">${fecha} · ${ev.municipio}</div>`)
+  })
+}
+
+function mostrarSeleccionMapa(coords, color) {
+  if (mapaSeleccion) mapaLeaflet.removeLayer(mapaSeleccion)
+
+  const icon = L.divIcon({
+    html: `<div class="mapa-seleccion">
+             <div class="mapa-seleccion-onda" style="background:${color};animation-delay:0s"></div>
+             <div class="mapa-seleccion-onda" style="background:${color};animation-delay:0.4s"></div>
+             <div class="mapa-seleccion-onda" style="background:${color};animation-delay:0.8s"></div>
+             <div class="mapa-seleccion-punto" style="background:${color}"></div>
+           </div>`,
+    className: '',
+    iconSize: [48, 48],
+    iconAnchor: [24, 24],
+  })
+
+  mapaSeleccion = L.marker(coords, { icon, interactive: false, zIndexOffset: 500 })
+    .addTo(mapaLeaflet)
+}
+
+function mostrarPanelMapa(nombre, s) {
+  document.getElementById('mapa-panel-nombre').textContent = nombre
+
+  const r = s.reuniones
+  const v = s.votantes
+  const e = s.eventos
+  const sol = s.solicitudes
+
+  const rApro = r.filter(x => x.estado === 'aprobado').length
+  const rPend = r.filter(x => x.estado === 'pendiente').length
+  const vApro = v.filter(x => x.estado === 'aprobado').length
+  const vPend = v.filter(x => x.estado === 'pendiente').length
+  const solPend = sol.filter(x => x.estado === 'pendiente').length
+
+  const eventosHtml = e.length
+    ? e.map(ev => `<div class="mapa-evento-item">
+        <strong>${ev.titulo || 'Evento'}</strong>
+        <span>${ev.fecha_evento ? formatFecha(ev.fecha_evento).split(',')[0] : 'Sin fecha'}</span>
+      </div>`).join('')
+    : '<p style="font-size:0.8rem;color:var(--texto-muted)">Sin eventos registrados</p>'
+
+  document.getElementById('mapa-panel-contenido').innerHTML = `
+    <div class="mapa-panel-seccion">
+      <div class="mapa-panel-seccion-titulo">Reuniones</div>
+      <div class="mapa-stat"><span class="mapa-stat-label">Total</span><span class="mapa-stat-valor">${r.length}</span></div>
+      <div class="mapa-stat"><span class="mapa-stat-label">✓ Aprobadas</span><span class="mapa-stat-valor aprobado">${rApro}</span></div>
+      <div class="mapa-stat"><span class="mapa-stat-label">⏳ Pendientes</span><span class="mapa-stat-valor pendiente">${rPend}</span></div>
+    </div>
+    <div class="mapa-panel-seccion">
+      <div class="mapa-panel-seccion-titulo">Votantes</div>
+      <div class="mapa-stat"><span class="mapa-stat-label">Total</span><span class="mapa-stat-valor">${v.length}</span></div>
+      <div class="mapa-stat"><span class="mapa-stat-label">✓ Aprobados</span><span class="mapa-stat-valor aprobado">${vApro}</span></div>
+      <div class="mapa-stat"><span class="mapa-stat-label">⏳ Pendientes</span><span class="mapa-stat-valor pendiente">${vPend}</span></div>
+    </div>
+    <div class="mapa-panel-seccion">
+      <div class="mapa-panel-seccion-titulo">Solicitudes</div>
+      <div class="mapa-stat"><span class="mapa-stat-label">Total</span><span class="mapa-stat-valor">${sol.length}</span></div>
+      <div class="mapa-stat"><span class="mapa-stat-label">⏳ Pendientes</span><span class="mapa-stat-valor pendiente">${solPend}</span></div>
+    </div>
+    <div class="mapa-eventos-lista">
+      <div class="mapa-eventos-titulo">Eventos (${e.length})</div>
+      ${eventosHtml}
+    </div>
+  `
+
+  document.getElementById('mapa-panel-lateral').classList.add('visible')
+}
+
+function cerrarPanelMapa() {
+  document.getElementById('mapa-panel-lateral').classList.remove('visible')
 }
 
 
