@@ -83,6 +83,10 @@ function mostrarLogin() {
   document.getElementById('app').style.display = 'none'
   document.getElementById('login-email').value = ''
   document.getElementById('login-password').value = ''
+  const btnLogin = document.getElementById('btn-login')
+  btnLogin.disabled = false
+  btnLogin.textContent = 'Entrar'
+  document.getElementById('login-error').style.display = 'none'
 }
 
 // Iniciar la app después del login
