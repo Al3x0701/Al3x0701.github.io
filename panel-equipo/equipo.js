@@ -86,10 +86,30 @@ function mostrarLogin() {
   document.getElementById('app').style.display = 'none'
   document.getElementById('login-email').value = ''
   document.getElementById('login-password').value = ''
+  // Resetear ojo al cerrar sesión
+  const pass = document.getElementById('login-password')
+  if (pass) pass.type = 'password'
+  document.getElementById('icon-ojo-abierto').style.display = 'block'
+  document.getElementById('icon-ojo-cerrado').style.display = 'none'
   const btnLogin = document.getElementById('btn-login')
   btnLogin.disabled = false
   btnLogin.textContent = 'Entrar'
   document.getElementById('login-error').style.display = 'none'
+}
+
+function togglePassword() {
+  const input = document.getElementById('login-password')
+  const abierto = document.getElementById('icon-ojo-abierto')
+  const cerrado = document.getElementById('icon-ojo-cerrado')
+  if (input.type === 'password') {
+    input.type = 'text'
+    abierto.style.display = 'none'
+    cerrado.style.display = 'block'
+  } else {
+    input.type = 'password'
+    abierto.style.display = 'block'
+    cerrado.style.display = 'none'
+  }
 }
 
 // Iniciar la app después del login

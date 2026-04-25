@@ -268,6 +268,29 @@ select {
   display: block;
 }
 
+.campo-password-wrap {
+  position: relative;
+}
+.campo-password-wrap input {
+  width: 100%;
+  padding-right: 2.8rem;
+}
+.btn-mostrar-pass {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--texto-muted);
+  padding: 0;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s;
+}
+.btn-mostrar-pass:hover { color: var(--texto-pri); }
+
 .btn-login {
   width: 100%;
   padding: 1rem;
