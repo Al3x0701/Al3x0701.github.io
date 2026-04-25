@@ -18,6 +18,8 @@ let datosReuniones = []     // caché de reuniones (consolidados)
 let datosVotantes = []     // caché de votantes (consolidados)
 let mapaLeaflet = null       // instancia Leaflet (se inicializa una sola vez)
 let mapaSeleccion = null     // marcador de selección activo
+let mapaCirculos = []        // [{circle, radioBase, key}] para escalar con zoom
+
 
 
 /* ==============================================
@@ -26,6 +28,7 @@ let mapaSeleccion = null     // marcador de selección activo
 document.addEventListener('DOMContentLoaded', async () => {
   iniciarNavegacion()
   iniciarMenuMovil()
+  iniciarMenuConfig()
   iniciarPestanas()
   iniciarFiltrosConsolidado()
   iniciarExportarExcel()
@@ -202,6 +205,8 @@ function navegarA(seccion) {
     usuarios: 'Gestión de Usuarios',
     auditoria: 'Log de Auditoría',
     mapa: 'Mapa Electoral',
+    configuracion: 'Configuración',
+    eventos: 'Eventos',
   }
   document.getElementById('topbar-titulo').textContent = titulos[seccion] || seccion
 
@@ -229,6 +234,26 @@ async function cargarSeccion(seccion) {
 /* ==============================================
    MENÚ MÓVIL
 ============================================== */
+
+function iniciarMenuConfig() {
+  const btn      = document.getElementById('btn-config')
+  const dropdown = document.getElementById('config-dropdown')
+
+  btn.addEventListener('click', e => {
+    e.stopPropagation()
+    dropdown.classList.toggle('abierto')
+  })
+
+  document.querySelectorAll('.config-item').forEach(item => {
+    item.addEventListener('click', e => {
+      e.preventDefault()
+      dropdown.classList.remove('abierto')
+      navegarA(item.dataset.seccion)
+    })
+  })
+
+  document.addEventListener('click', () => dropdown.classList.remove('abierto'))
+}
 
 function iniciarMenuMovil() {
   const sidebar  = document.getElementById('sidebar')
@@ -1110,7 +1135,7 @@ function _exportarAuditoriaXLSX(items) {
 // Centroides de los 42 municipios del Valle del Cauca
 const CENTROIDES_VDC = {
   'cali':             [3.4516, -76.5320],
-  'palmira':          [3.5393, -76.3036],
+  'palmira':          [3.5338, -76.2985],
   'buenaventura':     [3.8802, -77.0311],
   'tulua':            [4.0843, -76.1982],
   'cartago':          [4.7459, -75.9119],
@@ -1212,14 +1237,21 @@ async function cargarMapa() {
 
   // 4. Inicializar Leaflet solo una vez
   if (!mapaLeaflet) {
-    mapaLeaflet = L.map('mapa-leaflet', { zoomControl: true, scrollWheelZoom: false })
+    mapaLeaflet = L.map('mapa-leaflet', { zoomControl: true, scrollWheelZoom: true })
       .setView([4.0, -76.3], 8)
 
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
       attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
       subdomains: 'abcd',
-      maxZoom: 14,
+      maxZoom: 18,
     }).addTo(mapaLeaflet)
+
+    mapaLeaflet.on('zoomend', () => {
+      const zoom = mapaLeaflet.getZoom()
+      mapaCirculos.forEach(({ circle, radioBase }) => {
+        circle.setRadius(radioBase * Math.pow(0.5, zoom - 8))
+      })
+    })
   } else {
     const capasAEliminar = []
     mapaLeaflet.eachLayer(layer => {
@@ -1229,16 +1261,21 @@ async function cargarMapa() {
     })
     capasAEliminar.forEach(l => mapaLeaflet.removeLayer(l))
   }
+  mapaCirculos = []
 
   // 5. Círculos por municipio coloreados por intensidad
+  const zoomActual = mapaLeaflet.getZoom()
   Object.entries(CENTROIDES_VDC).forEach(([k, coords]) => {
     const nombreMunicipio = k.replace(/(^|\s)\S/g, l => l.toUpperCase())
     const s = stats[k] || { nombre: nombreMunicipio, reuniones: [], votantes: [], eventos: [], solicitudes: [] }
     const intensidad = s.reuniones.length + s.votantes.length
-    const radio = intensidad === 0 ? 4000 : Math.min(4000 + intensidad * 400, 18000)
+    // ~611 m/px a zoom 8 → radioBase fija el tamaño en píxeles a cualquier zoom
+    const nombreMostrar = s.nombre || nombreMunicipio
+    const pxBase = Math.max(32, nombreMostrar.length * 2.6) + (intensidad > 0 ? Math.min(intensidad * 0.4, 14) : 0)
+    const radioBase = Math.round(pxBase * 611)
+    const radio = radioBase * Math.pow(0.5, zoomActual - 8)
     const color = colorIntensidad(intensidad)
 
-    // Círculo base con borde de color para mayor contraste
     const borderColor = intensidad === 0 ? '#94a3b8' : color
     const circle = L.circle(coords, {
       radius: radio,
@@ -1247,6 +1284,8 @@ async function cargarMapa() {
       color: borderColor,
       weight: intensidad === 0 ? 1 : 2,
     }).addTo(mapaLeaflet)
+
+    mapaCirculos.push({ circle, radioBase, key: k, intensidad })
 
     const nombre = s.nombre || nombreMunicipio
     circle.on('click', () => {
@@ -1290,6 +1329,7 @@ async function cargarMapa() {
   })
 
   // Recalcular tamaño por si el contenedor estaba oculto al inicializar
+  guardarStatsParaBuscador(stats)
   setTimeout(() => mapaLeaflet.invalidateSize(), 150)
 }
 
@@ -1362,6 +1402,115 @@ function mostrarPanelMapa(nombre, s) {
 
 function cerrarPanelMapa() {
   document.getElementById('mapa-panel-lateral').classList.remove('visible')
+}
+
+
+/* ==============================================
+   BUSCADOR DE MUNICIPIOS EN EL MAPA
+============================================== */
+
+let _mapaStats = {}          // stats por municipio, guardado al cargar el mapa
+let _buscadorIndiceActivo = -1
+
+// Guarda stats para el buscador (llamado al final de cargarMapa)
+function guardarStatsParaBuscador(stats) { _mapaStats = stats }
+
+function filtrarMapaBuscador(valor) {
+  const lista = document.getElementById('mapa-buscador-lista')
+  const limpiar = document.getElementById('mapa-buscador-limpiar')
+  limpiar.style.display = valor ? 'block' : 'none'
+  _buscadorIndiceActivo = -1
+
+  const q = normMunicipio(valor)
+
+  // Mostrar/ocultar círculos según coincidencia
+  mapaCirculos.forEach(({ circle, key, intensidad }) => {
+    const coincide = !q || key.includes(q)
+    circle.setStyle({
+      fillOpacity: coincide ? (intensidad === 0 ? 0.45 : 0.85) : 0,
+      opacity:     coincide ? 1 : 0,
+    })
+  })
+
+  if (!valor.trim()) { lista.style.display = 'none'; return }
+
+  const resultados = Object.keys(CENTROIDES_VDC)
+    .filter(k => k.includes(q))
+    .sort()
+    .slice(0, 8)
+
+  if (!resultados.length) { lista.style.display = 'none'; return }
+
+  lista.innerHTML = resultados.map(k => {
+    const label = k.replace(/(^|\s)\S/g, l => l.toUpperCase())
+    const s = _mapaStats[k]
+    const intensidad = s ? s.reuniones.length + s.votantes.length : 0
+    const color = colorIntensidad(intensidad)
+    return `<li class="mapa-buscador-item" data-key="${k}" onmousedown="seleccionarMunicipioBuscador('${k}')">
+      <span class="buscador-dot" style="background:${color};border:1.5px solid ${intensidad ? color : '#94a3b8'}"></span>
+      ${label}
+    </li>`
+  }).join('')
+  lista.style.display = 'block'
+}
+
+function seleccionarMunicipioBuscador(k) {
+  if (!mapaLeaflet) return
+  const coords = CENTROIDES_VDC[k]
+  if (!coords) return
+
+  const label = k.replace(/(^|\s)\S/g, l => l.toUpperCase())
+  const s = _mapaStats[k] || { nombre: label, reuniones: [], votantes: [], eventos: [], solicitudes: [] }
+
+  // Centrar y hacer zoom al municipio
+  mapaLeaflet.flyTo(coords, 12, { duration: 1 })
+
+  // Mostrar panel lateral y ripple de selección
+  const color = colorIntensidad(s.reuniones.length + s.votantes.length)
+  setTimeout(() => {
+    mostrarPanelMapa(s.nombre || label, s)
+    mostrarSeleccionMapa(coords, color)
+  }, 800)
+
+  // Limpiar buscador
+  document.getElementById('mapa-buscador').value = label
+  document.getElementById('mapa-buscador-lista').style.display = 'none'
+  document.getElementById('mapa-buscador-limpiar').style.display = 'block'
+}
+
+function navegarBuscador(e) {
+  const lista = document.getElementById('mapa-buscador-lista')
+  const items = lista.querySelectorAll('.mapa-buscador-item')
+  if (!items.length) return
+
+  if (e.key === 'ArrowDown') {
+    e.preventDefault()
+    _buscadorIndiceActivo = Math.min(_buscadorIndiceActivo + 1, items.length - 1)
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault()
+    _buscadorIndiceActivo = Math.max(_buscadorIndiceActivo - 1, 0)
+  } else if (e.key === 'Enter') {
+    e.preventDefault()
+    const activo = lista.querySelector('.mapa-buscador-item.activo')
+    if (activo) seleccionarMunicipioBuscador(activo.dataset.key)
+    return
+  } else if (e.key === 'Escape') {
+    lista.style.display = 'none'
+    return
+  }
+
+  items.forEach((el, i) => el.classList.toggle('activo', i === _buscadorIndiceActivo))
+  if (items[_buscadorIndiceActivo]) items[_buscadorIndiceActivo].scrollIntoView({ block: 'nearest' })
+}
+
+function limpiarBuscadorMapa() {
+  document.getElementById('mapa-buscador').value = ''
+  document.getElementById('mapa-buscador-lista').style.display = 'none'
+  document.getElementById('mapa-buscador-limpiar').style.display = 'none'
+  _buscadorIndiceActivo = -1
+  mapaCirculos.forEach(({ circle, intensidad }) => {
+    circle.setStyle({ fillOpacity: intensidad === 0 ? 0.45 : 0.85, opacity: 1 })
+  })
 }
 
 
