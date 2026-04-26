@@ -5,7 +5,13 @@
 const SUPABASE_URL = 'https://qmoztpqycrlljonobxqm.supabase.co'
 const SUPABASE_ANON = 'sb_publishable_lnbeC0MylQnGVt6Jn_d87Q_hbRwMyJD'
 
-const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON)
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: false,
+  }
+})
 
 
 /* ==============================================
@@ -50,6 +56,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   db.auth.onAuthStateChange(async (evento, session) => {
     if (evento === 'SIGNED_IN') await iniciarApp(session.user)
     if (evento === 'SIGNED_OUT') mostrarLogin()
+    // TOKEN_REFRESHED: sesión renovada silenciosamente, solo actualizamos el usuario
+    if (evento === 'TOKEN_REFRESHED' && session) usuarioActual = session.user
   })
 })
 
