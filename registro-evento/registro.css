@@ -1,0 +1,151 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #f1f5f9;
+  min-height: 100vh;
+  color: #1e293b;
+}
+
+.registro-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 1rem 3rem;
+}
+
+.registro-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 1.75rem;
+}
+
+.registro-card {
+  width: 100%;
+  max-width: 520px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+  padding: 2rem;
+}
+
+/* Estados */
+.estado-bloque {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.75rem;
+  padding: 2rem 0;
+}
+.estado-titulo { font-size: 1.1rem; font-weight: 700; }
+.estado-sub { font-size: 0.875rem; color: #64748b; line-height: 1.5; }
+
+.spinner {
+  width: 40px; height: 40px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #facc15;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.icono-check {
+  width: 64px; height: 64px;
+  background: #22c55e;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Secciones del formulario */
+.form-seccion {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.form-seccion + .form-seccion { border-top: 1px solid #e2e8f0; padding-top: 1.5rem; }
+
+.seccion-num {
+  flex-shrink: 0;
+  width: 32px; height: 32px;
+  background: #facc15;
+  color: #1e293b;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 0.95rem;
+}
+
+.seccion-body { flex: 1; }
+.seccion-titulo { font-size: 1rem; font-weight: 700; margin-bottom: 1rem; }
+
+/* Campos */
+.campos-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+.campo { display: flex; flex-direction: column; gap: 0.35rem; }
+.campo-completo { grid-column: 1 / -1; }
+
+label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #475569;
+}
+
+input, select {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.9rem;
+  color: #1e293b;
+  background: #fff;
+  outline: none;
+  transition: border-color 0.15s;
+  width: 100%;
+}
+input:focus, select:focus { border-color: #facc15; box-shadow: 0 0 0 3px rgba(250,204,21,0.15); }
+
+/* Alerta */
+.alerta {
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+.alerta.error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+.alerta.exito { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+
+/* Botón */
+.btn-registrar {
+  width: 100%;
+  background: #facc15;
+  color: #1e293b;
+  border: none;
+  border-radius: 10px;
+  padding: 0.85rem;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+  margin-top: 0.5rem;
+}
+.btn-registrar:hover { background: #eab308; }
+.btn-registrar:active { transform: scale(0.98); }
+.btn-registrar:disabled { opacity: 0.55; cursor: not-allowed; }
+.btn-otro { background: #f1f5f9; color: #475569; margin-top: 1rem; }
+.btn-otro:hover { background: #e2e8f0; }
+
+@media (max-width: 480px) {
+  .campos-grid { grid-template-columns: 1fr; }
+  .campo-completo { grid-column: 1; }
+  .registro-card { padding: 1.5rem; }
+}

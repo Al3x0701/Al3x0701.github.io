@@ -168,11 +168,95 @@ async function cargarSelectsReferidos() {
         if (el) el.innerHTML = base
       })
 
+  poblarMultiselectResponsables(data.map(u => u.nombre_completo))
   iniciarModalesExcel()
 }
 
+// ── Multiselect Responsables ──
+let _responsablesSeleccionados = []
+
+function poblarMultiselectResponsables(usuarios) {
+  const contenedor = document.getElementById('responsables-opciones')
+  if (!contenedor) return
+  contenedor.innerHTML = usuarios.map(u => `
+    <label class="multiselect-opcion">
+      <input type="checkbox" value="${u}"> ${u}
+    </label>`).join('')
+  contenedor.querySelectorAll('input[type=checkbox]').forEach(cb => {
+    cb.addEventListener('change', () => actualizarResponsables())
+  })
+}
+
+function actualizarResponsables() {
+  const checks = document.querySelectorAll('#responsables-opciones input[type=checkbox]:checked')
+  _responsablesSeleccionados = Array.from(checks).map(c => c.value)
+  const display = document.getElementById('responsables-display')
+  const hidden  = document.getElementById('input-responsables')
+  if (_responsablesSeleccionados.length === 0) {
+    display.innerHTML = '<span class="multiselect-placeholder">— Selecciona responsables —</span>'
+  } else {
+    display.innerHTML = _responsablesSeleccionados
+      .map(n => `<span class="multiselect-tag">${n}<button type="button" data-val="${n}">&times;</button></span>`)
+      .join('')
+    display.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation()
+        const val = btn.dataset.val
+        const cb = document.querySelector(`#responsables-opciones input[value="${CSS.escape(val)}"]`)
+        if (cb) { cb.checked = false; actualizarResponsables() }
+      })
+    })
+  }
+  if (hidden) hidden.value = JSON.stringify(_responsablesSeleccionados)
+}
+
+function iniciarMultiselectResponsables() {
+  const wrap    = document.getElementById('responsables-wrap')
+  const display = document.getElementById('responsables-display')
+  const dropdown = document.getElementById('responsables-dropdown')
+  const search  = document.getElementById('responsables-search')
+  if (!wrap) return
+
+  display.addEventListener('click', () => {
+    const abierto = dropdown.classList.toggle('abierto')
+    if (abierto) search.focus()
+  })
+  search.addEventListener('input', () => {
+    const q = search.value.toLowerCase()
+    document.querySelectorAll('#responsables-opciones .multiselect-opcion').forEach(label => {
+      label.style.display = label.textContent.toLowerCase().includes(q) ? '' : 'none'
+    })
+  })
+  document.addEventListener('click', (e) => {
+    if (!wrap.contains(e.target)) dropdown.classList.remove('abierto')
+  })
+}
+
+function resetMultiselect() {
+  _responsablesSeleccionados = []
+  document.querySelectorAll('#responsables-opciones input[type=checkbox]').forEach(cb => cb.checked = false)
+  actualizarResponsables()
+  const search = document.getElementById('responsables-search')
+  if (search) { search.value = ''; search.dispatchEvent(new Event('input')) }
+}
+
 function iniciarModalesExcel() {
-  // ── Modal Votantes ──
+  // ── Modal Añadir Votante ──
+  const modalAV = document.getElementById('modal-añadir-votante')
+  document.getElementById('btn-abrir-votante').addEventListener('click', () => {
+    modalAV.style.display = 'flex'
+  })
+  document.getElementById('modal-cerrar-votante').addEventListener('click', () => {
+    modalAV.style.display = 'none'
+  })
+  document.getElementById('modal-cancelar-votante').addEventListener('click', () => {
+    modalAV.style.display = 'none'
+  })
+  modalAV.addEventListener('click', e => {
+    if (e.target === modalAV) modalAV.style.display = 'none'
+  })
+
+  // ── Modal Excel Votantes ──
   const modalV = document.getElementById('modal-excel-votantes')
   document.getElementById('btn-abrir-excel-votantes').addEventListener('click', () => {
     modalV.style.display = 'flex'
@@ -309,6 +393,7 @@ async function cargarSeccion(seccion) {
     case 'usuarios': await cargarUsuarios(); break
     case 'auditoria': await cargarAuditoria(); break
     case 'mapa': await cargarMapa(); break
+    case 'eventos': await cargarEventos(); iniciarModalEvento(); iniciarModalQR(); break
   }
 }
 
@@ -593,6 +678,11 @@ document.getElementById('form-reunion').addEventListener('submit', async (e) => 
    LISTA DE VOTANTES
 ============================================== */
 
+/* Estado local de votantes para filtro + paginación */
+let _votantesData = []
+let _votantesPagina = 1
+const _VOTANTES_POR_PAGINA = 13
+
 async function cargarVotantes() {
   const { data, error } = await db
     .from('lista_votantes')
@@ -600,24 +690,507 @@ async function cargarVotantes() {
     .eq('subido_por', usuarioActual.id)
     .order('created_at', { ascending: false })
 
-  const tbody = document.getElementById('tabla-votantes-body')
+  _votantesData = error ? [] : (data || [])
+  _votantesPagina = 1
+  renderTablaVotantes()
+  renderGraficoVotantes()
 
-  if (error || !data?.length) {
-    tbody.innerHTML = '<tr><td colspan="7" class="tabla-vacia">Sin registros aún.</td></tr>'
+  // Conectar buscador y tabs de gráfico (una sola vez)
+  const input = document.getElementById('buscador-votantes')
+  if (input && !input.dataset.connected) {
+    input.dataset.connected = '1'
+    input.addEventListener('input', () => {
+      _votantesPagina = 1
+      renderTablaVotantes()
+    })
+    iniciarGraficoVotantes()
+  } else {
+    // En recargas posteriores, solo repoblar el selector y re-renderizar
+    poblarSelectorReferidoGrafico()
+    renderGraficoVotantes()
+  }
+}
+
+function renderTablaVotantes() {
+  const tbody    = document.getElementById('tabla-votantes-body')
+  const pagWrap  = document.getElementById('paginacion-votantes')
+  const q        = (document.getElementById('buscador-votantes')?.value || '').toLowerCase().trim()
+
+  // Filtrar
+  const filtrados = q
+    ? _votantesData.filter(v =>
+        [v.nombre_completo, v.cedula, v.municipio, v.puesto_votacion, v.amigo_referido]
+          .some(campo => (campo || '').toLowerCase().includes(q))
+      )
+    : _votantesData
+
+  if (!filtrados.length) {
+    tbody.innerHTML = `<tr><td colspan="7" class="tabla-vacia">${q ? 'Sin resultados para "' + q + '".' : 'Sin registros aún.'}</td></tr>`
+    pagWrap.innerHTML = ''
     return
   }
 
-  tbody.innerHTML = data.map(v => `
+  // Paginación
+  const totalPags = Math.ceil(filtrados.length / _VOTANTES_POR_PAGINA)
+  if (_votantesPagina > totalPags) _votantesPagina = totalPags
+  const inicio = (_votantesPagina - 1) * _VOTANTES_POR_PAGINA
+  const pagina = filtrados.slice(inicio, inicio + _VOTANTES_POR_PAGINA)
+
+  tbody.innerHTML = pagina.map(v => `
     <tr>
       <td>${v.nombre_completo}</td>
       <td>${v.cedula}</td>
-      <td>${v.municipio}</td>
-      <td>${v.puesto_votacion}</td>
-      <td>${v.mesa}</td>
-      <td>${v.amigo_referido}</td>
+      <td>${v.municipio || '—'}</td>
+      <td>${v.puesto_votacion || '—'}</td>
+      <td>${v.mesa || '—'}</td>
+      <td>${v.amigo_referido || '—'}</td>
       <td>${badgeEstado(v.estado)}</td>
     </tr>
   `).join('')
+
+  // Controles de paginación
+  if (totalPags <= 1) { pagWrap.innerHTML = ''; return }
+
+  const rango = paginasVisibles(_votantesPagina, totalPags)
+  pagWrap.innerHTML = `
+    <div class="paginacion">
+      <button class="pag-btn" data-p="${_votantesPagina - 1}" ${_votantesPagina === 1 ? 'disabled' : ''}>&#8592;</button>
+      ${rango.map(p => p === '…'
+        ? `<span class="pag-ellipsis">…</span>`
+        : `<button class="pag-btn ${p === _votantesPagina ? 'activo' : ''}" data-p="${p}">${p}</button>`
+      ).join('')}
+      <button class="pag-btn" data-p="${_votantesPagina + 1}" ${_votantesPagina === totalPags ? 'disabled' : ''}>&#8594;</button>
+      <span class="pag-info">${inicio + 1}–${Math.min(inicio + _VOTANTES_POR_PAGINA, filtrados.length)} de ${filtrados.length}</span>
+    </div>
+  `
+  pagWrap.querySelectorAll('.pag-btn:not([disabled])').forEach(btn => {
+    btn.addEventListener('click', () => {
+      _votantesPagina = parseInt(btn.dataset.p)
+      renderTablaVotantes()
+    })
+  })
+}
+
+function paginasVisibles(actual, total) {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
+  const pags = new Set([1, total, actual])
+  if (actual > 1) pags.add(actual - 1)
+  if (actual < total) pags.add(actual + 1)
+  const sorted = [...pags].sort((a, b) => a - b)
+  const result = []
+  let prev = 0
+  for (const p of sorted) {
+    if (p - prev > 1) result.push('…')
+    result.push(p)
+    prev = p
+  }
+  return result
+}
+
+/* ==============================================
+   GRÁFICO VOTANTES
+============================================== */
+
+let _graficoMunicipio = null
+let _graficoPuesto    = null
+let _graficoReferido  = ''
+
+const _COLORES_GRAFICO = [
+  '#facc15','#f97316','#ef4444','#a855f7','#3b82f6',
+  '#10b981','#06b6d4','#e11d48','#84cc16','#f59e0b',
+  '#8b5cf6','#14b8a6','#f43f5e','#22c55e','#0ea5e9',
+]
+
+function iniciarGraficoVotantes() {
+  const sel = document.getElementById('filtro-referido-grafico')
+  if (!sel || sel.dataset.connected) return
+  sel.dataset.connected = '1'
+  sel.addEventListener('change', () => {
+    _graficoReferido = sel.value
+    renderGraficosVotantes()
+  })
+  poblarSelectorReferidoGrafico()
+}
+
+function poblarSelectorReferidoGrafico() {
+  const sel = document.getElementById('filtro-referido-grafico')
+  if (!sel) return
+  const referidos = [...new Set(_votantesData.map(v => v.amigo_referido).filter(Boolean))].sort()
+  const valorActual = sel.value
+  sel.innerHTML = '<option value="">— Todos los referidos —</option>' +
+    referidos.map(r => `<option value="${r}" ${r === valorActual ? 'selected' : ''}>${r}</option>`).join('')
+  _graficoReferido = sel.value
+}
+
+function agrupar(datos, campo, top = 0) {
+  const conteo = {}
+  for (const v of datos) {
+    const k = v[campo] || 'Sin dato'
+    conteo[k] = (conteo[k] || 0) + 1
+  }
+  const entradas = Object.entries(conteo).sort((a, b) => b[1] - a[1])
+  if (top && entradas.length > top) {
+    const otros = entradas.slice(top).reduce((s, [, v]) => s + v, 0)
+    return [...entradas.slice(0, top), ['Otros', otros]]
+  }
+  return entradas
+}
+
+function vacioEnCanvas(wrap, canvas, msg) {
+  if (_graficoMunicipio && canvas.id === 'grafico-municipio') { _graficoMunicipio.destroy(); _graficoMunicipio = null }
+  if (_graficoPuesto    && canvas.id === 'grafico-puesto')    { _graficoPuesto.destroy();    _graficoPuesto    = null }
+  wrap.style.height = '100px'
+  canvas.style.display = 'none'
+  let el = wrap.querySelector('.grafico-sin-datos')
+  if (!el) { el = document.createElement('p'); el.className = 'grafico-sin-datos'; el.style.cssText = 'margin:auto;color:var(--texto-muted);font-size:0.88rem;text-align:center;padding:1rem'; wrap.appendChild(el) }
+  el.textContent = msg
+  wrap.style.display = 'flex'
+}
+
+function renderGraficosVotantes() {
+  const base = _graficoReferido
+    ? _votantesData.filter(v => v.amigo_referido === _graficoReferido)
+    : _votantesData
+
+  // ── Gráfico Municipio (barras horizontales) ──
+  const wrapM  = document.getElementById('grafico-wrap-municipio')
+  const canvM  = document.getElementById('grafico-municipio')
+  const entradasM = agrupar(base, 'municipio', 10)
+
+  if (!entradasM.length) {
+    vacioEnCanvas(wrapM, canvM, 'Sin datos de municipio.')
+  } else {
+    canvM.style.display = ''
+    wrapM.style.display = ''
+    wrapM.querySelector('.grafico-sin-datos')?.remove()
+    wrapM.style.height = Math.max(160, entradasM.length * 44) + 'px'
+    const labelsM  = entradasM.map(([k]) => k)
+    const valoresM = entradasM.map(([, v]) => v)
+    const coloresM = labelsM.map((l, i) => l === 'Otros' ? '#cbd5e1' : _COLORES_GRAFICO[i % _COLORES_GRAFICO.length])
+    if (_graficoMunicipio) _graficoMunicipio.destroy()
+    _graficoMunicipio = new Chart(canvM, {
+      type: 'bar',
+      data: { labels: labelsM, datasets: [{ data: valoresM, backgroundColor: coloresM, borderRadius: 6, borderSkipped: false, barThickness: 22 }] },
+      options: {
+        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.x} votante${ctx.parsed.x !== 1 ? 's' : ''}` } }
+        },
+        scales: {
+          x: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 11 }, color: '#64748b' }, grid: { color: 'rgba(0,0,0,0.04)' } },
+          y: { ticks: { font: { size: 12 }, color: '#1e293b' }, grid: { display: false } }
+        }
+      }
+    })
+  }
+
+  // ── Gráfico Puesto (dona) ──
+  const wrapP  = document.getElementById('grafico-wrap-puesto')
+  const canvP  = document.getElementById('grafico-puesto')
+  const entradasP = agrupar(base, 'puesto_votacion')
+
+  if (!entradasP.length) {
+    vacioEnCanvas(wrapP, canvP, 'Sin datos de puesto.')
+  } else {
+    canvP.style.display = ''
+    wrapP.style.display = ''
+    wrapP.querySelector('.grafico-sin-datos')?.remove()
+    const labelsP  = entradasP.map(([k]) => k)
+    const valoresP = entradasP.map(([, v]) => v)
+    const coloresP = labelsP.map((_, i) => _COLORES_GRAFICO[i % _COLORES_GRAFICO.length])
+    if (_graficoPuesto) _graficoPuesto.destroy()
+    _graficoPuesto = new Chart(canvP, {
+      type: 'doughnut',
+      data: { labels: labelsP, datasets: [{ data: valoresP, backgroundColor: coloresP, borderWidth: 2, borderColor: '#fff', hoverOffset: 8 }] },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: '62%',
+        layout: { padding: { right: 8 } },
+        plugins: {
+          legend: {
+            position: 'right',
+            labels: {
+              font: { size: 11 },
+              padding: 10,
+              boxWidth: 11,
+              boxHeight: 11,
+              usePointStyle: true,
+              pointStyle: 'circle',
+              filter: (item) => item.index < 10,
+            }
+          },
+          tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed} votante${ctx.parsed !== 1 ? 's' : ''}` } }
+        }
+      }
+    })
+  }
+
+}
+
+function renderGraficoVotantes() { renderGraficosVotantes() }
+
+/* ==============================================
+   EVENTOS
+============================================== */
+function iniciarModalEvento() {
+  const overlay  = document.getElementById('modal-crear-evento')
+  const btnAbrir = document.getElementById('btn-abrir-evento')
+  const btnCerrar = document.getElementById('modal-cerrar-evento')
+  const btnCancelar = document.getElementById('modal-cancelar-evento')
+  if (!overlay) return
+
+  iniciarMultiselectResponsables()
+
+  const abrir = () => {
+    overlay.style.display = 'flex'
+    document.getElementById('form-evento-nuevo').reset()
+    resetMultiselect()
+    document.getElementById('evento-nuevo-alerta').style.display = 'none'
+  }
+  const cerrar = () => { overlay.style.display = 'none' }
+
+  btnAbrir.addEventListener('click', abrir)
+  btnCerrar.addEventListener('click', cerrar)
+  btnCancelar.addEventListener('click', cerrar)
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) cerrar() })
+}
+
+document.getElementById('form-evento-nuevo').addEventListener('submit', async (e) => {
+  e.preventDefault()
+  const form     = e.target
+  const alertaEl = document.getElementById('evento-nuevo-alerta')
+  const btn      = form.querySelector('button[type="submit"]')
+
+  if (_responsablesSeleccionados.length === 0) {
+    mostrarAlerta(alertaEl, '⚠️ Selecciona al menos un responsable.', 'error')
+    return
+  }
+
+  btn.disabled = true
+  btn.textContent = 'Guardando…'
+  alertaEl.style.display = 'none'
+
+  const datos = {
+    nombre_evento:    form.nombre_evento.value.trim(),
+    responsables:     _responsablesSeleccionados,
+    municipio:        form.municipio_evento.value,
+    fecha:            form.fecha_evento.value,
+    hora_inicio:      form.hora_inicio.value,
+    hora_cierre:      form.hora_cierre.value,
+    direccion:        form.direccion_evento.value.trim(),
+    creado_por:       usuarioActual.id,
+  }
+
+  const { error } = await db.from('eventos').insert([datos])
+
+  if (error) {
+    mostrarAlerta(alertaEl, '❌ Error al guardar: ' + error.message, 'error')
+  } else {
+    document.getElementById('modal-crear-evento').style.display = 'none'
+    await cargarEventos()
+  }
+
+  btn.disabled = false
+  btn.textContent = 'Guardar evento'
+})
+
+async function cargarEventos() {
+  const { data, error } = await db
+    .from('eventos')
+    .select('*')
+    .order('fecha', { ascending: true })
+
+  const wrap = document.getElementById('lista-eventos-wrap')
+  if (!wrap) return
+
+  if (error || !data?.length) {
+    wrap.innerHTML = `
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.4">
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+        <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+        <line x1="3" y1="10" x2="21" y2="10"/>
+      </svg>
+      <p style="font-size:1rem;font-weight:600">Sin eventos registrados</p>
+      <p style="font-size:0.875rem">Crea tu primer evento con el botón de arriba</p>`
+    wrap.style.cssText = 'min-height:300px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1rem;color:var(--texto-muted)'
+    return
+  }
+
+  wrap.style.cssText = ''
+  wrap.innerHTML = data.map(ev => {
+    const responsables = Array.isArray(ev.responsables) ? ev.responsables.join(', ') : ev.responsables
+    const fecha = ev.fecha ? new Date(ev.fecha + 'T00:00:00').toLocaleDateString('es-CO', { day:'2-digit', month:'long', year:'numeric' }) : '—'
+    return `
+      <div class="evento-card">
+        <div class="evento-card-header">
+          <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap">
+            <span class="evento-nombre">${ev.nombre_evento}</span>
+            <span class="evento-municipio">${ev.municipio || ''}</span>
+          </div>
+          <button class="btn-stats-evento btn btn-secundario" data-id="${ev.id}" data-nombre="${ev.nombre_evento}" style="font-size:0.78rem;padding:0.3rem 0.75rem">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            Estadísticas
+          </button>
+        </div>
+        <div class="evento-card-meta">
+          <span class="evento-meta-item">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>
+            ${fecha}
+          </span>
+          <span class="evento-meta-item">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            ${ev.hora_inicio || '—'} – ${ev.hora_cierre || '—'}
+          </span>
+          <span class="evento-meta-item">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            ${ev.direccion || '—'}
+          </span>
+          <span class="evento-meta-item">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+            ${responsables || '—'}
+          </span>
+        </div>
+      </div>`
+  }).join('')
+
+  // Enganche de botones de estadísticas
+  wrap.querySelectorAll('.btn-stats-evento').forEach(btn => {
+    btn.addEventListener('click', () => abrirStatsEvento(btn.dataset.id, btn.dataset.nombre))
+  })
+}
+
+// ── Modal QR ──
+function iniciarModalQR() {
+  const btnQR   = document.getElementById('btn-ver-qr')
+  const overlay = document.getElementById('modal-qr')
+  const btnCerrar = document.getElementById('modal-cerrar-qr')
+  const btnDesc = document.getElementById('btn-descargar-qr')
+  if (!btnQR || btnQR.dataset.qrIniciado) return
+  btnQR.dataset.qrIniciado = '1'
+
+  const url = window.location.href.replace(/panel-equipo.*/, '') + 'registro-evento/'
+
+  const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=10&data=${encodeURIComponent(url)}`
+
+  btnQR.addEventListener('click', () => {
+    overlay.style.display = 'flex'
+    document.getElementById('qr-url-texto').textContent = url
+    document.getElementById('qr-img').src = qrSrc
+  })
+  const cerrar = () => { overlay.style.display = 'none' }
+  btnCerrar.addEventListener('click', cerrar)
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) cerrar() })
+  btnDesc.addEventListener('click', () => {
+    const a = document.createElement('a')
+    a.download = 'qr-asistencia.png'
+    a.href = qrSrc
+    a.target = '_blank'
+    a.click()
+  })
+}
+
+// ── Modal Estadísticas ──
+let _graficoStats = null
+
+async function abrirStatsEvento(eventoId, nombreEvento) {
+  const overlay = document.getElementById('modal-stats-evento')
+  overlay.style.display = 'flex'
+  document.getElementById('stats-evento-nombre').textContent = nombreEvento
+  document.getElementById('stats-kpis').innerHTML = '<p style="color:var(--texto-muted);font-size:0.85rem">Cargando…</p>'
+  document.getElementById('stats-tabla').innerHTML = ''
+
+  // Destruir gráfico anterior
+  if (_graficoStats) { _graficoStats.destroy(); _graficoStats = null }
+
+  const cerrar = () => { overlay.style.display = 'none' }
+  document.getElementById('modal-cerrar-stats').onclick = cerrar
+  overlay.onclick = (e) => { if (e.target === overlay) cerrar() }
+
+  // Cargar asistentes del evento
+  const { data: asistentes, error } = await db
+    .from('asistentes_evento')
+    .select('*')
+    .eq('evento_id', eventoId)
+    .order('created_at', { ascending: true })
+
+  if (error) {
+    document.getElementById('stats-kpis').innerHTML = `<p style="color:red">Error: ${error.message}</p>`
+    return
+  }
+
+  const total = asistentes?.length || 0
+
+  // Cruzar cédulas con lista_votantes
+  let votantes = 0
+  if (total > 0) {
+    const cedulas = asistentes.map(a => a.cedula).filter(Boolean)
+    const { data: encontrados } = await db
+      .from('lista_votantes')
+      .select('cedula')
+      .in('cedula', cedulas)
+    votantes = encontrados?.length || 0
+  }
+  const noVotantes = total - votantes
+
+  // KPIs
+  document.getElementById('stats-kpis').innerHTML = `
+    <div class="stats-kpi">
+      <span class="stats-kpi-val">${total}</span>
+      <span class="stats-kpi-label">Total asistentes</span>
+    </div>
+    <div class="stats-kpi" style="--kpi-color:#22c55e">
+      <span class="stats-kpi-val">${votantes}</span>
+      <span class="stats-kpi-label">Votantes registrados</span>
+    </div>
+    <div class="stats-kpi" style="--kpi-color:#f97316">
+      <span class="stats-kpi-val">${noVotantes}</span>
+      <span class="stats-kpi-label">No registrados</span>
+    </div>`
+
+  // Gráfico dona
+  const canvas = document.getElementById('grafico-stats-evento')
+  if (total > 0) {
+    _graficoStats = new Chart(canvas, {
+      type: 'doughnut',
+      data: {
+        labels: ['Votantes registrados', 'No registrados'],
+        datasets: [{ data: [votantes, noVotantes], backgroundColor: ['#22c55e', '#f97316'], borderWidth: 2, borderColor: '#fff', hoverOffset: 6 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: '60%',
+        plugins: {
+          legend: { position: 'right', labels: { font: { size: 12 }, padding: 16, usePointStyle: true, pointStyle: 'circle' } },
+          tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed} (${total ? Math.round(ctx.parsed/total*100) : 0}%)` } }
+        }
+      }
+    })
+  } else {
+    canvas.getContext('2d') // limpia
+    canvas.parentElement.innerHTML = '<p style="text-align:center;color:var(--texto-muted);padding:3rem 0">Sin asistentes registrados aún</p>'
+  }
+
+  // Tabla de asistentes
+  if (total > 0) {
+    const cedulasVotantes = new Set()
+    if (votantes > 0) {
+      const { data: enc } = await db.from('lista_votantes').select('cedula').in('cedula', asistentes.map(a => a.cedula))
+      enc?.forEach(v => cedulasVotantes.add(v.cedula))
+    }
+    document.getElementById('stats-tabla').innerHTML = `
+      <table class="tabla-asistentes">
+        <thead><tr><th>Nombre</th><th>Cédula</th><th>Teléfono</th><th>Referido</th><th>Votante</th></tr></thead>
+        <tbody>
+          ${asistentes.map(a => `
+            <tr>
+              <td>${a.nombre_completo}</td>
+              <td>${a.cedula}</td>
+              <td>${a.telefono || '—'}</td>
+              <td>${a.referido || '—'}</td>
+              <td>${cedulasVotantes.has(a.cedula) ? '<span class="badge-si">Sí</span>' : '<span class="badge-no">No</span>'}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>`
+  }
 }
 
 document.getElementById('form-votante').addEventListener('submit', async (e) => {
@@ -650,6 +1223,9 @@ document.getElementById('form-votante').addEventListener('submit', async (e) => 
     mostrarAlerta(alertaEl, '✅ Registro guardado correctamente.', 'exito')
     form.reset()
     await cargarVotantes()
+    setTimeout(() => {
+      document.getElementById('modal-añadir-votante').style.display = 'none'
+    }, 1200)
   }
 
   btn.disabled = false
