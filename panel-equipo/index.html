@@ -1109,6 +1109,44 @@
         </div>
       </div>
 
+      <!-- ── MODAL REGISTRO MANUAL EVENTO ── -->
+      <div class="modal-overlay" id="modal-registro-evento" style="display:none">
+        <div class="modal-caja" style="max-width:520px">
+          <div class="modal-cabecera">
+            <h2 class="modal-titulo" id="registro-evento-titulo">Registro de Asistencia</h2>
+            <button class="modal-cerrar" id="modal-cerrar-registro-evento" type="button">&times;</button>
+          </div>
+          <form id="form-registro-evento-manual">
+            <div class="form-grilla">
+              <div class="campo campo-completo">
+                <label>Nombre completo *</label>
+                <input type="text" name="nombre_completo" placeholder="Ej. Juan Pérez García" required>
+              </div>
+              <div class="campo">
+                <label>Cédula *</label>
+                <input type="text" name="cedula" placeholder="Ej. 1234567890" required>
+              </div>
+              <div class="campo">
+                <label>Teléfono</label>
+                <input type="tel" name="telefono" placeholder="Ej. 3001234567">
+              </div>
+              <div class="campo campo-completo">
+                <label>Referido por *</label>
+                <select name="referido" id="select-referido-registro-manual" required>
+                  <option value="">— Selecciona un organizador —</option>
+                </select>
+              </div>
+            </div>
+            <input type="hidden" id="registro-manual-evento-id">
+            <div id="registro-manual-alerta" class="alerta" style="display:none;margin-top:1rem"></div>
+            <div style="display:flex;gap:0.75rem;margin-top:1.25rem">
+              <button type="submit" class="btn btn-primario">Registrar asistencia</button>
+              <button type="button" class="btn btn-secundario" id="modal-cancelar-registro-evento">Cancelar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
       <!-- ── MODAL AÑADIR VOTANTE ── -->
       <div class="modal-overlay" id="modal-añadir-votante" style="display:none">
         <div class="modal-caja" style="max-width:560px">

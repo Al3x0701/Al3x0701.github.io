@@ -1027,10 +1027,16 @@ async function cargarEventos() {
             <span class="evento-nombre">${ev.nombre_evento}</span>
             <span class="evento-municipio">${ev.municipio || ''}</span>
           </div>
-          <button class="btn-stats-evento btn btn-secundario" data-id="${ev.id}" data-nombre="${ev.nombre_evento}" style="font-size:0.78rem;padding:0.3rem 0.75rem">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-            Estadísticas
-          </button>
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+            <button class="btn-registro-evento btn btn-primario" data-id="${ev.id}" data-nombre="${ev.nombre_evento}" data-responsables='${JSON.stringify(Array.isArray(ev.responsables) ? ev.responsables : [])}' style="font-size:0.78rem;padding:0.3rem 0.75rem">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+              Registro
+            </button>
+            <button class="btn-stats-evento btn btn-secundario" data-id="${ev.id}" data-nombre="${ev.nombre_evento}" style="font-size:0.78rem;padding:0.3rem 0.75rem">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              Estadísticas
+            </button>
+          </div>
         </div>
         <div class="evento-card-meta">
           <span class="evento-meta-item">
@@ -1053,9 +1059,15 @@ async function cargarEventos() {
       </div>`
   }).join('')
 
-  // Enganche de botones de estadísticas
+  // Enganche de botones
   wrap.querySelectorAll('.btn-stats-evento').forEach(btn => {
     btn.addEventListener('click', () => abrirStatsEvento(btn.dataset.id, btn.dataset.nombre))
+  })
+  wrap.querySelectorAll('.btn-registro-evento').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const responsables = JSON.parse(btn.dataset.responsables || '[]')
+      abrirRegistroEvento(btn.dataset.id, btn.dataset.nombre, responsables)
+    })
   })
 }
 
@@ -1088,6 +1100,57 @@ function iniciarModalQR() {
     a.click()
   })
 }
+
+// ── Modal Registro Manual ──
+function abrirRegistroEvento(eventoId, nombreEvento, responsables) {
+  const overlay = document.getElementById('modal-registro-evento')
+  const form    = document.getElementById('form-registro-evento-manual')
+  document.getElementById('registro-evento-titulo').textContent = `Registro — ${nombreEvento}`
+  document.getElementById('registro-manual-evento-id').value = eventoId
+  document.getElementById('registro-manual-alerta').style.display = 'none'
+  form.reset()
+
+  const selRef = document.getElementById('select-referido-registro-manual')
+  selRef.innerHTML = '<option value="">— Selecciona un organizador —</option>' +
+    responsables.map(r => `<option value="${r}">${r}</option>`).join('')
+
+  overlay.style.display = 'flex'
+
+  const cerrar = () => { overlay.style.display = 'none' }
+  document.getElementById('modal-cerrar-registro-evento').onclick = cerrar
+  document.getElementById('modal-cancelar-registro-evento').onclick = cerrar
+  overlay.onclick = (e) => { if (e.target === overlay) cerrar() }
+}
+
+document.getElementById('form-registro-evento-manual').addEventListener('submit', async (e) => {
+  e.preventDefault()
+  const form     = e.target
+  const alertaEl = document.getElementById('registro-manual-alerta')
+  const btn      = form.querySelector('button[type="submit"]')
+  const eventoId = document.getElementById('registro-manual-evento-id').value
+
+  btn.disabled = true
+  btn.textContent = 'Guardando…'
+  alertaEl.style.display = 'none'
+
+  const { error } = await db.from('asistentes_evento').insert([{
+    evento_id:       eventoId,
+    nombre_completo: form.nombre_completo.value.trim(),
+    cedula:          form.cedula.value.trim(),
+    telefono:        form.telefono.value.trim() || null,
+    referido:        form.referido.value,
+  }])
+
+  if (error) {
+    mostrarAlerta(alertaEl, '❌ Error: ' + error.message, 'error')
+  } else {
+    form.reset()
+    mostrarAlerta(alertaEl, '✅ Asistencia registrada correctamente.', 'exito')
+  }
+
+  btn.disabled = false
+  btn.textContent = 'Registrar asistencia'
+})
 
 // ── Modal Estadísticas ──
 let _graficoStats = null
@@ -1836,6 +1899,18 @@ const CENTROIDES_VDC = {
   'bolivar': [4.3432, -76.2281],
 }
 
+// Coordenadas de puestos de votación conocidos
+// Clave: nombre exacto tal como aparece en lista_votantes (case-insensitive match)
+const PUESTOS_VOTACION_COORDS = {
+  'colegio cardenas mirriñao': [3.5459649031378686, -76.29660686953302],
+  'esc. harold edder zamorano': [3.556195217147753, -76.30078643220871],
+}
+
+function normPuesto(nombre) {
+  if (!nombre) return ''
+  return nombre.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+}
+
 function normMunicipio(nombre) {
   if (!nombre) return ''
   return nombre.trim().toLowerCase()
@@ -1861,7 +1936,7 @@ async function cargarMapa() {
     { data: solicitudes },
   ] = await Promise.all([
     db.from('lista_reuniones').select('municipio, estado'),
-    db.from('lista_votantes').select('municipio, estado'),
+    db.from('lista_votantes').select('municipio, estado, puesto_votacion'),
     db.from('noticias_eventos').select('titulo, municipio, fecha_evento').eq('tipo', 'evento'),
     db.from('solicitudes').select('municipio, estado, tipo'),
   ])
@@ -1985,6 +2060,38 @@ async function cargarMapa() {
       }).addTo(mapaLeaflet)
         .bindPopup(`<div class="mapa-popup-titulo">${ev.titulo || 'Evento'}</div><div class="mapa-popup-fecha">${fecha} · ${ev.municipio}</div>`)
     })
+
+  // 7. Marcadores de puestos de votación
+  const votosPorPuesto = {}
+  ;(votantes || []).forEach(v => {
+    if (!v.puesto_votacion) return
+    const k = normPuesto(v.puesto_votacion)
+    votosPorPuesto[k] = (votosPorPuesto[k] || 0) + 1
+  })
+
+  Object.entries(PUESTOS_VOTACION_COORDS).forEach(([nombreNorm, coords]) => {
+    const votos = votosPorPuesto[normPuesto(nombreNorm)] || 0
+    const nombre = nombreNorm.replace(/(^\w|\s\w)/g, c => c.toUpperCase())
+
+    const circle = L.circleMarker(coords, {
+      radius: 10,
+      fillColor: '#3b82f6',
+      fillOpacity: 0.9,
+      color: '#fff',
+      weight: 2,
+      pane: 'markerPane',
+    }).addTo(mapaLeaflet)
+
+    circle.bindTooltip(
+      `<div class="mapa-puesto-tooltip">
+        <strong>${nombre}</strong>
+        <span>${votos} voto${votos !== 1 ? 's' : ''} registrado${votos !== 1 ? 's' : ''}</span>
+       </div>`,
+      { permanent: false, direction: 'top', className: 'mapa-tooltip-puesto', opacity: 1 }
+    )
+    circle.on('mouseover', function () { this.openTooltip() })
+    circle.on('mouseout',  function () { this.closeTooltip() })
+  })
 
   // Recalcular tamaño por si el contenedor estaba oculto al inicializar
   guardarStatsParaBuscador(stats)

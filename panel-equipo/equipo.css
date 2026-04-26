@@ -2697,3 +2697,29 @@ select {
   font-size: 0.72rem; font-weight: 700;
   padding: 0.15rem 0.5rem; border-radius: 999px;
 }
+
+/* Tooltip puestos de votación */
+.mapa-tooltip-puesto {
+  background: #1e293b !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 0 !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2) !important;
+}
+.mapa-tooltip-puesto::before { display: none !important; }
+
+.mapa-puesto-tooltip {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.55rem 0.85rem;
+}
+.mapa-puesto-tooltip strong {
+  font-size: 0.82rem;
+  color: #fff;
+  font-weight: 700;
+}
+.mapa-puesto-tooltip span {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
