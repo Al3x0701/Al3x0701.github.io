@@ -2,7 +2,7 @@
    CONFIGURACIÓN DE SUPABASE
    Reemplaza los valores con los de tu proyecto
 ============================================== */
-const SUPABASE_URL  = 'https://qmoztpqycrlljonobxqm.supabase.co'
+const SUPABASE_URL = 'https://qmoztpqycrlljonobxqm.supabase.co'
 const SUPABASE_ANON = 'sb_publishable_lnbeC0MylQnGVt6Jn_d87Q_hbRwMyJD'
 
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON)
@@ -137,6 +137,60 @@ async function iniciarApp(user) {
 
   // Cargar el dashboard
   navegarA('dashboard')
+
+  // Pre-cargar usuarios para los selects de referidos
+  cargarSelectsReferidos()
+}
+
+async function cargarSelectsReferidos() {
+  const { data } = await db
+    .from('usuarios')
+    .select('nombre_completo')
+    .eq('activo', true)
+    .order('nombre_completo', { ascending: true })
+
+  if (!data?.length) return
+
+  const opciones = data.map(u => `<option value="${u.nombre_completo}">${u.nombre_completo}</option>`).join('')
+  const base = '<option value="">— Selecciona —</option>' + opciones
+
+    ;['select-referido-reunion', 'select-referido-votante',
+      'modal-referido-reuniones', 'modal-referido-votantes'].forEach(id => {
+        const el = document.getElementById(id)
+        if (el) el.innerHTML = base
+      })
+
+  iniciarModalesExcel()
+}
+
+function iniciarModalesExcel() {
+  // ── Modal Votantes ──
+  const modalV = document.getElementById('modal-excel-votantes')
+  document.getElementById('btn-abrir-excel-votantes').addEventListener('click', () => {
+    modalV.style.display = 'flex'
+  })
+  document.getElementById('modal-cerrar-excel-votantes').addEventListener('click', () => {
+    modalV.style.display = 'none'
+  })
+  modalV.addEventListener('click', e => {
+    if (e.target === e.currentTarget) modalV.style.display = 'none'
+  })
+
+  // Dropdown "Descargar formato"
+  const btnFormato  = document.getElementById('btn-formato-dropdown')
+  const menuFormato = document.getElementById('excel-formato-menu')
+  btnFormato.addEventListener('click', e => {
+    e.stopPropagation()
+    menuFormato.style.display = menuFormato.style.display === 'none' ? 'block' : 'none'
+  })
+  document.addEventListener('click', () => { menuFormato.style.display = 'none' })
+  document.getElementById('btn-descargar-formato-votantes').addEventListener('click', () => {
+    descargarFormatoVotantes()
+    menuFormato.style.display = 'none'
+  })
+
+  // Inicializa la lógica de upload (drag, file input, subir, limpiar)
+  initExcelVotantes()
 }
 
 
@@ -256,7 +310,7 @@ async function cargarSeccion(seccion) {
 ============================================== */
 
 function iniciarMenuConfig() {
-  const btn      = document.getElementById('btn-config')
+  const btn = document.getElementById('btn-config')
   const dropdown = document.getElementById('config-dropdown')
 
   btn.addEventListener('click', e => {
@@ -276,8 +330,8 @@ function iniciarMenuConfig() {
 }
 
 function iniciarMenuMovil() {
-  const sidebar  = document.getElementById('sidebar')
-  const overlay  = document.getElementById('sidebar-overlay')
+  const sidebar = document.getElementById('sidebar')
+  const overlay = document.getElementById('sidebar-overlay')
 
   document.getElementById('btn-menu').addEventListener('click', () => {
     sidebar.classList.toggle('abierto')
@@ -836,18 +890,18 @@ async function cargarSolicitudes() {
 
   const items = data || []
   const pendiente = items.filter(x => x.estado === 'pendiente').length
-  const revision  = items.filter(x => x.estado === 'revision').length
-  const resuelto  = items.filter(x => x.estado === 'resuelto').length
+  const revision = items.filter(x => x.estado === 'revision').length
+  const resuelto = items.filter(x => x.estado === 'resuelto').length
 
   document.getElementById('sol-kpi-pendiente').textContent = pendiente
-  document.getElementById('sol-kpi-revision').textContent  = revision
-  document.getElementById('sol-kpi-resuelto').textContent  = resuelto
+  document.getElementById('sol-kpi-revision').textContent = revision
+  document.getElementById('sol-kpi-resuelto').textContent = resuelto
 
   renderSolicitudes(items)
 
   // Filtros
   const filtroEstado = document.getElementById('sol-filtro-estado')
-  const filtroTexto  = document.getElementById('sol-filtro-texto')
+  const filtroTexto = document.getElementById('sol-filtro-texto')
   const aplicar = () => {
     const est = filtroEstado.value
     const txt = filtroTexto.value.toLowerCase()
@@ -935,7 +989,7 @@ document.getElementById('form-noticia').addEventListener('submit', async (e) => 
   const form = e.target
   const alertaEl = document.getElementById('noticia-alerta')
   const btn = form.querySelector('button[type="submit"]')
-  
+
   btn.disabled = true
   btn.textContent = 'Publicando...'
 
@@ -963,7 +1017,7 @@ document.getElementById('form-evento').addEventListener('submit', async (e) => {
   const form = e.target
   const alertaEl = document.getElementById('evento-alerta')
   const btn = form.querySelector('button[type="submit"]')
-  
+
   btn.disabled = true
   btn.textContent = 'Publicando...'
 
@@ -1052,13 +1106,13 @@ document.getElementById('form-usuario').addEventListener('submit', async (e) => 
       'Authorization': `Bearer ${session.access_token}`,
     },
     body: JSON.stringify({
-      email:           form.email.value,
-      password:        form.password.value,
+      email: form.email.value,
+      password: form.password.value,
       nombre_completo: form.nombre_completo.value,
-      rol:             form.rol.value,
-      municipio:       form.municipio.value || null,
-      telefono:        form.telefono.value || null,
-      creado_por:      usuarioActual.id,
+      rol: form.rol.value,
+      municipio: form.municipio.value || null,
+      telefono: form.telefono.value || null,
+      creado_por: usuarioActual.id,
     }),
   })
 
@@ -1154,48 +1208,48 @@ function _exportarAuditoriaXLSX(items) {
 
 // Centroides de los 42 municipios del Valle del Cauca
 const CENTROIDES_VDC = {
-  'cali':             [3.4516, -76.5320],
-  'palmira':          [3.5338, -76.2985],
-  'buenaventura':     [3.8802, -77.0311],
-  'tulua':            [4.0843, -76.1982],
-  'cartago':          [4.7459, -75.9119],
-  'buga':             [3.9002, -76.2996],
-  'yumbo':            [3.5886, -76.4953],
-  'jamundi':          [3.2629, -76.5387],
-  'florida':          [3.3283, -76.2356],
-  'candelaria':       [3.4085, -76.3418],
-  'pradera':          [3.4213, -76.2443],
-  'el cerrito':       [3.6953, -76.2954],
-  'guacari':          [3.7706, -76.3380],
-  'ginebra':          [3.7427, -76.2745],
-  'san pedro':        [3.9613, -76.4017],
-  'bugalagrande':     [4.2060, -76.1597],
-  'zarzal':           [4.3886, -76.0713],
-  'la union':         [4.5300, -76.1015],
-  'roldanillo':       [4.4172, -76.1538],
-  'toro':             [4.5990, -76.0802],
-  'versalles':        [4.5800, -76.2386],
-  'el dovio':         [4.5213, -76.2990],
-  'trujillo':         [4.2353, -76.3270],
-  'riofrio':          [4.0918, -76.3507],
-  'yotoco':           [3.8687, -76.3951],
-  'calima':           [3.9279, -76.5192],
-  'dagua':            [3.6573, -76.6894],
-  'la cumbre':        [3.6430, -76.5638],
-  'vijes':            [3.6911, -76.4613],
-  'restrepo':         [3.8227, -76.5303],
-  'el aguila':        [4.9163, -75.9705],
-  'ansermanuevo':     [4.8042, -75.9842],
-  'el cairo':         [4.8958, -76.2418],
-  'obando':           [4.5782, -75.9781],
-  'la victoria':      [4.5238, -75.9070],
-  'ulloa':            [4.7064, -75.9353],
-  'alcala':           [4.6742, -75.7762],
-  'caicedonia':       [4.3309, -75.8291],
-  'sevilla':          [4.2680, -75.9377],
-  'andalucia':        [4.1523, -76.1668],
-  'argelia':          [4.0677, -75.9892],
-  'bolivar':          [4.3432, -76.2281],
+  'cali': [3.4516, -76.5320],
+  'palmira': [3.5338, -76.2985],
+  'buenaventura': [3.8802, -77.0311],
+  'tulua': [4.0843, -76.1982],
+  'cartago': [4.7459, -75.9119],
+  'buga': [3.9002, -76.2996],
+  'yumbo': [3.5886, -76.4953],
+  'jamundi': [3.2629, -76.5387],
+  'florida': [3.3283, -76.2356],
+  'candelaria': [3.4085, -76.3418],
+  'pradera': [3.4213, -76.2443],
+  'el cerrito': [3.6953, -76.2954],
+  'guacari': [3.7706, -76.3380],
+  'ginebra': [3.7427, -76.2745],
+  'san pedro': [3.9613, -76.4017],
+  'bugalagrande': [4.2060, -76.1597],
+  'zarzal': [4.3886, -76.0713],
+  'la union': [4.5300, -76.1015],
+  'roldanillo': [4.4172, -76.1538],
+  'toro': [4.5990, -76.0802],
+  'versalles': [4.5800, -76.2386],
+  'el dovio': [4.5213, -76.2990],
+  'trujillo': [4.2353, -76.3270],
+  'riofrio': [4.0918, -76.3507],
+  'yotoco': [3.8687, -76.3951],
+  'calima': [3.9279, -76.5192],
+  'dagua': [3.6573, -76.6894],
+  'la cumbre': [3.6430, -76.5638],
+  'vijes': [3.6911, -76.4613],
+  'restrepo': [3.8227, -76.5303],
+  'el aguila': [4.9163, -75.9705],
+  'ansermanuevo': [4.8042, -75.9842],
+  'el cairo': [4.8958, -76.2418],
+  'obando': [4.5782, -75.9781],
+  'la victoria': [4.5238, -75.9070],
+  'ulloa': [4.7064, -75.9353],
+  'alcala': [4.6742, -75.7762],
+  'caicedonia': [4.3309, -75.8291],
+  'sevilla': [4.2680, -75.9377],
+  'andalucia': [4.1523, -76.1668],
+  'argelia': [4.0677, -75.9892],
+  'bolivar': [4.3432, -76.2281],
 }
 
 function normMunicipio(nombre) {
@@ -1208,9 +1262,9 @@ function normMunicipio(nombre) {
 
 function colorIntensidad(valor) {
   if (!valor || valor === 0) return '#f1f5f9'
-  if (valor <= 10)  return '#fef9c3'
-  if (valor <= 30)  return '#facc15'
-  if (valor <= 60)  return '#f97316'
+  if (valor <= 10) return '#fef9c3'
+  if (valor <= 30) return '#facc15'
+  if (valor <= 60) return '#f97316'
   return '#dc2626'
 }
 
@@ -1231,7 +1285,7 @@ async function cargarMapa() {
   // 2. Agregar por municipio
   const stats = {}
   const agregar = (arr, tipo) => {
-    ;(arr || []).forEach(x => {
+    ; (arr || []).forEach(x => {
       const k = normMunicipio(x.municipio)
       if (!k) return
       if (!stats[k]) stats[k] = { nombre: x.municipio?.trim(), reuniones: [], votantes: [], eventos: [], solicitudes: [] }
@@ -1250,9 +1304,9 @@ async function cargarMapa() {
   const totalS = (solicitudes || []).length
   const muniActivos = Object.keys(stats).filter(k => stats[k].reuniones.length + stats[k].votantes.length > 0).length
 
-  document.getElementById('mapa-kpi-total').textContent       = totalR + totalV
-  document.getElementById('mapa-kpi-municipios').textContent  = muniActivos
-  document.getElementById('mapa-kpi-eventos').textContent     = totalE
+  document.getElementById('mapa-kpi-total').textContent = totalR + totalV
+  document.getElementById('mapa-kpi-municipios').textContent = muniActivos
+  document.getElementById('mapa-kpi-eventos').textContent = totalE
   document.getElementById('mapa-kpi-solicitudes').textContent = totalS
 
   // 4. Inicializar Leaflet solo una vez
@@ -1313,7 +1367,7 @@ async function cargarMapa() {
       mostrarSeleccionMapa(coords, color)
     })
     circle.on('mouseover', () => circle.setStyle({ fillOpacity: 1, weight: 3 }))
-    circle.on('mouseout',  () => circle.setStyle({ fillOpacity: intensidad === 0 ? 0.45 : 0.85, weight: intensidad === 0 ? 1 : 2 }))
+    circle.on('mouseout', () => circle.setStyle({ fillOpacity: intensidad === 0 ? 0.45 : 0.85, weight: intensidad === 0 ? 1 : 2 }))
     circle.bindTooltip(nombre, { permanent: false, direction: 'top', className: 'mapa-tooltip' })
 
     // Ondas animadas en municipios con actividad media-alta
@@ -1332,21 +1386,21 @@ async function cargarMapa() {
     }
   })
 
-  // 6. Marcadores de eventos (círculo pequeño morado encima)
-  ;(eventos || []).forEach(ev => {
-    const k = normMunicipio(ev.municipio)
-    const coords = CENTROIDES_VDC[k]
-    if (!coords) return
-    const fecha = ev.fecha_evento ? formatFecha(ev.fecha_evento).split(',')[0] : 'Sin fecha'
-    L.circleMarker(coords, {
-      radius: 6,
-      fillColor: '#6366f1',
-      fillOpacity: 1,
-      color: '#fff',
-      weight: 2,
-    }).addTo(mapaLeaflet)
-      .bindPopup(`<div class="mapa-popup-titulo">${ev.titulo || 'Evento'}</div><div class="mapa-popup-fecha">${fecha} · ${ev.municipio}</div>`)
-  })
+    // 6. Marcadores de eventos (círculo pequeño morado encima)
+    ; (eventos || []).forEach(ev => {
+      const k = normMunicipio(ev.municipio)
+      const coords = CENTROIDES_VDC[k]
+      if (!coords) return
+      const fecha = ev.fecha_evento ? formatFecha(ev.fecha_evento).split(',')[0] : 'Sin fecha'
+      L.circleMarker(coords, {
+        radius: 6,
+        fillColor: '#6366f1',
+        fillOpacity: 1,
+        color: '#fff',
+        weight: 2,
+      }).addTo(mapaLeaflet)
+        .bindPopup(`<div class="mapa-popup-titulo">${ev.titulo || 'Evento'}</div><div class="mapa-popup-fecha">${fecha} · ${ev.municipio}</div>`)
+    })
 
   // Recalcular tamaño por si el contenedor estaba oculto al inicializar
   guardarStatsParaBuscador(stats)
@@ -1448,7 +1502,7 @@ function filtrarMapaBuscador(valor) {
     const coincide = !q || key.includes(q)
     circle.setStyle({
       fillOpacity: coincide ? (intensidad === 0 ? 0.45 : 0.85) : 0,
-      opacity:     coincide ? 1 : 0,
+      opacity: coincide ? 1 : 0,
     })
   })
 
@@ -1556,4 +1610,227 @@ function hoy() {
 function formatFecha(iso) {
   if (!iso) return '—'
   return new Date(iso).toLocaleDateString('es-CO', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+}
+
+
+/* ==============================================
+   CARGA MASIVA DESDE EXCEL
+============================================== */
+
+// Mapeo de encabezados flexibles → nombre interno
+const ALIAS_REUNIONES = {
+  nombre: 'nombre_completo', nombre_completo: 'nombre_completo',
+  cedula: 'cedula', cédula: 'cedula', documento: 'cedula', cc: 'cedula',
+  telefono: 'telefono', teléfono: 'telefono', celular: 'telefono',
+  municipio: 'municipio', ciudad: 'municipio',
+  fecha_reunion: 'fecha_reunion', fecha: 'fecha_reunion', 'fecha reunión': 'fecha_reunion',
+  amigo_referido: 'amigo_referido', referido: 'amigo_referido', referido_por: 'amigo_referido', 'referido por': 'amigo_referido',
+}
+
+const ALIAS_VOTANTES = {
+  nombre: 'nombre_completo', nombre_completo: 'nombre_completo',
+  cedula: 'cedula', cédula: 'cedula', documento: 'cedula', cc: 'cedula',
+  telefono: 'telefono', teléfono: 'telefono', celular: 'telefono',
+  municipio: 'municipio', ciudad: 'municipio',
+  puesto_votacion: 'puesto_votacion', puesto: 'puesto_votacion', 'puesto de votacion': 'puesto_votacion', 'puesto de votación': 'puesto_votacion',
+  mesa: 'mesa', numero_mesa: 'mesa', 'número de mesa': 'mesa',
+  amigo_referido: 'amigo_referido', referido: 'amigo_referido', referido_por: 'amigo_referido', 'referido por': 'amigo_referido',
+}
+
+const CAMPOS_REUNIONES = ['nombre_completo', 'cedula', 'telefono', 'municipio', 'fecha_reunion', 'amigo_referido']
+const CAMPOS_VOTANTES = ['nombre_completo', 'cedula', 'telefono', 'municipio', 'puesto_votacion', 'mesa', 'amigo_referido']
+
+function normalizarClave(str) {
+  return String(str).toLowerCase().trim()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/\s+/g, '_')
+}
+
+function parsearExcel(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = e => {
+      try {
+        const wb = XLSX.read(e.target.result, { type: 'array', cellDates: true })
+        const ws = wb.Sheets[wb.SheetNames[0]]
+        const rows = XLSX.utils.sheet_to_json(ws, { defval: '' })
+        resolve(rows)
+      } catch (err) { reject(err) }
+    }
+    reader.onerror = reject
+    reader.readAsArrayBuffer(file)
+  })
+}
+
+function mapearFilas(rows, alias) {
+  return rows.map(row => {
+    const mapped = {}
+    for (const [k, v] of Object.entries(row)) {
+      const norm = normalizarClave(k)
+      const campo = alias[norm]
+      if (campo) mapped[campo] = v === undefined || v === null ? '' : String(v).trim()
+    }
+    return mapped
+  }).filter(r => r.nombre_completo || r.cedula)
+}
+
+function renderPreview(filas, campos, tablaEl, countEl) {
+  const headers = campos.map(c => `<th>${c}</th>`).join('')
+  const body = filas.slice(0, 5).map(f =>
+    `<tr>${campos.map(c => `<td>${f[c] ?? '—'}</td>`).join('')}</tr>`
+  ).join('')
+  const resto = filas.length > 5 ? `<tr><td colspan="${campos.length}" class="tabla-vacia">… y ${filas.length - 5} registros más</td></tr>` : ''
+  tablaEl.innerHTML = `<thead><tr>${headers}</tr></thead><tbody>${body}${resto}</tbody>`
+  countEl.textContent = `${filas.length} registro(s) listos para subir`
+}
+
+function iniciarExcel({ inputId, zonaId, previewId, tablaId, countId, subirId, cancelarId, alertaId, referidoId, municipioId, modalId, alias, campos, tabla, onExito }) {
+  const input = document.getElementById(inputId)
+  const zona = document.getElementById(zonaId)
+  const preview = document.getElementById(previewId)
+  const tablaEl = document.getElementById(tablaId)
+  const countEl = document.getElementById(countId)
+  const btnSubir = document.getElementById(subirId)
+  const btnCancelar = document.getElementById(cancelarId)
+  const alertaEl = document.getElementById(alertaId)
+  const selectRef = document.getElementById(referidoId)
+
+  let filasListas = []
+
+  async function procesarArchivo(file) {
+    try {
+      const rows = await parsearExcel(file)
+      filasListas = mapearFilas(rows, alias)
+      if (!filasListas.length) {
+        mostrarAlerta(alertaEl, '⚠️ No se encontraron filas válidas. Verifica que los encabezados coincidan.', 'error')
+        preview.style.display = 'none'
+        return
+      }
+      renderPreview(filasListas, campos, tablaEl, countEl)
+      preview.style.display = 'block'
+      alertaEl.style.display = 'none'
+    } catch {
+      mostrarAlerta(alertaEl, '❌ No se pudo leer el archivo. Asegúrate de que sea .xlsx, .xls o .csv.', 'error')
+      preview.style.display = 'none'
+    }
+  }
+
+  zona.addEventListener('click', e => { if (e.target === zona) input.click() })
+  input.addEventListener('change', e => { if (e.target.files[0]) procesarArchivo(e.target.files[0]) })
+
+  zona.addEventListener('dragover', e => { e.preventDefault(); zona.classList.add('drag-over') })
+  zona.addEventListener('dragleave', () => zona.classList.remove('drag-over'))
+  zona.addEventListener('drop', e => {
+    e.preventDefault()
+    zona.classList.remove('drag-over')
+    if (e.dataTransfer.files[0]) procesarArchivo(e.dataTransfer.files[0])
+  })
+
+  function limpiar() {
+    filasListas = []
+    preview.style.display = 'none'
+    input.value = ''
+    alertaEl.style.display = 'none'
+  }
+
+  btnCancelar.addEventListener('click', limpiar)
+
+  btnSubir.addEventListener('click', async () => {
+    if (!filasListas.length) return
+
+    const referido = selectRef?.value?.trim()
+    if (!referido) {
+      mostrarAlerta(alertaEl, '⚠️ Debes seleccionar el "Referido por" antes de subir.', 'error')
+      return
+    }
+
+    const selectMun = municipioId ? document.getElementById(municipioId) : null
+    const municipio = selectMun?.value?.trim() || null
+    if (selectMun && !municipio) {
+      mostrarAlerta(alertaEl, '⚠️ Debes seleccionar el municipio antes de subir.', 'error')
+      return
+    }
+
+    btnSubir.disabled = true
+    btnSubir.textContent = 'Subiendo...'
+    alertaEl.style.display = 'none'
+
+    const registros = filasListas.map(f => ({
+      ...f,
+      amigo_referido: referido,
+      ...(municipio && { municipio }),
+      subido_por: usuarioActual.id,
+      estado: 'pendiente',
+    }))
+
+    const LOTE = 100
+    let errores = 0
+    let mensajeError = ''
+
+    try {
+      for (let i = 0; i < registros.length; i += LOTE) {
+        const lote = registros.slice(i, i + LOTE)
+        const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 15000))
+        const insertar = db.from(tabla).insert(lote)
+        const { error } = await Promise.race([insertar, timeout])
+        if (error) {
+          errores++
+          mensajeError = error.message
+        }
+      }
+    } catch (e) {
+      btnSubir.disabled = false
+      btnSubir.textContent = 'Subir todos los registros'
+      mostrarAlerta(alertaEl, `❌ Tiempo agotado o error de red: ${e.message}. Revisa la consola y los permisos de Supabase.`, 'error')
+      return
+    }
+
+    if (errores) {
+      mostrarAlerta(alertaEl, `⚠️ ${errores} lote(s) fallaron. Error: ${mensajeError}`, 'error')
+    } else {
+      mostrarAlerta(alertaEl, `✅ ${registros.length} registro(s) subidos correctamente.`, 'exito')
+      limpiar()
+      if (modalId) setTimeout(() => { document.getElementById(modalId).style.display = 'none' }, 1500)
+      await onExito()
+    }
+
+    btnSubir.disabled = false
+    btnSubir.textContent = 'Subir todos los registros'
+  })
+}
+
+function initExcelReuniones() {
+  iniciarExcel({
+    inputId: 'excel-reuniones', zonaId: 'excel-zona-reuniones',
+    previewId: 'excel-preview-reuniones', tablaId: 'excel-tabla-reuniones',
+    countId: 'excel-count-reuniones', subirId: 'btn-subir-reuniones',
+    cancelarId: 'btn-cancelar-reuniones', alertaId: 'excel-alerta-reuniones',
+    referidoId: 'modal-referido-reuniones', modalId: 'modal-excel-reuniones',
+    alias: ALIAS_REUNIONES, campos: CAMPOS_REUNIONES,
+    tabla: 'lista_reuniones', onExito: cargarReuniones,
+  })
+}
+
+function initExcelVotantes() {
+  iniciarExcel({
+    inputId: 'excel-votantes', zonaId: 'excel-zona-votantes',
+    previewId: 'excel-preview-votantes', tablaId: 'excel-tabla-votantes',
+    countId: 'excel-count-votantes', subirId: 'btn-subir-votantes',
+    cancelarId: 'btn-cancelar-votantes', alertaId: 'excel-alerta-votantes',
+    referidoId: 'modal-referido-votantes', municipioId: 'modal-municipio-votantes', modalId: 'modal-excel-votantes',
+    alias: ALIAS_VOTANTES, campos: CAMPOS_VOTANTES,
+    tabla: 'lista_votantes', onExito: cargarVotantes,
+  })
+}
+
+function descargarFormatoVotantes() {
+  const encabezados = [['nombre_completo', 'cedula', 'telefono', 'puesto_votacion', 'mesa']]
+  const wb = XLSX.utils.book_new()
+  const ws = XLSX.utils.aoa_to_sheet(encabezados)
+
+  // Ancho de columnas
+  ws['!cols'] = encabezados[0].map(() => ({ wch: 22 }))
+
+  XLSX.utils.book_append_sheet(wb, ws, 'Votantes')
+  XLSX.writeFile(wb, 'formato_votantes.xlsx')
 }

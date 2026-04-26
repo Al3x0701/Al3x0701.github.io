@@ -1,24 +1,30 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Panel de Equipo — Impulso Ciudadano</title>
 
   <!-- Fuentes -->
-  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
 
   <!-- Supabase (librería oficial vía CDN) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <!-- Leaflet (mapas interactivos) -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <!-- Nuestros estilos -->
-  <link rel="stylesheet" href="equipo.css?v=5">
-  <script src="equipo.js?v=5" defer></script>
+  <!-- SheetJS para lectura de Excel -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <link rel="stylesheet" href="equipo.css?v=6">
+  <script src="equipo.js?v=6" defer></script>
 </head>
+
 <body>
 
   <!-- =============================================
@@ -42,8 +48,17 @@
           <div class="campo-password-wrap">
             <input type="password" id="login-password" placeholder="••••••••" required>
             <button type="button" class="btn-mostrar-pass" onclick="togglePassword()" aria-label="Mostrar contraseña">
-              <svg id="icon-ojo-abierto" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-              <svg id="icon-ojo-cerrado" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+              <svg id="icon-ojo-abierto" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+              <svg id="icon-ojo-cerrado" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" style="display:none">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+                <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+                <line x1="1" y1="1" x2="23" y2="23" />
+              </svg>
             </button>
           </div>
         </div>
@@ -72,55 +87,103 @@
       <nav class="sidebar-nav">
         <span class="nav-seccion">Principal</span>
         <a href="#" class="nav-item activo" data-seccion="dashboard">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7" />
+            <rect x="14" y="3" width="7" height="7" />
+            <rect x="3" y="14" width="7" height="7" />
+            <rect x="14" y="14" width="7" height="7" />
+          </svg>
           Dashboard
         </a>
         <!-- Solo visible para lider y amigo -->
         <span class="nav-seccion solo-lider">Mis Listas</span>
         <a href="#" class="nav-item solo-lider" data-seccion="reuniones">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+          </svg>
           Lista de Reuniones
         </a>
         <a href="#" class="nav-item solo-lider" data-seccion="votantes">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 11l3 3L22 4" />
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+          </svg>
           Lista de Votantes
         </a>
         <a href="#" class="nav-item solo-lider" data-seccion="eventos">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+            <line x1="16" y1="2" x2="16" y2="6" />
+            <line x1="8" y1="2" x2="8" y2="6" />
+            <line x1="3" y1="10" x2="21" y2="10" />
+          </svg>
           Eventos
         </a>
 
         <!-- Solo visible para admin y owner -->
         <span class="nav-seccion solo-admin">Administración</span>
         <a href="#" class="nav-item solo-admin" data-seccion="aprobaciones">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+            <polyline points="22 4 12 14.01 9 11.01" />
+          </svg>
           Aprobaciones
         </a>
         <a href="#" class="nav-item solo-admin" data-seccion="consolidado">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="8" y1="6" x2="21" y2="6" />
+            <line x1="8" y1="12" x2="21" y2="12" />
+            <line x1="8" y1="18" x2="21" y2="18" />
+            <line x1="3" y1="6" x2="3.01" y2="6" />
+            <line x1="3" y1="12" x2="3.01" y2="12" />
+            <line x1="3" y1="18" x2="3.01" y2="18" />
+          </svg>
           Consolidados
         </a>
         <a href="#" class="nav-item solo-admin" data-seccion="solicitudes">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+          </svg>
           Solicitudes
         </a>
         <a href="#" class="nav-item solo-admin" data-seccion="noticias">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8M15 18h-5M10 6h8v4h-8V6Z"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path
+              d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2" />
+            <path d="M18 14h-8M15 18h-5M10 6h8v4h-8V6Z" />
+          </svg>
           Noticias y Eventos
         </a>
 
         <!-- Solo visible para owner -->
         <span class="nav-seccion solo-owner">Sistema</span>
         <a href="#" class="nav-item solo-owner" data-seccion="usuarios">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="23" y1="11" x2="17" y2="11"/><line x1="20" y1="8" x2="20" y2="14"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <line x1="23" y1="11" x2="17" y2="11" />
+            <line x1="20" y1="8" x2="20" y2="14" />
+          </svg>
           Gestión de Usuarios
         </a>
         <a href="#" class="nav-item solo-owner" data-seccion="auditoria">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+            <line x1="16" y1="17" x2="8" y2="17" />
+            <polyline points="10 9 9 9 8 9" />
+          </svg>
           Log de Auditoría
         </a>
         <a href="#" class="nav-item solo-owner" data-seccion="mapa">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" />
+            <line x1="9" y1="3" x2="9" y2="18" />
+            <line x1="15" y1="6" x2="15" y2="21" />
+          </svg>
           Mapa Electoral
         </a>
       </nav>
@@ -144,22 +207,37 @@
       <header id="topbar">
         <div class="topbar-izquierda">
           <button id="btn-menu" class="btn-icono" aria-label="Abrir menú">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
           </button>
           <span id="topbar-titulo">Dashboard</span>
         </div>
         <div class="topbar-derecha">
           <div class="config-menu-wrap" id="config-menu-wrap">
             <button class="btn-icono btn-config" id="btn-config" aria-label="Configuración">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                <circle cx="12" cy="12" r="3" />
+                <path
+                  d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+              </svg>
             </button>
             <div class="config-dropdown" id="config-dropdown">
               <a href="#" class="config-item" data-seccion="perfil">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                  <circle cx="12" cy="8" r="4" />
+                  <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+                </svg>
                 Mi Perfil
               </a>
               <a href="#" class="config-item" data-seccion="configuracion">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                  <circle cx="12" cy="12" r="3" />
+                  <path
+                    d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                </svg>
                 Configuración
               </a>
             </div>
@@ -181,28 +259,43 @@
           <div class="kpi-fila">
             <div class="kpi kpi-total">
               <div class="kpi-icono" style="background:rgba(30,41,59,0.07)">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1e293b" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1e293b" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <polyline points="14 2 14 8 20 8" />
+                  <line x1="16" y1="13" x2="8" y2="13" />
+                  <line x1="16" y1="17" x2="8" y2="17" />
+                </svg>
               </div>
               <div class="kpi-valor" id="kpi-total">—</div>
               <div class="kpi-etiqueta">Total registros</div>
             </div>
             <div class="kpi kpi-exito">
               <div class="kpi-icono" style="background:rgba(16,185,129,0.12)">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                  <polyline points="22 4 12 14.01 9 11.01" />
+                </svg>
               </div>
               <div class="kpi-valor" id="kpi-aprobados">—</div>
               <div class="kpi-etiqueta">Aprobados</div>
             </div>
             <div class="kpi kpi-aviso">
               <div class="kpi-icono" style="background:rgba(245,158,11,0.12)">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
+                </svg>
               </div>
               <div class="kpi-valor" id="kpi-pendientes">—</div>
               <div class="kpi-etiqueta">Pendientes</div>
             </div>
             <div class="kpi kpi-error">
               <div class="kpi-icono" style="background:rgba(239,68,68,0.12)">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="15" y1="9" x2="9" y2="15" />
+                  <line x1="9" y1="9" x2="15" y2="15" />
+                </svg>
               </div>
               <div class="kpi-valor" id="kpi-rechazados">—</div>
               <div class="kpi-etiqueta">Rechazados</div>
@@ -214,7 +307,12 @@
               <div class="tarjeta-encabezado">
                 <div class="dash-tarjeta-titulo-grupo">
                   <div class="dash-tarjeta-icono" style="background:rgba(99,102,241,0.12)">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2">
+                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                      <circle cx="9" cy="7" r="4" />
+                      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                    </svg>
                   </div>
                   <h2 class="tarjeta-titulo">Reuniones</h2>
                 </div>
@@ -226,7 +324,10 @@
               <div class="tarjeta-encabezado">
                 <div class="dash-tarjeta-titulo-grupo">
                   <div class="dash-tarjeta-icono" style="background:rgba(250,204,21,0.15)">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                      <circle cx="12" cy="7" r="4" />
+                    </svg>
                   </div>
                   <h2 class="tarjeta-titulo">Votantes</h2>
                 </div>
@@ -297,12 +398,18 @@
               <table class="tabla">
                 <thead>
                   <tr>
-                    <th>Nombre</th><th>Cédula</th><th>Municipio</th>
-                    <th>Fecha</th><th>Referido por</th><th>Estado</th>
+                    <th>Nombre</th>
+                    <th>Cédula</th>
+                    <th>Municipio</th>
+                    <th>Fecha</th>
+                    <th>Referido por</th>
+                    <th>Estado</th>
                   </tr>
                 </thead>
                 <tbody id="tabla-reuniones-body">
-                  <tr><td colspan="6" class="tabla-vacia">Cargando...</td></tr>
+                  <tr>
+                    <td colspan="6" class="tabla-vacia">Cargando...</td>
+                  </tr>
                 </tbody>
               </table>
             </div>
@@ -313,8 +420,16 @@
         <!-- ── LISTA DE VOTANTES ── -->
         <section id="sec-votantes" class="seccion">
           <div class="pagina-encabezado">
-            <h1 class="pagina-titulo">Lista de Votantes</h1>
-            <p class="pagina-subtitulo">Registra los votantes identificados</p>
+            <div>
+              <h1 class="pagina-titulo">Lista de Votantes</h1>
+              <p class="pagina-subtitulo">Registra los votantes identificados</p>
+            </div>
+            <button class="container-btn-file standalone" id="btn-abrir-excel-votantes" type="button">
+              <svg fill="#fff" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 50 50">
+                <path d="M28.8125 .03125L.8125 5.34375C.339844 5.433594 0 5.863281 0 6.34375L0 43.65625C0 44.136719 .339844 44.566406 .8125 44.65625L28.8125 49.96875C28.875 49.980469 28.9375 50 29 50C29.230469 50 29.445313 49.929688 29.625 49.78125C29.855469 49.589844 30 49.296875 30 49L30 1C30 .703125 29.855469 .410156 29.625 .21875C29.394531 .0273438 29.105469 -.0234375 28.8125 .03125ZM32 6L32 13L34 13L34 15L32 15L32 20L34 20L34 22L32 22L32 27L34 27L34 29L32 29L32 35L34 35L34 37L32 37L32 44L47 44C48.101563 44 49 43.101563 49 42L49 8C49 6.898438 48.101563 6 47 6ZM36 13L44 13L44 15L36 15ZM6.6875 15.6875L11.8125 15.6875L14.5 21.28125C14.710938 21.722656 14.898438 22.265625 15.0625 22.875L15.09375 22.875C15.199219 22.511719 15.402344 21.941406 15.6875 21.21875L18.65625 15.6875L23.34375 15.6875L17.75 24.9375L23.5 34.375L18.53125 34.375L15.28125 28.28125C15.160156 28.054688 15.035156 27.636719 14.90625 27.03125L14.875 27.03125C14.8125 27.316406 14.664063 27.761719 14.4375 28.34375L11.1875 34.375L6.1875 34.375L12.15625 25.03125ZM36 20L44 20L44 22L36 22ZM36 27L44 27L44 29L36 29ZM36 35L44 35L44 37L36 37Z"></path>
+              </svg>
+              Subir Excel
+            </button>
           </div>
 
           <div class="tarjeta">
@@ -361,12 +476,19 @@
               <table class="tabla">
                 <thead>
                   <tr>
-                    <th>Nombre</th><th>Cédula</th><th>Municipio</th>
-                    <th>Puesto</th><th>Mesa</th><th>Referido por</th><th>Estado</th>
+                    <th>Nombre</th>
+                    <th>Cédula</th>
+                    <th>Municipio</th>
+                    <th>Puesto</th>
+                    <th>Mesa</th>
+                    <th>Referido por</th>
+                    <th>Estado</th>
                   </tr>
                 </thead>
                 <tbody id="tabla-votantes-body">
-                  <tr><td colspan="7" class="tabla-vacia">Cargando...</td></tr>
+                  <tr>
+                    <td colspan="7" class="tabla-vacia">Cargando...</td>
+                  </tr>
                 </tbody>
               </table>
             </div>
@@ -396,12 +518,19 @@
                 <table class="tabla">
                   <thead>
                     <tr>
-                      <th>Nombre</th><th>Cédula</th><th>Municipio</th>
-                      <th>Fecha</th><th>Referido por</th><th>Estado</th><th>Acciones</th>
+                      <th>Nombre</th>
+                      <th>Cédula</th>
+                      <th>Municipio</th>
+                      <th>Fecha</th>
+                      <th>Referido por</th>
+                      <th>Estado</th>
+                      <th>Acciones</th>
                     </tr>
                   </thead>
                   <tbody id="tabla-apro-reuniones-body">
-                    <tr><td colspan="7" class="tabla-vacia">Cargando...</td></tr>
+                    <tr>
+                      <td colspan="7" class="tabla-vacia">Cargando...</td>
+                    </tr>
                   </tbody>
                 </table>
               </div>
@@ -414,12 +543,20 @@
                 <table class="tabla">
                   <thead>
                     <tr>
-                      <th>Nombre</th><th>Cédula</th><th>Municipio</th><th>Puesto</th>
-                      <th>Mesa</th><th>Referido por</th><th>Estado</th><th>Acciones</th>
+                      <th>Nombre</th>
+                      <th>Cédula</th>
+                      <th>Municipio</th>
+                      <th>Puesto</th>
+                      <th>Mesa</th>
+                      <th>Referido por</th>
+                      <th>Estado</th>
+                      <th>Acciones</th>
                     </tr>
                   </thead>
                   <tbody id="tabla-apro-votantes-body">
-                    <tr><td colspan="8" class="tabla-vacia">Cargando...</td></tr>
+                    <tr>
+                      <td colspan="8" class="tabla-vacia">Cargando...</td>
+                    </tr>
                   </tbody>
                 </table>
               </div>
@@ -458,12 +595,19 @@
                 <table class="tabla">
                   <thead>
                     <tr>
-                      <th>Nombre</th><th>Cédula</th><th>Municipio</th>
-                      <th>Fecha</th><th>Referido por</th><th>Estado</th><th>Comentario</th>
+                      <th>Nombre</th>
+                      <th>Cédula</th>
+                      <th>Municipio</th>
+                      <th>Fecha</th>
+                      <th>Referido por</th>
+                      <th>Estado</th>
+                      <th>Comentario</th>
                     </tr>
                   </thead>
                   <tbody id="tabla-con-reuniones-body">
-                    <tr><td colspan="7" class="tabla-vacia">Cargando...</td></tr>
+                    <tr>
+                      <td colspan="7" class="tabla-vacia">Cargando...</td>
+                    </tr>
                   </tbody>
                 </table>
               </div>
@@ -476,12 +620,20 @@
                 <table class="tabla">
                   <thead>
                     <tr>
-                      <th>Nombre</th><th>Cédula</th><th>Municipio</th><th>Puesto</th>
-                      <th>Mesa</th><th>Referido por</th><th>Estado</th><th>Comentario</th>
+                      <th>Nombre</th>
+                      <th>Cédula</th>
+                      <th>Municipio</th>
+                      <th>Puesto</th>
+                      <th>Mesa</th>
+                      <th>Referido por</th>
+                      <th>Estado</th>
+                      <th>Comentario</th>
                     </tr>
                   </thead>
                   <tbody id="tabla-con-votantes-body">
-                    <tr><td colspan="8" class="tabla-vacia">Cargando...</td></tr>
+                    <tr>
+                      <td colspan="8" class="tabla-vacia">Cargando...</td>
+                    </tr>
                   </tbody>
                 </table>
               </div>
@@ -540,12 +692,19 @@
               <table class="tabla">
                 <thead>
                   <tr>
-                    <th>Nombre</th><th>Municipio</th><th>Categoría</th>
-                    <th>Mensaje</th><th>Fecha</th><th>Estado</th><th>Cambiar estado</th>
+                    <th>Nombre</th>
+                    <th>Municipio</th>
+                    <th>Categoría</th>
+                    <th>Mensaje</th>
+                    <th>Fecha</th>
+                    <th>Estado</th>
+                    <th>Cambiar estado</th>
                   </tr>
                 </thead>
                 <tbody id="tabla-solicitudes-body">
-                  <tr><td colspan="7" class="tabla-vacia">Cargando...</td></tr>
+                  <tr>
+                    <td colspan="7" class="tabla-vacia">Cargando...</td>
+                  </tr>
                 </tbody>
               </table>
             </div>
@@ -627,10 +786,18 @@
             <div class="tabla-contenedor">
               <table class="tabla">
                 <thead>
-                  <tr><th>Tipo</th><th>Título</th><th>Fecha</th><th>Visible</th><th></th></tr>
+                  <tr>
+                    <th>Tipo</th>
+                    <th>Título</th>
+                    <th>Fecha</th>
+                    <th>Visible</th>
+                    <th></th>
+                  </tr>
                 </thead>
                 <tbody id="tabla-noticias-body">
-                  <tr><td colspan="5" class="tabla-vacia">Cargando...</td></tr>
+                  <tr>
+                    <td colspan="5" class="tabla-vacia">Cargando...</td>
+                  </tr>
                 </tbody>
               </table>
             </div>
@@ -693,12 +860,18 @@
               <table class="tabla">
                 <thead>
                   <tr>
-                    <th>Nombre</th><th>Correo</th><th>Rol</th>
-                    <th>Municipio</th><th>Teléfono</th><th>Estado</th>
+                    <th>Nombre</th>
+                    <th>Correo</th>
+                    <th>Rol</th>
+                    <th>Municipio</th>
+                    <th>Teléfono</th>
+                    <th>Estado</th>
                   </tr>
                 </thead>
                 <tbody id="tabla-usuarios-body">
-                  <tr><td colspan="6" class="tabla-vacia">Cargando...</td></tr>
+                  <tr>
+                    <td colspan="6" class="tabla-vacia">Cargando...</td>
+                  </tr>
                 </tbody>
               </table>
             </div>
@@ -727,10 +900,18 @@
             <div class="tabla-contenedor">
               <table class="tabla">
                 <thead>
-                  <tr><th>Fecha</th><th>Usuario</th><th>Rol</th><th>Acción</th><th>Detalle</th></tr>
+                  <tr>
+                    <th>Fecha</th>
+                    <th>Usuario</th>
+                    <th>Rol</th>
+                    <th>Acción</th>
+                    <th>Detalle</th>
+                  </tr>
                 </thead>
                 <tbody id="tabla-auditoria-body">
-                  <tr><td colspan="5" class="tabla-vacia">Cargando...</td></tr>
+                  <tr>
+                    <td colspan="5" class="tabla-vacia">Cargando...</td>
+                  </tr>
                 </tbody>
               </table>
             </div>
@@ -749,28 +930,44 @@
           <div class="kpi-fila kpi-compacto">
             <div class="kpi kpi-total">
               <div class="kpi-icono" style="background:rgba(250,204,21,0.15)">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#facc15" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#facc15" stroke-width="2">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
               </div>
               <span class="kpi-valor" id="mapa-kpi-total">—</span>
               <span class="kpi-etiqueta">Total registros</span>
             </div>
             <div class="kpi kpi-exito">
               <div class="kpi-icono" style="background:rgba(16,185,129,0.12)">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2">
+                  <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" />
+                  <line x1="9" y1="3" x2="9" y2="18" />
+                  <line x1="15" y1="6" x2="15" y2="21" />
+                </svg>
               </div>
               <span class="kpi-valor" id="mapa-kpi-municipios">—</span>
               <span class="kpi-etiqueta">Municipios activos</span>
             </div>
             <div class="kpi" style="--kpi-color:#6366f1">
               <div class="kpi-icono" style="background:rgba(99,102,241,0.12)">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2">
+                  <rect x="3" y="4" width="18" height="18" rx="2" />
+                  <line x1="16" y1="2" x2="16" y2="6" />
+                  <line x1="8" y1="2" x2="8" y2="6" />
+                  <line x1="3" y1="10" x2="21" y2="10" />
+                </svg>
               </div>
               <span class="kpi-valor" id="mapa-kpi-eventos" style="color:#6366f1">—</span>
               <span class="kpi-etiqueta">Eventos registrados</span>
             </div>
             <div class="kpi kpi-error">
               <div class="kpi-icono" style="background:rgba(239,68,68,0.12)">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
               </div>
               <span class="kpi-valor" id="mapa-kpi-solicitudes">—</span>
               <span class="kpi-etiqueta">Solicitudes</span>
@@ -783,9 +980,14 @@
               <!-- Buscador flotante -->
               <div class="mapa-buscador-wrap" id="mapa-buscador-wrap">
                 <div class="mapa-buscador-input-wrap">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                  <input type="text" id="mapa-buscador" placeholder="Buscar municipio…" autocomplete="off" oninput="filtrarMapaBuscador(this.value)" onkeydown="navegarBuscador(event)">
-                  <button class="mapa-buscador-limpiar" id="mapa-buscador-limpiar" onclick="limpiarBuscadorMapa()" style="display:none">✕</button>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                  </svg>
+                  <input type="text" id="mapa-buscador" placeholder="Buscar municipio…" autocomplete="off"
+                    oninput="filtrarMapaBuscador(this.value)" onkeydown="navegarBuscador(event)">
+                  <button class="mapa-buscador-limpiar" id="mapa-buscador-limpiar" onclick="limpiarBuscadorMapa()"
+                    style="display:none">✕</button>
                 </div>
                 <ul id="mapa-buscador-lista" class="mapa-buscador-lista" style="display:none"></ul>
               </div>
@@ -818,8 +1020,14 @@
             <h1 class="pagina-titulo">Configuración</h1>
             <p class="pagina-subtitulo">Ajustes de tu cuenta y preferencias</p>
           </div>
-          <div class="tarjeta" style="min-height:300px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1rem;color:var(--texto-muted)">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.4"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <div class="tarjeta"
+            style="min-height:300px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1rem;color:var(--texto-muted)">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+              opacity="0.4">
+              <circle cx="12" cy="12" r="3" />
+              <path
+                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
             <p style="font-size:1rem;font-weight:600">Próximamente</p>
             <p style="font-size:0.875rem">Aquí podrás ajustar las preferencias de tu cuenta</p>
           </div>
@@ -831,14 +1039,105 @@
             <h1 class="pagina-titulo">Eventos</h1>
             <p class="pagina-subtitulo">Gestión de eventos de tu equipo</p>
           </div>
-          <div class="tarjeta" style="min-height:300px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1rem;color:var(--texto-muted)">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.4"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <div class="tarjeta"
+            style="min-height:300px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1rem;color:var(--texto-muted)">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+              opacity="0.4">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
             <p style="font-size:1rem;font-weight:600">Próximamente</p>
             <p style="font-size:0.875rem">Aquí aparecerán los eventos de tu equipo</p>
           </div>
         </section>
 
       </main>
+
+      <!-- ── MODAL CARGA EXCEL VOTANTES ── -->
+      <div class="modal-overlay" id="modal-excel-votantes" style="display:none">
+        <div class="modal-caja">
+
+          <div class="modal-cabecera">
+            <h2 class="modal-titulo">Carga masiva — Votantes</h2>
+            <button class="modal-cerrar" id="modal-cerrar-excel-votantes" type="button">&times;</button>
+          </div>
+
+          <!-- Descarga de formato -->
+          <div class="excel-formato-wrap">
+            <span class="excel-formato-label">¿No tienes el formato?</span>
+            <div class="excel-formato-dropdown-wrap">
+              <button class="btn-formato-excel" id="btn-formato-dropdown" type="button">
+                <svg width="14" height="14" viewBox="0 0 50 50" fill="currentColor"><path d="M28.8125 .03125L.8125 5.34375C.339844 5.433594 0 5.863281 0 6.34375L0 43.65625C0 44.136719 .339844 44.566406 .8125 44.65625L28.8125 49.96875C28.875 49.980469 28.9375 50 29 50C29.230469 50 29.445313 49.929688 29.625 49.78125C29.855469 49.589844 30 49.296875 30 49L30 1C30 .703125 29.855469 .410156 29.625 .21875C29.394531 .0273438 29.105469 -.0234375 28.8125 .03125ZM32 6L32 13L34 13L34 15L32 15L32 20L34 20L34 22L32 22L32 27L34 27L34 29L32 29L32 35L34 35L34 37L32 37L32 44L47 44C48.101563 44 49 43.101563 49 42L49 8C49 6.898438 48.101563 6 47 6ZM36 13L44 13L44 15L36 15ZM36 20L44 20L44 22L36 22ZM36 27L44 27L44 29L36 29ZM36 35L44 35L44 37L36 37Z"/></svg>
+                Descargar formato
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
+              <div class="excel-formato-menu" id="excel-formato-menu" style="display:none">
+                <button class="excel-formato-opcion" id="btn-descargar-formato-votantes" type="button">
+                  📋 Formato Votantes (.xlsx)
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Municipio y Referido por -->
+          <div class="form-grilla" style="margin-bottom:1.25rem">
+            <div class="campo">
+              <label>Municipio (aplica a todos los registros) *</label>
+              <select id="modal-municipio-votantes" required>
+                <option value="">— Selecciona —</option>
+                <option>Alcalá</option><option>Andalucía</option><option>Ansermanuevo</option>
+                <option>Argelia</option><option>Bolívar</option><option>Buenaventura</option>
+                <option>Buga</option><option>Bugalagrande</option><option>Caicedonia</option>
+                <option>Cali</option><option>Calima</option><option>Candelaria</option>
+                <option>Cartago</option><option>Dagua</option><option>El Cairo</option>
+                <option>El Cerrito</option><option>El Dovio</option><option>El Águila</option>
+                <option>Florida</option><option>Ginebra</option><option>Guacarí</option>
+                <option>Jamundí</option><option>La Cumbre</option><option>La Unión</option>
+                <option>La Victoria</option><option>Obando</option><option>Palmira</option>
+                <option>Pradera</option><option>Restrepo</option><option>Riofrío</option>
+                <option>Roldanillo</option><option>San Pedro</option><option>Sevilla</option>
+                <option>Toro</option><option>Trujillo</option><option>Tuluá</option>
+                <option>Ulloa</option><option>Versalles</option><option>Vijes</option>
+                <option>Yotoco</option><option>Yumbo</option><option>Zarzal</option>
+              </select>
+            </div>
+            <div class="campo">
+              <label>Referido por (aplica a todos los registros) *</label>
+              <select id="modal-referido-votantes" required>
+                <option value="">— Selecciona un usuario —</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Zona de carga -->
+          <div class="excel-zona" id="excel-zona-votantes">
+            <button class="container-btn-file standalone" type="button" onclick="event.stopPropagation(); document.getElementById('excel-votantes').click()">
+              <svg fill="#fff" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 50 50">
+                <path d="M28.8125 .03125L.8125 5.34375C.339844 5.433594 0 5.863281 0 6.34375L0 43.65625C0 44.136719 .339844 44.566406 .8125 44.65625L28.8125 49.96875C28.875 49.980469 28.9375 50 29 50C29.230469 50 29.445313 49.929688 29.625 49.78125C29.855469 49.589844 30 49.296875 30 49L30 1C30 .703125 29.855469 .410156 29.625 .21875C29.394531 .0273438 29.105469 -.0234375 28.8125 .03125ZM32 6L32 13L34 13L34 15L32 15L32 20L34 20L34 22L32 22L32 27L34 27L34 29L32 29L32 35L34 35L34 37L32 37L32 44L47 44C48.101563 44 49 43.101563 49 42L49 8C49 6.898438 48.101563 6 47 6ZM36 13L44 13L44 15L36 15ZM6.6875 15.6875L11.8125 15.6875L14.5 21.28125C14.710938 21.722656 14.898438 22.265625 15.0625 22.875L15.09375 22.875C15.199219 22.511719 15.402344 21.941406 15.6875 21.21875L18.65625 15.6875L23.34375 15.6875L17.75 24.9375L23.5 34.375L18.53125 34.375L15.28125 28.28125C15.160156 28.054688 15.035156 27.636719 14.90625 27.03125L14.875 27.03125C14.8125 27.316406 14.664063 27.761719 14.4375 28.34375L11.1875 34.375L6.1875 34.375L12.15625 25.03125ZM36 20L44 20L44 22L36 22ZM36 27L44 27L44 29L36 29ZM36 35L44 35L44 37L36 37Z"></path>
+              </svg>
+              Seleccionar archivo Excel
+            </button>
+            <input type="file" id="excel-votantes" accept=".xlsx,.xls,.csv" style="display:none">
+            <p style="font-size:0.82rem;color:var(--texto-muted);margin-top:0.75rem">o arrastra el archivo aquí</p>
+          </div>
+
+          <!-- Vista previa -->
+          <div id="excel-preview-votantes" style="display:none;margin-top:1.25rem">
+            <div class="tabla-contenedor" style="max-height:220px;overflow-y:auto">
+              <table class="tabla" id="excel-tabla-votantes"></table>
+            </div>
+            <div style="display:flex;align-items:center;gap:1rem;margin-top:1rem;flex-wrap:wrap">
+              <span id="excel-count-votantes" style="font-size:0.85rem;color:var(--texto-muted)"></span>
+              <button class="btn btn-primario" id="btn-subir-votantes" type="button">Subir todos los registros</button>
+              <button class="btn btn-secundario" id="btn-cancelar-votantes" type="button">Limpiar</button>
+            </div>
+            <div id="excel-alerta-votantes" class="alerta" style="display:none;margin-top:0.75rem"></div>
+          </div>
+
+        </div>
+      </div>
 
       <!-- ── MODAL EDITOR MAPA ── -->
       <footer class="panel-footer">
@@ -848,4 +1147,5 @@
   </div><!-- /app -->
 
 </body>
+
 </html>
