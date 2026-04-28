@@ -847,6 +847,7 @@ const _VOTANTES_POR_PAGINA = 13
 
 async function cargarVotantes() {
   renderEquipo._cache = null  // invalidar caché de usuarios al recargar
+  _equipoPagina = 1
   const esAdmin = ['owner', 'admin'].includes(perfilActual?.rol)
   let q = db.from('lista_votantes').select('*').order('created_at', { ascending: false })
   if (!esAdmin) q = q.eq('subido_por', usuarioActual.id)
@@ -875,11 +876,15 @@ async function cargarVotantes() {
   }
 }
 
+let _equipoPagina = 1
+const _EQUIPO_POR_PAGINA = 8
+
 async function renderEquipo() {
   const wrap = document.getElementById('equipo-lista')
   if (!wrap) return
 
   const q = (document.getElementById('buscador-equipo')?.value || '').toLowerCase().trim()
+  if (q) _equipoPagina = 1
 
   // Cargar usuarios solo la primera vez o si no están en caché
   if (!renderEquipo._cache) {
@@ -900,7 +905,25 @@ async function renderEquipo() {
     return
   }
 
-  wrap.innerHTML = usuarios.map(u => {
+  const totalPags = Math.ceil(usuarios.length / _EQUIPO_POR_PAGINA)
+  if (_equipoPagina > totalPags) _equipoPagina = totalPags
+  const inicio = (_equipoPagina - 1) * _EQUIPO_POR_PAGINA
+  const pagina = usuarios.slice(inicio, inicio + _EQUIPO_POR_PAGINA)
+
+  const paginacionHTML = totalPags <= 1 ? '' : `
+    <div class="paginacion-wrap" style="padding:0.75rem 1.25rem 0.25rem">
+      <div class="paginacion">
+        <button class="pag-btn" data-ep="${_equipoPagina - 1}" ${_equipoPagina === 1 ? 'disabled' : ''}>&#8592;</button>
+        ${paginasVisibles(_equipoPagina, totalPags).map(p => p === '…'
+          ? `<span class="pag-ellipsis">…</span>`
+          : `<button class="pag-btn ${p === _equipoPagina ? 'activo' : ''}" data-ep="${p}">${p}</button>`
+        ).join('')}
+        <button class="pag-btn" data-ep="${_equipoPagina + 1}" ${_equipoPagina === totalPags ? 'disabled' : ''}>&#8594;</button>
+        <span class="pag-info">${inicio + 1}–${Math.min(inicio + _EQUIPO_POR_PAGINA, usuarios.length)} de ${usuarios.length}</span>
+      </div>
+    </div>`
+
+  wrap.innerHTML = pagina.map(u => {
     const votantes = _votantesData.filter(v => v.amigo_referido === u.nombre_completo)
     const aprobados = votantes.filter(v => v.estado === 'aprobado').length
     const pendientes = votantes.filter(v => v.estado === 'pendiente').length
@@ -940,7 +963,14 @@ async function renderEquipo() {
             </table>` : '<p class="tabla-vacia" style="padding:1rem 1.5rem">Sin votantes referidos aún.</p>'}
         </div>
       </div>`
-  }).join('')
+  }).join('') + paginacionHTML
+
+  wrap.querySelectorAll('.pag-btn[data-ep]:not([disabled])').forEach(btn => {
+    btn.addEventListener('click', () => {
+      _equipoPagina = parseInt(btn.dataset.ep)
+      renderEquipo()
+    })
+  })
 }
 
 function toggleMiembro(id) {
