@@ -1351,6 +1351,7 @@ document.getElementById('form-registro-evento-manual').addEventListener('submit'
 
 // ── Modal Estadísticas ──
 let _graficoStats = null
+let _statsActuales = { asistentes: [], cedulasVotantes: new Set(), nombreEvento: '' }
 
 async function abrirStatsEvento(eventoId, nombreEvento) {
   const overlay = document.getElementById('modal-stats-evento')
@@ -1362,9 +1363,13 @@ async function abrirStatsEvento(eventoId, nombreEvento) {
   // Destruir gráfico anterior
   if (_graficoStats) { _graficoStats.destroy(); _graficoStats = null }
 
+  _statsActuales = { asistentes: [], cedulasVotantes: new Set(), nombreEvento }
+
   const cerrar = () => { overlay.style.display = 'none' }
   document.getElementById('modal-cerrar-stats').onclick = cerrar
   overlay.onclick = (e) => { if (e.target === overlay) cerrar() }
+
+  document.getElementById('btn-descargar-stats').onclick = () => descargarStatsEvento()
 
   // Cargar asistentes del evento
   const { data: asistentes, error } = await db
@@ -1436,6 +1441,7 @@ async function abrirStatsEvento(eventoId, nombreEvento) {
       const { data: enc } = await db.from('lista_votantes').select('cedula').in('cedula', asistentes.map(a => a.cedula))
       enc?.forEach(v => cedulasVotantes.add(v.cedula))
     }
+    _statsActuales = { asistentes, cedulasVotantes, nombreEvento }
     document.getElementById('stats-tabla').innerHTML = `
       <table class="tabla-asistentes">
         <thead><tr><th>Nombre</th><th>Cédula</th><th>Teléfono</th><th>Referido</th><th>Votante</th></tr></thead>
@@ -1450,6 +1456,36 @@ async function abrirStatsEvento(eventoId, nombreEvento) {
             </tr>`).join('')}
         </tbody>
       </table>`
+  }
+}
+
+function descargarStatsEvento() {
+  const { asistentes, cedulasVotantes, nombreEvento } = _statsActuales
+  if (!asistentes.length) return
+
+  const hacer = () => {
+    const datos = asistentes.map(a => ({
+      'Nombre':   a.nombre_completo,
+      'Cédula':   a.cedula,
+      'Teléfono': a.telefono || '',
+      'Referido': a.referido || '',
+      'Votante registrado': cedulasVotantes.has(a.cedula) ? 'Sí' : 'No',
+    }))
+    const hoja  = XLSX.utils.json_to_sheet(datos)
+    hoja['!cols'] = [{ wch: 28 }, { wch: 14 }, { wch: 14 }, { wch: 22 }, { wch: 18 }]
+    const libro = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(libro, hoja, 'Asistentes')
+    const nombreArchivo = `asistentes_${nombreEvento.replace(/\s+/g, '_').toLowerCase()}_${hoy()}.xlsx`
+    XLSX.writeFile(libro, nombreArchivo)
+  }
+
+  if (!window.XLSX) {
+    const script = document.createElement('script')
+    script.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'
+    script.onload = hacer
+    document.head.appendChild(script)
+  } else {
+    hacer()
   }
 }
 
