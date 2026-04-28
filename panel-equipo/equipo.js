@@ -20,6 +20,7 @@ const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
 let usuarioActual = null   // datos de auth.users
 let perfilActual = null   // datos de la tabla usuarios
 let tabActiva = {}     // pestaña activa por sección
+let datosReuniones = []     // caché de reuniones (consolidados)
 let datosVotantes = []     // caché de votantes (consolidados)
 let mapaLeaflet = null       // instancia Leaflet (se inicializa una sola vez)
 let mapaSeleccion = null     // marcador de selección activo
@@ -161,7 +162,8 @@ async function cargarSelectsReferidos() {
   const opciones = data.map(u => `<option value="${u.nombre_completo}">${u.nombre_completo}</option>`).join('')
   const base = '<option value="">— Selecciona —</option>' + opciones
 
-    ;['select-referido-votante', 'modal-referido-votantes'].forEach(id => {
+    ;['select-referido-reunion', 'select-referido-votante',
+      'modal-referido-reuniones', 'modal-referido-votantes'].forEach(id => {
         const el = document.getElementById(id)
         if (el) el.innerHTML = base
       })
@@ -360,6 +362,7 @@ function navegarA(seccion) {
   const titulos = {
     dashboard: 'Dashboard',
     perfil: 'Mi Perfil',
+    reuniones: 'Lista de Reuniones',
     votantes: 'Lista de Votantes',
     aprobaciones: 'Aprobaciones',
     consolidado: 'Consolidados',
@@ -381,6 +384,7 @@ async function cargarSeccion(seccion) {
   switch (seccion) {
     case 'dashboard': await cargarDashboard(); break
     case 'perfil': cargarPerfil(); break
+    case 'reuniones': await cargarReuniones(); break
     case 'votantes': await cargarVotantes(); break
     case 'aprobaciones': await cargarAprobaciones(); break
     case 'consolidado': await cargarConsolidado(); break
@@ -469,28 +473,40 @@ let _graficoDashMunicipio = null
 async function cargarDashboard() {
   const esAdmin = ['owner', 'admin'].includes(perfilActual?.rol)
 
+  let qR = db.from('lista_reuniones').select('estado')
   let qV = db.from('lista_votantes').select('estado, municipio')
-  if (!esAdmin) qV = qV.eq('subido_por', usuarioActual.id)
+
+  if (!esAdmin) {
+    qR = qR.eq('subido_por', usuarioActual.id)
+    qV = qV.eq('subido_por', usuarioActual.id)
+  }
 
   const [
-    { data: votantes, error: errV },
+    { data: reuniones, error: errR },
+    { data: votantes,  error: errV },
     { data: eventosDB }
-  ] = await Promise.all([qV, db.from('eventos').select('nombre_evento, fecha, hora_inicio, hora_cierre, municipio')])
+  ] = await Promise.all([qR, qV, db.from('eventos').select('nombre_evento, fecha, hora_inicio, hora_cierre, municipio')])
 
-  if (errV) { console.error('Error cargando dashboard:', errV); return }
+  if (errR || errV) { console.error('Error cargando dashboard:', errR || errV); return }
 
+  const r = reuniones || []
   const v = votantes || []
 
+  const rApro = r.filter(x => x.estado === 'aprobado').length
+  const rPend = r.filter(x => x.estado === 'pendiente').length
+  const rRech = r.filter(x => x.estado === 'rechazado').length
   const vApro = v.filter(x => x.estado === 'aprobado').length
   const vPend = v.filter(x => x.estado === 'pendiente').length
   const vRech = v.filter(x => x.estado === 'rechazado').length
 
   document.getElementById('kpi-total-votantes').textContent = v.length
-  document.getElementById('kpi-total').textContent = v.length
-  document.getElementById('kpi-aprobados').textContent = vApro
-  document.getElementById('kpi-pendientes').textContent = vPend
-  document.getElementById('kpi-rechazados').textContent = vRech
+  document.getElementById('kpi-total').textContent = r.length + v.length
+  document.getElementById('kpi-aprobados').textContent = rApro + vApro
+  document.getElementById('kpi-pendientes').textContent = rPend + vPend
+  document.getElementById('kpi-rechazados').textContent = rRech + vRech
 
+  document.getElementById('dash-total-r').textContent = `${r.length} total`
+  document.getElementById('dash-barras-r').innerHTML = htmlBarras(rApro, rPend, rRech, r.length)
   document.getElementById('dash-total-v').textContent = `${v.length} total`
   document.getElementById('dash-barras-v').innerHTML = htmlBarras(vApro, vPend, vRech, v.length)
 
@@ -755,6 +771,70 @@ async function restablecerClave() {
 }
 
 
+/* ==============================================
+   LISTA DE REUNIONES
+============================================== */
+
+async function cargarReuniones() {
+  const { data, error } = await db
+    .from('lista_reuniones')
+    .select('*')
+    .eq('subido_por', usuarioActual.id)
+    .order('created_at', { ascending: false })
+
+  const tbody = document.getElementById('tabla-reuniones-body')
+
+  if (error || !data?.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="tabla-vacia">Sin registros aún.</td></tr>'
+    return
+  }
+
+  tbody.innerHTML = data.map(r => `
+    <tr>
+      <td>${r.nombre_completo}</td>
+      <td>${r.cedula}</td>
+      <td>${r.municipio || '—'}</td>
+      <td>${r.fecha_reunion || '—'}</td>
+      <td>${r.amigo_referido}</td>
+      <td>${badgeEstado(r.estado)}</td>
+    </tr>
+  `).join('')
+}
+
+document.getElementById('form-reunion').addEventListener('submit', async (e) => {
+  e.preventDefault()
+  const form = e.target
+  const alertaEl = document.getElementById('reunion-alerta')
+  const btn = form.querySelector('button[type="submit"]')
+
+  btn.disabled = true
+  btn.textContent = 'Guardando...'
+  alertaEl.style.display = 'none'
+
+  const datos = {
+    nombre_completo: form.nombre_completo.value,
+    cedula: form.cedula.value,
+    telefono: form.telefono.value || null,
+    municipio: form.municipio.value || null,
+    fecha_reunion: form.fecha_reunion.value || null,
+    amigo_referido: form.amigo_referido.value,
+    subido_por: usuarioActual.id,
+    estado: 'pendiente',
+  }
+
+  const { error } = await db.from('lista_reuniones').insert(datos)
+
+  if (error) {
+    mostrarAlerta(alertaEl, '❌ Error al guardar. Intenta de nuevo.', 'error')
+  } else {
+    mostrarAlerta(alertaEl, '✅ Registro guardado correctamente.', 'exito')
+    form.reset()
+    await cargarReuniones()
+  }
+
+  btn.disabled = false
+  btn.textContent = 'Guardar registro'
+})
 
 
 /* ==============================================
@@ -1384,22 +1464,56 @@ document.getElementById('form-votante').addEventListener('submit', async (e) => 
 ============================================== */
 
 async function cargarAprobaciones() {
-  const { data: votantes, error: errV } = await db
-    .from('lista_votantes').select('*').order('created_at', { ascending: false })
+  const [{ data: reuniones, error: errR }, { data: votantes, error: errV }] = await Promise.all([
+    db.from('lista_reuniones').select('*').order('created_at', { ascending: false }),
+    db.from('lista_votantes').select('*').order('created_at', { ascending: false }),
+  ])
 
-  if (errV) {
+  if (errR || errV) {
     const msg = '<tr><td colspan="8" class="tabla-vacia" style="color:var(--rojo)">Error al cargar datos. Intenta de nuevo.</td></tr>'
+    document.getElementById('tabla-apro-reuniones-body').innerHTML = msg
     document.getElementById('tabla-apro-votantes-body').innerHTML = msg
     return
   }
 
+  const r = reuniones || []
   const v = votantes || []
+
+  const pendR = r.filter(x => x.estado === 'pendiente').length
   const pendV = v.filter(x => x.estado === 'pendiente').length
+
+  document.getElementById('badge-apro-r').textContent = pendR
   document.getElementById('badge-apro-v').textContent = pendV
 
+  // Tabla reuniones
+  const tbodyR = document.getElementById('tabla-apro-reuniones-body')
+  tbodyR.innerHTML = r.length ? r.map(r => filaAprobacionReunion(r)).join('') :
+    '<tr><td colspan="7" class="tabla-vacia">Sin registros.</td></tr>'
+
+  // Tabla votantes
   const tbodyV = document.getElementById('tabla-apro-votantes-body')
   tbodyV.innerHTML = v.length ? v.map(v => filaAprobacionVotante(v)).join('') :
     '<tr><td colspan="8" class="tabla-vacia">Sin registros.</td></tr>'
+}
+
+function filaAprobacionReunion(r) {
+  const acciones = r.estado === 'pendiente'
+    ? `<div class="acciones-grupo">
+        <button class="btn btn-exito" onclick="aprobar('lista_reuniones','${r.id}')">✓ Aprobar</button>
+        <div class="rechazo-fila">
+          <input type="text" id="motivo-${r.id}" placeholder="Motivo rechazo">
+          <button class="btn btn-peligro" onclick="rechazar('lista_reuniones','${r.id}')">✕</button>
+        </div>
+       </div>`
+    : `<span style="font-size:0.75rem;color:var(--texto-muted)">${r.comentario_rechazo || '—'}</span>`
+
+  return `<tr>
+    <td>${r.nombre_completo}</td><td>${r.cedula}</td>
+    <td>${r.municipio || '—'}</td><td>${r.fecha_reunion || '—'}</td>
+    <td>${r.amigo_referido}</td>
+    <td>${badgeEstado(r.estado)}</td>
+    <td>${acciones}</td>
+  </tr>`
 }
 
 function filaAprobacionVotante(v) {
@@ -1453,12 +1567,15 @@ let _conGraficoReferido  = null
 let _conGraficoPuesto    = null
 
 async function cargarConsolidado() {
-  const { data: v, error: errV } = await db
-    .from('lista_votantes').select('*').order('created_at', { ascending: false })
+  const [{ data: r, error: errR }, { data: v, error: errV }] = await Promise.all([
+    db.from('lista_reuniones').select('*').order('created_at', { ascending: false }),
+    db.from('lista_votantes').select('*').order('created_at', { ascending: false }),
+  ])
 
-  if (errV) { console.error('Error cargando consolidado:', errV); return }
+  if (errR || errV) { console.error('Error cargando consolidado:', errR || errV); return }
 
-  datosVotantes = v || []
+  datosReuniones = r || []
+  datosVotantes  = v || []
   renderConsolidado()
   renderGraficosConsolidado()
 }
@@ -1626,7 +1743,19 @@ function renderConsolidado() {
     return true
   })
 
+  const r = filtrar(datosReuniones)
   const v = filtrar(datosVotantes)
+
+  const tbodyR = document.getElementById('tabla-con-reuniones-body')
+  tbodyR.innerHTML = r.length ? r.map(x => `
+    <tr>
+      <td>${x.nombre_completo}</td><td>${x.cedula}</td>
+      <td>${x.municipio || '—'}</td><td>${x.fecha_reunion || '—'}</td>
+      <td>${x.amigo_referido}</td>
+      <td>${badgeEstado(x.estado)}</td>
+      <td style="font-size:0.8rem;color:var(--texto-muted)">${x.comentario_rechazo || '—'}</td>
+    </tr>`).join('') : '<tr><td colspan="7" class="tabla-vacia">Sin resultados.</td></tr>'
+
   const tbodyV = document.getElementById('tabla-con-votantes-body')
   tbodyV.innerHTML = v.length ? v.map(x => `
     <tr>
@@ -1664,6 +1793,10 @@ function iniciarExportarExcel() {
 }
 
 function exportarExcel() {
+  // Determinar qué pestaña está activa en consolidado
+  const tabActiva = document.querySelector('#sec-consolidado .pestana.activa')?.dataset.tab
+  const esReuniones = tabActiva === 'con-reuniones'
+
   const estado = document.getElementById('filtro-estado').value
   const municipio = document.getElementById('filtro-municipio').value.toLowerCase()
 
@@ -1673,19 +1806,35 @@ function exportarExcel() {
     return true
   })
 
-  const datos = filtrar(datosVotantes).map(v => ({
-    Nombre: v.nombre_completo,
-    Cédula: v.cedula,
-    Teléfono: v.telefono || '',
-    Municipio: v.municipio,
-    Puesto: v.puesto_votacion,
-    Mesa: v.mesa,
-    'Referido por': v.amigo_referido,
-    Estado: v.estado,
-    Comentario: v.comentario_rechazo || '',
-  }))
-  const nombreHoja    = 'Votantes'
-  const nombreArchivo = `votantes_${hoy()}.xlsx`
+  let datos, nombreHoja, nombreArchivo
+  if (esReuniones) {
+    datos = filtrar(datosReuniones).map(r => ({
+      Nombre: r.nombre_completo,
+      Cédula: r.cedula,
+      Teléfono: r.telefono || '',
+      Municipio: r.municipio || '',
+      'Fecha Reunión': r.fecha_reunion || '',
+      'Referido por': r.amigo_referido,
+      Estado: r.estado,
+      Comentario: r.comentario_rechazo || '',
+    }))
+    nombreHoja = 'Reuniones'
+    nombreArchivo = `reuniones_${hoy()}.xlsx`
+  } else {
+    datos = filtrar(datosVotantes).map(v => ({
+      Nombre: v.nombre_completo,
+      Cédula: v.cedula,
+      Teléfono: v.telefono || '',
+      Municipio: v.municipio,
+      Puesto: v.puesto_votacion,
+      Mesa: v.mesa,
+      'Referido por': v.amigo_referido,
+      Estado: v.estado,
+      Comentario: v.comentario_rechazo || '',
+    }))
+    nombreHoja = 'Votantes'
+    nombreArchivo = `votantes_${hoy()}.xlsx`
+  }
 
   const hoja = XLSX.utils.json_to_sheet(datos)
   const libro = XLSX.utils.book_new()
@@ -2122,10 +2271,12 @@ function colorIntensidad(valor) {
 async function cargarMapa() {
   // 1. Fetch paralelo
   const [
+    { data: reuniones },
     { data: votantes },
     { data: eventos },
     { data: solicitudes },
   ] = await Promise.all([
+    db.from('lista_reuniones').select('municipio, estado'),
     db.from('lista_votantes').select('municipio, estado, puesto_votacion'),
     db.from('noticias_eventos').select('titulo, municipio, fecha_evento').eq('tipo', 'evento'),
     db.from('solicitudes').select('municipio, estado, tipo'),
@@ -2137,21 +2288,23 @@ async function cargarMapa() {
     ; (arr || []).forEach(x => {
       const k = normMunicipio(x.municipio)
       if (!k) return
-      if (!stats[k]) stats[k] = { nombre: x.municipio?.trim(), votantes: [], eventos: [], solicitudes: [] }
+      if (!stats[k]) stats[k] = { nombre: x.municipio?.trim(), reuniones: [], votantes: [], eventos: [], solicitudes: [] }
       stats[k][tipo].push(x)
     })
   }
+  agregar(reuniones, 'reuniones')
   agregar(votantes, 'votantes')
   agregar(eventos, 'eventos')
   agregar(solicitudes, 'solicitudes')
 
   // 3. KPIs globales
+  const totalR = (reuniones || []).length
   const totalV = (votantes || []).length
   const totalE = (eventos || []).length
   const totalS = (solicitudes || []).length
-  const muniActivos = Object.keys(stats).filter(k => stats[k].votantes.length > 0).length
+  const muniActivos = Object.keys(stats).filter(k => stats[k].reuniones.length + stats[k].votantes.length > 0).length
 
-  document.getElementById('mapa-kpi-total').textContent = totalV
+  document.getElementById('mapa-kpi-total').textContent = totalR + totalV
   document.getElementById('mapa-kpi-municipios').textContent = muniActivos
   document.getElementById('mapa-kpi-eventos').textContent = totalE
   document.getElementById('mapa-kpi-solicitudes').textContent = totalS
@@ -2188,8 +2341,8 @@ async function cargarMapa() {
   const zoomActual = mapaLeaflet.getZoom()
   Object.entries(CENTROIDES_VDC).forEach(([k, coords]) => {
     const nombreMunicipio = k.replace(/(^|\s)\S/g, l => l.toUpperCase())
-    const s = stats[k] || { nombre: nombreMunicipio, votantes: [], eventos: [], solicitudes: [] }
-    const intensidad = s.votantes.length
+    const s = stats[k] || { nombre: nombreMunicipio, reuniones: [], votantes: [], eventos: [], solicitudes: [] }
+    const intensidad = s.reuniones.length + s.votantes.length
     // ~611 m/px a zoom 8 → radioBase fija el tamaño en píxeles a cualquier zoom
     const nombreMostrar = s.nombre || nombreMunicipio
     const pxBase = Math.max(32, nombreMostrar.length * 2.6) + (intensidad > 0 ? Math.min(intensidad * 0.4, 14) : 0)
@@ -2308,12 +2461,15 @@ function mostrarSeleccionMapa(coords, color) {
 function mostrarPanelMapa(nombre, s) {
   document.getElementById('mapa-panel-nombre').textContent = nombre
 
-  const v   = s.votantes
-  const e   = s.eventos
+  const r = s.reuniones
+  const v = s.votantes
+  const e = s.eventos
   const sol = s.solicitudes
 
-  const vApro   = v.filter(x => x.estado === 'aprobado').length
-  const vPend   = v.filter(x => x.estado === 'pendiente').length
+  const rApro = r.filter(x => x.estado === 'aprobado').length
+  const rPend = r.filter(x => x.estado === 'pendiente').length
+  const vApro = v.filter(x => x.estado === 'aprobado').length
+  const vPend = v.filter(x => x.estado === 'pendiente').length
   const solPend = sol.filter(x => x.estado === 'pendiente').length
 
   const eventosHtml = e.length
@@ -2324,6 +2480,12 @@ function mostrarPanelMapa(nombre, s) {
     : '<p style="font-size:0.8rem;color:var(--texto-muted)">Sin eventos registrados</p>'
 
   document.getElementById('mapa-panel-contenido').innerHTML = `
+    <div class="mapa-panel-seccion">
+      <div class="mapa-panel-seccion-titulo">Reuniones</div>
+      <div class="mapa-stat"><span class="mapa-stat-label">Total</span><span class="mapa-stat-valor">${r.length}</span></div>
+      <div class="mapa-stat"><span class="mapa-stat-label">✓ Aprobadas</span><span class="mapa-stat-valor aprobado">${rApro}</span></div>
+      <div class="mapa-stat"><span class="mapa-stat-label">⏳ Pendientes</span><span class="mapa-stat-valor pendiente">${rPend}</span></div>
+    </div>
     <div class="mapa-panel-seccion">
       <div class="mapa-panel-seccion-titulo">Votantes</div>
       <div class="mapa-stat"><span class="mapa-stat-label">Total</span><span class="mapa-stat-valor">${v.length}</span></div>
@@ -2388,7 +2550,7 @@ function filtrarMapaBuscador(valor) {
   lista.innerHTML = resultados.map(k => {
     const label = k.replace(/(^|\s)\S/g, l => l.toUpperCase())
     const s = _mapaStats[k]
-    const intensidad = s ? s.votantes.length : 0
+    const intensidad = s ? s.reuniones.length + s.votantes.length : 0
     const color = colorIntensidad(intensidad)
     return `<li class="mapa-buscador-item" data-key="${k}" onmousedown="seleccionarMunicipioBuscador('${k}')">
       <span class="buscador-dot" style="background:${color};border:1.5px solid ${intensidad ? color : '#94a3b8'}"></span>
@@ -2410,7 +2572,7 @@ function seleccionarMunicipioBuscador(k) {
   mapaLeaflet.flyTo(coords, 12, { duration: 1 })
 
   // Mostrar panel lateral y ripple de selección
-  const color = colorIntensidad(s.votantes.length)
+  const color = colorIntensidad(s.reuniones.length + s.votantes.length)
   setTimeout(() => {
     mostrarPanelMapa(s.nombre || label, s)
     mostrarSeleccionMapa(coords, color)
@@ -2488,6 +2650,15 @@ function formatFecha(iso) {
 ============================================== */
 
 // Mapeo de encabezados flexibles → nombre interno
+const ALIAS_REUNIONES = {
+  nombre: 'nombre_completo', nombre_completo: 'nombre_completo',
+  cedula: 'cedula', cédula: 'cedula', documento: 'cedula', cc: 'cedula',
+  telefono: 'telefono', teléfono: 'telefono', celular: 'telefono',
+  municipio: 'municipio', ciudad: 'municipio',
+  fecha_reunion: 'fecha_reunion', fecha: 'fecha_reunion', 'fecha reunión': 'fecha_reunion',
+  amigo_referido: 'amigo_referido', referido: 'amigo_referido', referido_por: 'amigo_referido', 'referido por': 'amigo_referido',
+}
+
 const ALIAS_VOTANTES = {
   nombre: 'nombre_completo', nombre_completo: 'nombre_completo',
   cedula: 'cedula', cédula: 'cedula', documento: 'cedula', cc: 'cedula',
@@ -2501,7 +2672,8 @@ const ALIAS_VOTANTES = {
   amigo_referido: 'amigo_referido', referido: 'amigo_referido', referido_por: 'amigo_referido', 'referido por': 'amigo_referido',
 }
 
-const CAMPOS_VOTANTES =['nombre_completo', 'cedula', 'telefono', 'municipio', 'puesto_votacion', 'mesa', 'amigo_referido']
+const CAMPOS_REUNIONES = ['nombre_completo', 'cedula', 'telefono', 'municipio', 'fecha_reunion', 'amigo_referido']
+const CAMPOS_VOTANTES = ['nombre_completo', 'cedula', 'telefono', 'municipio', 'puesto_votacion', 'mesa', 'amigo_referido']
 
 function normalizarClave(str) {
   return String(str).toLowerCase().trim()
@@ -2666,6 +2838,18 @@ function iniciarExcel({ inputId, zonaId, previewId, tablaId, countId, subirId, c
 
     btnSubir.disabled = false
     btnSubir.textContent = 'Subir todos los registros'
+  })
+}
+
+function initExcelReuniones() {
+  iniciarExcel({
+    inputId: 'excel-reuniones', zonaId: 'excel-zona-reuniones',
+    previewId: 'excel-preview-reuniones', tablaId: 'excel-tabla-reuniones',
+    countId: 'excel-count-reuniones', subirId: 'btn-subir-reuniones',
+    cancelarId: 'btn-cancelar-reuniones', alertaId: 'excel-alerta-reuniones',
+    referidoId: 'modal-referido-reuniones', modalId: 'modal-excel-reuniones',
+    alias: ALIAS_REUNIONES, campos: CAMPOS_REUNIONES,
+    tabla: 'lista_reuniones', onExito: cargarReuniones,
   })
 }
 
