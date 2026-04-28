@@ -3097,3 +3097,24 @@ select {
   padding: 0 1.25rem 1rem;
   border-top: 1px solid #f1f5f9;
 }
+
+/* ── Layout votantes: equipo izq + gráficos der ── */
+.votantes-layout {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 1.25rem;
+  align-items: start;
+}
+.votantes-graficos-col { display: flex; flex-direction: column; }
+.votantes-graficos-col .grafico-bloque { padding: 1.25rem; }
+
+/* Miembro activo */
+.equipo-miembro-header.activo {
+  background: #fefce8;
+  border-radius: 8px;
+}
+.equipo-miembro-header.activo .equipo-nombre { color: var(--color-accent-dark, #854d0e); }
+
+@media (max-width: 900px) {
+  .votantes-layout { grid-template-columns: 1fr; }
+}

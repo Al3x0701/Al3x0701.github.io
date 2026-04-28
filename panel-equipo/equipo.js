@@ -867,13 +867,9 @@ async function cargarVotantes() {
     inputEquipo.addEventListener('input', renderEquipo)
   }
 
-  // Tabs de gráfico (una sola vez)
-  if (!document.getElementById('filtro-referido-grafico')?.dataset.connected) {
-    iniciarGraficoVotantes()
-  } else {
-    poblarSelectorReferidoGrafico()
-    renderGraficoVotantes()
-  }
+  _miembroActivo = null
+  _graficoReferido = ''
+  renderGraficosVotantes()
 }
 
 let _equipoPagina = 1
@@ -960,15 +956,41 @@ async function renderEquipo() {
 
 const _miembroPagina = {}
 const _MIEMBRO_POR_PAGINA = 8
+let _miembroActivo = null   // id del miembro seleccionado actualmente
 
 function toggleMiembro(id) {
-  const panel = document.getElementById(`votantes-${id}`)
+  const panel  = document.getElementById(`votantes-${id}`)
   const header = panel?.previousElementSibling
   if (!panel) return
+
   const abierto = panel.style.display !== 'none'
-  panel.style.display = abierto ? 'none' : 'block'
-  header?.querySelector('.equipo-chevron')?.style.setProperty('transform', abierto ? '' : 'rotate(180deg)')
-  if (!abierto) renderVotantesMiembro(id)
+
+  // Cerrar cualquier otro miembro abierto
+  document.querySelectorAll('.equipo-votantes').forEach(p => { p.style.display = 'none' })
+  document.querySelectorAll('.equipo-chevron').forEach(c => c.style.transform = '')
+  document.querySelectorAll('.equipo-miembro-header').forEach(h => h.classList.remove('activo'))
+
+  if (abierto) {
+    // Era el mismo → cerrar y volver a todos
+    _miembroActivo = null
+    actualizarGraficosMiembro(null)
+  } else {
+    // Abrir este
+    panel.style.display = 'block'
+    header?.querySelector('.equipo-chevron')?.style.setProperty('transform', 'rotate(180deg)')
+    header?.classList.add('activo')
+    _miembroActivo = id
+    renderVotantesMiembro(id)
+    actualizarGraficosMiembro(id)
+  }
+}
+
+function actualizarGraficosMiembro(id) {
+  const usuario = id ? renderEquipo._cache?.find(u => u.id === id) : null
+  const titulo  = document.getElementById('grafico-titulo-miembro')
+  if (titulo) titulo.textContent = usuario ? usuario.nombre_completo : 'Todos los votantes'
+  _graficoReferido = usuario ? usuario.nombre_completo : ''
+  renderGraficosVotantes()
 }
 
 function renderVotantesMiembro(id, pag) {

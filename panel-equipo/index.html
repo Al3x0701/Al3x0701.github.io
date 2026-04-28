@@ -512,41 +512,35 @@
             </div>
           </div>
 
-          <!-- Filtro de referido compartido -->
-          <div class="grafico-filtro-barra">
-            <div class="grafico-referido-filtro" id="grafico-referido-filtro">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-              <select id="filtro-referido-grafico">
-                <option value="">— Todos los referidos —</option>
-              </select>
+          <div class="votantes-layout">
+            <!-- Columna izquierda: Mi equipo -->
+            <div class="tarjeta" id="tarjeta-registros">
+              <div class="tabla-controles">
+                <h2 class="tarjeta-titulo" style="margin:0">Mi equipo</h2>
+                <div class="buscador-wrap">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  <input type="text" id="buscador-equipo" placeholder="Buscar miembro…">
+                </div>
+              </div>
+              <div id="equipo-lista"></div>
             </div>
-          </div>
 
-          <!-- Dos tarjetas en fila -->
-          <div class="graficos-doble">
-            <div class="tarjeta grafico-bloque">
-              <p class="grafico-subtitulo">Por Municipio</p>
-              <div class="grafico-wrap" id="grafico-wrap-municipio">
-                <canvas id="grafico-municipio"></canvas>
+            <!-- Columna derecha: gráficos -->
+            <div class="votantes-graficos-col">
+              <div class="tarjeta grafico-bloque" style="margin-bottom:1rem">
+                <p class="grafico-subtitulo" id="grafico-titulo-miembro">Todos los votantes</p>
+                <p class="grafico-subtitulo" style="font-size:0.75rem;color:var(--texto-muted);margin-top:-0.5rem" id="grafico-sub-municipio">Por Municipio</p>
+                <div class="grafico-wrap" id="grafico-wrap-municipio">
+                  <canvas id="grafico-municipio"></canvas>
+                </div>
+              </div>
+              <div class="tarjeta grafico-bloque">
+                <p class="grafico-subtitulo" style="font-size:0.75rem;color:var(--texto-muted)" id="grafico-sub-puesto">Por Puesto de Votación</p>
+                <div class="grafico-wrap" id="grafico-wrap-puesto" style="height:280px">
+                  <canvas id="grafico-puesto"></canvas>
+                </div>
               </div>
             </div>
-            <div class="tarjeta grafico-bloque">
-              <p class="grafico-subtitulo">Por Puesto de Votación</p>
-              <div class="grafico-wrap" id="grafico-wrap-puesto" style="height:300px">
-                <canvas id="grafico-puesto"></canvas>
-              </div>
-            </div>
-          </div>
-
-          <div class="tarjeta" id="tarjeta-registros">
-            <div class="tabla-controles">
-              <h2 class="tarjeta-titulo" style="margin:0">Mi equipo</h2>
-              <div class="buscador-wrap">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                <input type="text" id="buscador-equipo" placeholder="Buscar miembro…">
-              </div>
-            </div>
-            <div id="equipo-lista"></div>
           </div>
         </section>
 
