@@ -44,21 +44,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     await db.auth.signOut()
   })
 
-  // Carga inicial: getSession() resuelve de inmediato con la sesión en caché
+  // Escuchar cambios de sesión PRIMERO para no perder eventos durante la carga
+  db.auth.onAuthStateChange(async (evento, session) => {
+    if (evento === 'SIGNED_IN') await iniciarApp(session.user)
+    if (evento === 'SIGNED_OUT') mostrarLogin()
+    if (evento === 'TOKEN_REFRESHED' && session) {
+      usuarioActual = session.user
+      // El token expirado ya fue renovado: recargar la sección activa si tiene datos/gráficos
+      const secActiva = document.querySelector('.seccion.activa')?.id?.replace('sec-', '')
+      if (secActiva && ['dashboard', 'consolidado', 'votantes', 'reuniones', 'aprobaciones'].includes(secActiva)) {
+        cargarSeccion(secActiva)
+      }
+    }
+  })
+
+  // Carga inicial: getSession() resuelve con la sesión en caché (puede estar expirada)
   const { data: { session } } = await db.auth.getSession()
   if (session) {
     await iniciarApp(session.user)
   } else {
     mostrarLogin()
   }
-
-  // Escuchar cambios de sesión posteriores a la carga inicial
-  db.auth.onAuthStateChange(async (evento, session) => {
-    if (evento === 'SIGNED_IN') await iniciarApp(session.user)
-    if (evento === 'SIGNED_OUT') mostrarLogin()
-    // TOKEN_REFRESHED: sesión renovada silenciosamente, solo actualizamos el usuario
-    if (evento === 'TOKEN_REFRESHED' && session) usuarioActual = session.user
-  })
 })
 
 
@@ -148,6 +154,26 @@ async function iniciarApp(user) {
 
   // Pre-cargar usuarios para los selects de referidos
   cargarSelectsReferidos()
+}
+
+// Muestra un banner de error con botón "Reintentar" dentro de la sección indicada
+function mostrarErrorSeccion(seccionId, reintentar) {
+  const sec = document.getElementById(seccionId)
+  if (!sec) return
+  // Evitar duplicar el banner
+  if (sec.querySelector('.error-conexion-banner')) return
+  const banner = document.createElement('div')
+  banner.className = 'error-conexion-banner'
+  banner.innerHTML = `
+    <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    <span>No se pudieron cargar los datos. Verifica tu conexión.</span>
+    <button class="btn-reintentar-conexion">Reintentar</button>
+  `
+  banner.querySelector('.btn-reintentar-conexion').addEventListener('click', () => {
+    banner.remove()
+    reintentar()
+  })
+  sec.prepend(banner)
 }
 
 async function cargarSelectsReferidos() {
@@ -487,7 +513,11 @@ async function cargarDashboard() {
     { data: eventosDB }
   ] = await Promise.all([qR, qV, db.from('eventos').select('nombre_evento, fecha, hora_inicio, hora_cierre, municipio')])
 
-  if (errR || errV) { console.error('Error cargando dashboard:', errR || errV); return }
+  if (errR || errV) {
+    console.error('Error cargando dashboard:', errR || errV)
+    mostrarErrorSeccion('sec-dashboard', () => cargarDashboard())
+    return
+  }
 
   const r = reuniones || []
   const v = votantes || []
@@ -1572,7 +1602,11 @@ async function cargarConsolidado() {
     db.from('lista_votantes').select('*').order('created_at', { ascending: false }),
   ])
 
-  if (errR || errV) { console.error('Error cargando consolidado:', errR || errV); return }
+  if (errR || errV) {
+    console.error('Error cargando consolidado:', errR || errV)
+    mostrarErrorSeccion('sec-consolidado', () => cargarConsolidado())
+    return
+  }
 
   datosReuniones = r || []
   datosVotantes  = v || []

@@ -3058,3 +3058,33 @@ select {
   background: #fefce8;
   border-color: var(--color-accent);
 }
+
+/* ── Banner error de conexión ── */
+.error-conexion-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  color: #991b1b;
+  padding: 0.85rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 1.25rem;
+}
+.error-conexion-banner svg { flex-shrink: 0; }
+.error-conexion-banner span { flex: 1; }
+.btn-reintentar-conexion {
+  background: #991b1b;
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  padding: 0.4rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+.btn-reintentar-conexion:hover { background: #7f1d1d; }
