@@ -776,11 +776,10 @@ async function restablecerClave() {
 ============================================== */
 
 async function cargarReuniones() {
-  const { data, error } = await db
-    .from('lista_reuniones')
-    .select('*')
-    .eq('subido_por', usuarioActual.id)
-    .order('created_at', { ascending: false })
+  const esAdmin = ['owner', 'admin'].includes(perfilActual?.rol)
+  let q = db.from('lista_reuniones').select('*').order('created_at', { ascending: false })
+  if (!esAdmin) q = q.eq('subido_por', usuarioActual.id)
+  const { data, error } = await q
 
   const tbody = document.getElementById('tabla-reuniones-body')
 
@@ -847,11 +846,10 @@ let _votantesPagina = 1
 const _VOTANTES_POR_PAGINA = 13
 
 async function cargarVotantes() {
-  const { data, error } = await db
-    .from('lista_votantes')
-    .select('*')
-    .eq('subido_por', usuarioActual.id)
-    .order('created_at', { ascending: false })
+  const esAdmin = ['owner', 'admin'].includes(perfilActual?.rol)
+  let q = db.from('lista_votantes').select('*').order('created_at', { ascending: false })
+  if (!esAdmin) q = q.eq('subido_por', usuarioActual.id)
+  const { data, error } = await q
 
   _votantesData = error ? [] : (data || [])
   _votantesPagina = 1
