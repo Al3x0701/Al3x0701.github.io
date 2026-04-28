@@ -1195,6 +1195,9 @@ async function cargarEventos() {
     return 'expirado'
   }
 
+  const orden = { activo: 0, proximo: 1, 'sin-horario': 1, finalizado: 2, expirado: 2 }
+  data.sort((a, b) => orden[estadoEvento(a)] - orden[estadoEvento(b)])
+
   wrap.innerHTML = data.map(ev => {
     const responsables = Array.isArray(ev.responsables) ? ev.responsables.join(', ') : ev.responsables
     const fecha = ev.fecha ? new Date(ev.fecha + 'T00:00:00').toLocaleDateString('es-CO', { day:'2-digit', month:'long', year:'numeric' }) : '—'
