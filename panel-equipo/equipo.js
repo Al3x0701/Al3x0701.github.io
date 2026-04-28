@@ -44,27 +44,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     await db.auth.signOut()
   })
 
-  // Escuchar cambios de sesión PRIMERO para no perder eventos durante la carga
-  db.auth.onAuthStateChange(async (evento, session) => {
-    if (evento === 'SIGNED_IN') await iniciarApp(session.user)
-    if (evento === 'SIGNED_OUT') mostrarLogin()
-    if (evento === 'TOKEN_REFRESHED' && session) {
-      usuarioActual = session.user
-      // El token expirado ya fue renovado: recargar la sección activa si tiene datos/gráficos
-      const secActiva = document.querySelector('.seccion.activa')?.id?.replace('sec-', '')
-      if (secActiva && ['dashboard', 'consolidado', 'votantes', 'reuniones', 'aprobaciones'].includes(secActiva)) {
-        cargarSeccion(secActiva)
-      }
-    }
-  })
-
-  // Carga inicial: getSession() resuelve con la sesión en caché (puede estar expirada)
+  // Carga inicial: getSession() resuelve con la sesión en caché
   const { data: { session } } = await db.auth.getSession()
   if (session) {
     await iniciarApp(session.user)
   } else {
     mostrarLogin()
   }
+
+  // Escuchar cambios de sesión posteriores a la carga inicial
+  db.auth.onAuthStateChange(async (evento, session) => {
+    if (evento === 'SIGNED_IN' && !usuarioActual) await iniciarApp(session.user)
+    if (evento === 'SIGNED_OUT') mostrarLogin()
+    if (evento === 'TOKEN_REFRESHED' && session) {
+      usuarioActual = session.user
+      // Token renovado: recargar la sección activa si depende de datos de BD
+      const secActiva = document.querySelector('.seccion.activa')?.id?.replace('sec-', '')
+      if (secActiva && ['dashboard', 'consolidado', 'votantes', 'reuniones', 'aprobaciones'].includes(secActiva)) {
+        cargarSeccion(secActiva)
+      }
+    }
+  })
 })
 
 
