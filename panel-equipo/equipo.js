@@ -946,22 +946,7 @@ async function renderEquipo() {
           </div>
           <svg class="equipo-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
-        <div class="equipo-votantes" id="votantes-${u.id}" style="display:none">
-          ${votantes.length ? `
-            <table class="tabla" style="margin:0">
-              <thead><tr><th>Nombre</th><th>Cédula</th><th>Municipio</th><th>Puesto</th><th>Mesa</th><th>Estado</th></tr></thead>
-              <tbody>
-                ${votantes.map(v => `<tr>
-                  <td>${v.nombre_completo}</td>
-                  <td>${v.cedula}</td>
-                  <td>${v.municipio || '—'}</td>
-                  <td>${v.puesto_votacion || '—'}</td>
-                  <td>${v.mesa || '—'}</td>
-                  <td>${badgeEstado(v.estado)}</td>
-                </tr>`).join('')}
-              </tbody>
-            </table>` : '<p class="tabla-vacia" style="padding:1rem 1.5rem">Sin votantes referidos aún.</p>'}
-        </div>
+        <div class="equipo-votantes" id="votantes-${u.id}" style="display:none"></div>
       </div>`
   }).join('') + paginacionHTML
 
@@ -973,6 +958,9 @@ async function renderEquipo() {
   })
 }
 
+const _miembroPagina = {}
+const _MIEMBRO_POR_PAGINA = 8
+
 function toggleMiembro(id) {
   const panel = document.getElementById(`votantes-${id}`)
   const header = panel?.previousElementSibling
@@ -980,6 +968,59 @@ function toggleMiembro(id) {
   const abierto = panel.style.display !== 'none'
   panel.style.display = abierto ? 'none' : 'block'
   header?.querySelector('.equipo-chevron')?.style.setProperty('transform', abierto ? '' : 'rotate(180deg)')
+  if (!abierto) renderVotantesMiembro(id)
+}
+
+function renderVotantesMiembro(id, pag) {
+  const panel = document.getElementById(`votantes-${id}`)
+  if (!panel) return
+
+  if (pag !== undefined) _miembroPagina[id] = pag
+  if (!_miembroPagina[id]) _miembroPagina[id] = 1
+
+  const votantes = _votantesData.filter(v => {
+    const usuario = renderEquipo._cache?.find(u => u.id === id)
+    return usuario && v.amigo_referido === usuario.nombre_completo
+  })
+
+  if (!votantes.length) {
+    panel.innerHTML = '<p class="tabla-vacia" style="padding:1rem 1.5rem">Sin votantes referidos aún.</p>'
+    return
+  }
+
+  const totalPags = Math.ceil(votantes.length / _MIEMBRO_POR_PAGINA)
+  const pagActual = Math.min(_miembroPagina[id], totalPags)
+  _miembroPagina[id] = pagActual
+  const inicio = (pagActual - 1) * _MIEMBRO_POR_PAGINA
+  const pagina = votantes.slice(inicio, inicio + _MIEMBRO_POR_PAGINA)
+
+  const paginacionHTML = totalPags <= 1 ? '' : `
+    <div class="paginacion-wrap" style="padding:0.5rem 0 0">
+      <div class="paginacion">
+        <button class="pag-btn" onclick="renderVotantesMiembro('${id}', ${pagActual - 1})" ${pagActual === 1 ? 'disabled' : ''}>&#8592;</button>
+        ${paginasVisibles(pagActual, totalPags).map(p => p === '…'
+          ? `<span class="pag-ellipsis">…</span>`
+          : `<button class="pag-btn ${p === pagActual ? 'activo' : ''}" onclick="renderVotantesMiembro('${id}', ${p})">${p}</button>`
+        ).join('')}
+        <button class="pag-btn" onclick="renderVotantesMiembro('${id}', ${pagActual + 1})" ${pagActual === totalPags ? 'disabled' : ''}>&#8594;</button>
+        <span class="pag-info">${inicio + 1}–${Math.min(inicio + _MIEMBRO_POR_PAGINA, votantes.length)} de ${votantes.length}</span>
+      </div>
+    </div>`
+
+  panel.innerHTML = `
+    <table class="tabla" style="margin:0">
+      <thead><tr><th>Nombre</th><th>Cédula</th><th>Municipio</th><th>Puesto</th><th>Mesa</th><th>Estado</th></tr></thead>
+      <tbody>
+        ${pagina.map(v => `<tr>
+          <td>${v.nombre_completo}</td>
+          <td>${v.cedula}</td>
+          <td>${v.municipio || '—'}</td>
+          <td>${v.puesto_votacion || '—'}</td>
+          <td>${v.mesa || '—'}</td>
+          <td>${badgeEstado(v.estado)}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>${paginacionHTML}`
 }
 
 function renderTablaVotantes() {
