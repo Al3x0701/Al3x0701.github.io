@@ -1219,20 +1219,26 @@ function renderGraficosVotantes() {
     })
   }
 
-  // ── Gráfico Puesto (dona) ──
+  // ── Gráfico Dona ──
+  // Sin miembro: votantes por referido (quién los aportó)
+  // Con miembro: puestos de votación del miembro
   const wrapP  = document.getElementById('grafico-wrap-puesto')
   const canvP  = document.getElementById('grafico-puesto')
-  const entradasP = agrupar(base, 'puesto_votacion')
+  const subP   = document.getElementById('grafico-sub-puesto')
+  const campoP = _miembroActivo ? 'puesto_votacion' : 'amigo_referido'
+  if (subP) subP.textContent = _miembroActivo ? 'Por Puesto de Votación' : 'Votantes por miembro'
+  const entradasP = agrupar(base, campoP)
 
   if (!entradasP.length) {
-    vacioEnCanvas(wrapP, canvP, 'Sin datos de puesto.')
+    vacioEnCanvas(wrapP, canvP, _miembroActivo ? 'Sin datos de puesto.' : 'Sin votantes registrados.')
   } else {
     canvP.style.display = ''
     wrapP.style.display = ''
     wrapP.querySelector('.grafico-sin-datos')?.remove()
-    const labelsP  = entradasP.map(([k]) => k)
+    const total    = entradasP.reduce((s, [, v]) => s + v, 0)
+    const labelsP  = entradasP.map(([k, v]) => `${k} (${v})`)
     const valoresP = entradasP.map(([, v]) => v)
-    const coloresP = labelsP.map((_, i) => _COLORES_GRAFICO[i % _COLORES_GRAFICO.length])
+    const coloresP = valoresP.map((_, i) => _COLORES_GRAFICO[i % _COLORES_GRAFICO.length])
     if (_graficoPuesto) _graficoPuesto.destroy()
     _graficoPuesto = new Chart(canvP, {
       type: 'doughnut',
