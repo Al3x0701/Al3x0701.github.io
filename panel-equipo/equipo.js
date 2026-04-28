@@ -468,24 +468,26 @@ function iniciarPestanas() {
    DASHBOARD
 ============================================== */
 
+let _graficoDashMunicipio = null
+
 async function cargarDashboard() {
   const esAdmin = ['owner', 'admin'].includes(perfilActual?.rol)
 
-  // Obtener reuniones y votantes
   let qR = db.from('lista_reuniones').select('estado')
-  let qV = db.from('lista_votantes').select('estado')
+  let qV = db.from('lista_votantes').select('estado, municipio')
 
   if (!esAdmin) {
     qR = qR.eq('subido_por', usuarioActual.id)
     qV = qV.eq('subido_por', usuarioActual.id)
   }
 
-  const [{ data: reuniones, error: errR }, { data: votantes, error: errV }] = await Promise.all([qR, qV])
+  const [
+    { data: reuniones, error: errR },
+    { data: votantes,  error: errV },
+    { data: eventosDB }
+  ] = await Promise.all([qR, qV, db.from('eventos').select('nombre_evento, fecha, hora_inicio, hora_cierre, municipio')])
 
-  if (errR || errV) {
-    console.error('Error cargando dashboard:', errR || errV)
-    return
-  }
+  if (errR || errV) { console.error('Error cargando dashboard:', errR || errV); return }
 
   const r = reuniones || []
   const v = votantes || []
@@ -497,19 +499,180 @@ async function cargarDashboard() {
   const vPend = v.filter(x => x.estado === 'pendiente').length
   const vRech = v.filter(x => x.estado === 'rechazado').length
 
-  // KPIs
+  document.getElementById('kpi-total-votantes').textContent = v.length
   document.getElementById('kpi-total').textContent = r.length + v.length
   document.getElementById('kpi-aprobados').textContent = rApro + vApro
   document.getElementById('kpi-pendientes').textContent = rPend + vPend
   document.getElementById('kpi-rechazados').textContent = rRech + vRech
 
-  // Desglose reuniones
   document.getElementById('dash-total-r').textContent = `${r.length} total`
   document.getElementById('dash-barras-r').innerHTML = htmlBarras(rApro, rPend, rRech, r.length)
-
-  // Desglose votantes
   document.getElementById('dash-total-v').textContent = `${v.length} total`
   document.getElementById('dash-barras-v').innerHTML = htmlBarras(vApro, vPend, vRech, v.length)
+
+  // ── Gráfico dona municipios ──
+  const conteo = {}
+  v.forEach(x => {
+    if (!x.municipio) return
+    const m = x.municipio.trim()
+    conteo[m] = (conteo[m] || 0) + 1
+  })
+
+  const entradas = Object.entries(conteo).sort((a, b) => b[1] - a[1])
+  const TOP = 8
+  const top = entradas.slice(0, TOP)
+  const otrosTotal = entradas.slice(TOP).reduce((s, [, n]) => s + n, 0)
+  if (otrosTotal > 0) top.push(['Otros', otrosTotal])
+
+  const labels  = top.map(([k]) => k)
+  const valores = top.map(([, n]) => n)
+  const PALETA  = ['#facc15','#f97316','#ef4444','#a855f7','#3b82f6','#10b981','#06b6d4','#e11d48','#84cc16','#cbd5e1']
+  const colores = labels.map((l, i) => l === 'Otros' ? '#cbd5e1' : PALETA[i % PALETA.length])
+
+  document.getElementById('dash-dona-total').textContent = `${v.length} votante${v.length !== 1 ? 's' : ''}`
+  document.getElementById('dash-dona-muni-top-val').textContent = entradas.length
+  document.getElementById('dash-dona-muni-top-label').textContent = `municipio${entradas.length !== 1 ? 's' : ''}`
+
+  // Leyenda personalizada
+  document.getElementById('dash-dona-leyenda').innerHTML = top.map(([nombre, n], i) => {
+    const pct = v.length > 0 ? Math.round(n / v.length * 100) : 0
+    return `
+      <div class="dash-dona-leyenda-item">
+        <span class="dash-dona-dot" style="background:${colores[i]}"></span>
+        <span class="dash-dona-leyenda-nombre">${nombre}</span>
+        <span class="dash-dona-leyenda-val">${n}</span>
+        <span class="dash-dona-leyenda-pct">${pct}%</span>
+      </div>`
+  }).join('')
+
+  renderCalendarioDash(eventosDB || [])
+
+  const canvas = document.getElementById('dash-grafico-municipio')
+  if (_graficoDashMunicipio) { _graficoDashMunicipio.destroy(); _graficoDashMunicipio = null }
+
+  if (valores.length) {
+    _graficoDashMunicipio = new Chart(canvas, {
+      type: 'doughnut',
+      data: { labels, datasets: [{ data: valores, backgroundColor: colores, borderWidth: 3, borderColor: '#fff', hoverOffset: 10, hoverBorderWidth: 0 }] },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: '72%',
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: ctx => {
+                const pct = v.length > 0 ? Math.round(ctx.parsed / v.length * 100) : 0
+                return `  ${ctx.parsed} votantes (${pct}%)`
+              }
+            },
+            backgroundColor: '#1e293b',
+            titleColor: '#fff',
+            bodyColor: '#94a3b8',
+            padding: 10,
+            cornerRadius: 8,
+          }
+        },
+        animation: { animateRotate: true, duration: 700, easing: 'easeInOutQuart' }
+      }
+    })
+  }
+}
+
+let _calMes = new Date().getMonth()
+let _calAnio = new Date().getFullYear()
+
+function renderCalendarioDash(eventos) {
+  const wrap = document.getElementById('dash-calendario')
+  if (!wrap) return
+
+  // Indexar eventos por fecha YYYY-MM-DD
+  const porFecha = {}
+  eventos.forEach(ev => {
+    if (!ev.fecha) return
+    if (!porFecha[ev.fecha]) porFecha[ev.fecha] = []
+    porFecha[ev.fecha].push(ev)
+  })
+
+  const hoy = new Date()
+  const primerDia = new Date(_calAnio, _calMes, 1)
+  const ultimoDia = new Date(_calAnio, _calMes + 1, 0)
+  const diasMes   = ultimoDia.getDate()
+  const inicioSemana = primerDia.getDay() // 0=dom
+
+  const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
+  const dias  = ['Do','Lu','Ma','Mi','Ju','Vi','Sá']
+
+  // Cabecera navegación
+  let html = `
+    <div class="cal-nav">
+      <button class="cal-nav-btn" id="cal-prev">&#8249;</button>
+      <span class="cal-titulo">${meses[_calMes]} ${_calAnio}</span>
+      <button class="cal-nav-btn" id="cal-next">&#8250;</button>
+    </div>
+    <div class="cal-grid">
+      ${dias.map(d => `<div class="cal-dia-header">${d}</div>`).join('')}`
+
+  // Celdas vacías al inicio
+  for (let i = 0; i < inicioSemana; i++) html += `<div class="cal-celda cal-vacia"></div>`
+
+  // Días del mes
+  for (let d = 1; d <= diasMes; d++) {
+    const fecha = `${_calAnio}-${String(_calMes + 1).padStart(2,'0')}-${String(d).padStart(2,'0')}`
+    const esHoy = hoy.getDate() === d && hoy.getMonth() === _calMes && hoy.getFullYear() === _calAnio
+    const evsDia = porFecha[fecha] || []
+    const tieneEvento = evsDia.length > 0
+
+    const tooltip = tieneEvento
+      ? evsDia.map(e => `${e.nombre_evento}${e.hora_inicio ? ' · ' + e.hora_inicio : ''}`).join('\n')
+      : ''
+
+    html += `<div class="cal-celda${esHoy ? ' cal-hoy' : ''}${tieneEvento ? ' cal-con-evento' : ''}"
+               title="${tooltip}" data-fecha="${fecha}">
+               <span class="cal-num">${d}</span>
+               ${tieneEvento ? `<div class="cal-puntos">${evsDia.slice(0,3).map((e,i) => `<span class="cal-punto" style="background:${['#6366f1','#f97316','#10b981'][i]}"></span>`).join('')}</div>` : ''}
+             </div>`
+  }
+
+  html += `</div>`
+
+  // Lista de próximos eventos del mes
+  const proximos = eventos
+    .filter(e => e.fecha >= `${_calAnio}-${String(_calMes+1).padStart(2,'0')}-01` &&
+                 e.fecha <= `${_calAnio}-${String(_calMes+1).padStart(2,'0')}-${String(diasMes).padStart(2,'0')}`)
+    .sort((a,b) => a.fecha.localeCompare(b.fecha))
+    .slice(0, 4)
+
+  if (proximos.length) {
+    html += `<div class="cal-proximos">`
+    proximos.forEach(ev => {
+      const [,, dia] = ev.fecha.split('-')
+      html += `
+        <div class="cal-proximo-item">
+          <div class="cal-proximo-fecha">
+            <span class="cal-proximo-dia">${parseInt(dia)}</span>
+            <span class="cal-proximo-mes">${meses[_calMes].slice(0,3)}</span>
+          </div>
+          <div class="cal-proximo-info">
+            <span class="cal-proximo-nombre">${ev.nombre_evento}</span>
+            <span class="cal-proximo-meta">${ev.hora_inicio || ''} ${ev.municipio ? '· ' + ev.municipio : ''}</span>
+          </div>
+        </div>`
+    })
+    html += `</div>`
+  }
+
+  wrap.innerHTML = html
+
+  document.getElementById('cal-prev').addEventListener('click', () => {
+    _calMes--
+    if (_calMes < 0) { _calMes = 11; _calAnio-- }
+    renderCalendarioDash(eventos)
+  })
+  document.getElementById('cal-next').addEventListener('click', () => {
+    _calMes++
+    if (_calMes > 11) { _calMes = 0; _calAnio++ }
+    renderCalendarioDash(eventos)
+  })
 }
 
 function htmlBarras(apro, pend, rech, total) {
@@ -1399,20 +1562,175 @@ async function rechazar(tabla, id) {
    CONSOLIDADOS
 ============================================== */
 
+let _conGraficoMunicipio = null
+let _conGraficoReferido  = null
+let _conGraficoPuesto    = null
+
 async function cargarConsolidado() {
   const [{ data: r, error: errR }, { data: v, error: errV }] = await Promise.all([
     db.from('lista_reuniones').select('*').order('created_at', { ascending: false }),
     db.from('lista_votantes').select('*').order('created_at', { ascending: false }),
   ])
 
-  if (errR || errV) {
-    console.error('Error cargando consolidado:', errR || errV)
+  if (errR || errV) { console.error('Error cargando consolidado:', errR || errV); return }
+
+  datosReuniones = r || []
+  datosVotantes  = v || []
+  renderConsolidado()
+  renderGraficosConsolidado()
+}
+
+function renderGraficosConsolidado() {
+  const v = datosVotantes
+
+  // ── KPIs ──
+  const municipios = new Set(v.map(x => x.municipio).filter(Boolean))
+  const puestos    = new Set(v.map(x => x.puesto_votacion).filter(Boolean))
+  const referidos  = new Set(v.map(x => x.amigo_referido).filter(Boolean))
+  document.getElementById('con-kpi-votantes').textContent   = v.length
+  document.getElementById('con-kpi-municipios').textContent = municipios.size
+  document.getElementById('con-kpi-puestos').textContent    = puestos.size
+  document.getElementById('con-kpi-referidos').textContent  = referidos.size
+
+  const PALETA = ['#facc15','#f97316','#ef4444','#a855f7','#3b82f6','#10b981','#06b6d4','#e11d48','#84cc16','#f59e0b','#8b5cf6','#14b8a6','#f43f5e','#22c55e','#0ea5e9']
+
+  // ── Gráfico Municipio (dona) ──
+  const entMuni = agrupar(v, 'municipio')
+  const wrapM = document.getElementById('con-wrap-municipio')
+  if (entMuni.length) {
+    wrapM.querySelector('.grafico-sin-datos')?.remove()
+    document.getElementById('con-grafico-municipio').style.display = ''
+    if (_conGraficoMunicipio) _conGraficoMunicipio.destroy()
+    _conGraficoMunicipio = new Chart(document.getElementById('con-grafico-municipio'), {
+      type: 'doughnut',
+      data: {
+        labels: entMuni.map(([k]) => k),
+        datasets: [{ data: entMuni.map(([,n]) => n), backgroundColor: entMuni.map((_,i) => PALETA[i % PALETA.length]), borderWidth: 2, borderColor: '#fff', hoverOffset: 8 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: '60%',
+        plugins: {
+          legend: { position: 'right', labels: { font: { size: 11 }, padding: 10, usePointStyle: true, pointStyle: 'circle', filter: item => item.index < 10 } },
+          tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed} votos` } }
+        }
+      }
+    })
+  }
+
+  // ── Gráfico Referido (barras horizontales) ──
+  const entRef = agrupar(v, 'amigo_referido')
+  const wrapR = document.getElementById('con-wrap-referido')
+  if (entRef.length) {
+    wrapR.style.height = Math.max(160, entRef.length * 44) + 'px'
+    wrapR.querySelector('.grafico-sin-datos')?.remove()
+    document.getElementById('con-grafico-referido').style.display = ''
+    if (_conGraficoReferido) _conGraficoReferido.destroy()
+    _conGraficoReferido = new Chart(document.getElementById('con-grafico-referido'), {
+      type: 'bar',
+      data: {
+        labels: entRef.map(([k]) => k),
+        datasets: [{ data: entRef.map(([,n]) => n), backgroundColor: entRef.map((_,i) => PALETA[i % PALETA.length]), borderRadius: 6, borderSkipped: false, barThickness: 22 }]
+      },
+      options: {
+        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.x} voto${ctx.parsed.x !== 1 ? 's' : ''}` } }
+        },
+        scales: {
+          x: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 11 }, color: '#64748b' }, grid: { color: 'rgba(0,0,0,0.04)' } },
+          y: { ticks: { font: { size: 12 }, color: '#1e293b' }, grid: { display: false } }
+        }
+      }
+    })
+  }
+
+  // ── Ranking Puestos ──
+  const entPuesto = agrupar(v, 'puesto_votacion')
+  renderRankingPuestos(entPuesto)
+}
+
+function renderRankingPuestos(entradas) {
+  const wrap = document.getElementById('con-ranking-puestos')
+  if (!wrap) return
+
+  const PALETA = ['#facc15','#f97316','#ef4444','#a855f7','#3b82f6','#10b981','#06b6d4','#e11d48','#84cc16','#f59e0b']
+  const TOP = 10
+  const top = entradas.slice(0, TOP)
+  const maximo = top[0]?.[1] || 1
+
+  if (!top.length) {
+    wrap.innerHTML = '<p style="color:var(--texto-muted);font-size:0.875rem;text-align:center;padding:1.5rem 0">Sin datos de puestos</p>'
     return
   }
 
-  datosReuniones = r || []
-  datosVotantes = v || []
-  renderConsolidado()
+  wrap.innerHTML = top.map(([nombre, n], i) => {
+    const pct = Math.round(n / maximo * 100)
+    const color = PALETA[i % PALETA.length]
+    return `
+      <div class="ranking-puesto-item">
+        <div class="ranking-puesto-num">${i + 1}</div>
+        <div class="ranking-puesto-info">
+          <div class="ranking-puesto-header">
+            <span class="ranking-puesto-nombre">${nombre}</span>
+            <span class="ranking-puesto-val">${n} <span style="font-weight:400;color:var(--texto-muted)">voto${n !== 1 ? 's' : ''}</span></span>
+          </div>
+          <div class="ranking-puesto-barra-bg">
+            <div class="ranking-puesto-barra-fill" style="width:${pct}%;background:${color}"></div>
+          </div>
+        </div>
+      </div>`
+  }).join('')
+
+  // Botón "Ver todos"
+  const btnVerTodos = document.getElementById('btn-ver-todos-puestos')
+  const badge = document.getElementById('con-puestos-total-badge')
+  if (entradas.length > TOP) {
+    btnVerTodos.style.display = ''
+    badge.textContent = entradas.length
+    btnVerTodos.onclick = () => abrirModalTodosPuestos(entradas)
+  } else {
+    btnVerTodos.style.display = 'none'
+  }
+}
+
+function abrirModalTodosPuestos(entradas) {
+  const overlay = document.getElementById('modal-todos-puestos')
+  const lista   = document.getElementById('modal-lista-puestos')
+  const buscador = document.getElementById('buscador-puestos-modal')
+  const PALETA  = ['#facc15','#f97316','#ef4444','#a855f7','#3b82f6','#10b981','#06b6d4','#e11d48','#84cc16','#f59e0b']
+  const maximo  = entradas[0]?.[1] || 1
+
+  const renderLista = (filtradas) => {
+    lista.innerHTML = filtradas.map(([nombre, n], i) => {
+      const pct   = Math.round(n / maximo * 100)
+      const color = PALETA[i % PALETA.length]
+      return `
+        <div class="ranking-puesto-item">
+          <div class="ranking-puesto-num">${i + 1}</div>
+          <div class="ranking-puesto-info">
+            <div class="ranking-puesto-header">
+              <span class="ranking-puesto-nombre">${nombre}</span>
+              <span class="ranking-puesto-val">${n} <span style="font-weight:400;color:var(--texto-muted)">voto${n !== 1 ? 's' : ''}</span></span>
+            </div>
+            <div class="ranking-puesto-barra-bg">
+              <div class="ranking-puesto-barra-fill" style="width:${pct}%;background:${color}"></div>
+            </div>
+          </div>
+        </div>`
+    }).join('')
+  }
+
+  renderLista(entradas)
+  buscador.value = ''
+  overlay.style.display = 'flex'
+
+  buscador.oninput = () => {
+    const q = buscador.value.toLowerCase()
+    renderLista(entradas.filter(([k]) => k.toLowerCase().includes(q)))
+  }
+  document.getElementById('modal-cerrar-puestos').onclick = () => { overlay.style.display = 'none' }
+  overlay.onclick = (e) => { if (e.target === overlay) overlay.style.display = 'none' }
 }
 
 function renderConsolidado() {
@@ -1699,7 +2017,6 @@ async function cargarUsuarios() {
   const { data, error } = await db
     .from('usuarios')
     .select('*')
-    .order('created_at', { ascending: false })
 
   const tbody = document.getElementById('tabla-usuarios-body')
 
@@ -1708,7 +2025,13 @@ async function cargarUsuarios() {
     return
   }
 
-  const items = data || []
+  const JERARQUIA = { owner: 0, admin: 1, lider: 2, amigo: 3 }
+  const items = (data || []).sort((a, b) => {
+    const rA = JERARQUIA[a.rol] ?? 99
+    const rB = JERARQUIA[b.rol] ?? 99
+    if (rA !== rB) return rA - rB
+    return (a.nombre_completo || '').localeCompare(b.nombre_completo || '', 'es')
+  })
 
   if (!items.length) {
     tbody.innerHTML = '<tr><td colspan="6" class="tabla-vacia">Sin usuarios.</td></tr>'
@@ -1735,6 +2058,24 @@ async function desactivarUsuario(id, activo) {
   await db.from('usuarios').update({ activo: !activo }).eq('id', id)
   await cargarUsuarios()
 }
+
+// ── Modal Añadir Usuario ──
+;(function () {
+  const btnAbrir   = document.getElementById('btn-abrir-usuario')
+  const overlay    = document.getElementById('modal-añadir-usuario')
+  const btnCerrar  = document.getElementById('modal-cerrar-usuario')
+  const btnCancel  = document.getElementById('modal-cancelar-usuario')
+  if (!btnAbrir) return
+  const cerrar = () => {
+    overlay.style.display = 'none'
+    document.getElementById('form-usuario').reset()
+    document.getElementById('usuario-alerta').style.display = 'none'
+  }
+  btnAbrir.addEventListener('click', () => { overlay.style.display = 'flex' })
+  btnCerrar.addEventListener('click', cerrar)
+  btnCancel.addEventListener('click', cerrar)
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) cerrar() })
+})()
 
 document.getElementById('form-usuario').addEventListener('submit', async (e) => {
   e.preventDefault()
@@ -1768,7 +2109,7 @@ document.getElementById('form-usuario').addEventListener('submit', async (e) => 
   if (!res.ok) {
     mostrarAlerta(alertaEl, `❌ ${resultado.error || 'Error al crear usuario'}`, 'error')
   } else {
-    mostrarAlerta(alertaEl, '✅ Usuario creado correctamente.', 'exito')
+    document.getElementById('modal-añadir-usuario').style.display = 'none'
     form.reset()
     await cargarUsuarios()
   }
@@ -2321,9 +2662,12 @@ const ALIAS_REUNIONES = {
 const ALIAS_VOTANTES = {
   nombre: 'nombre_completo', nombre_completo: 'nombre_completo',
   cedula: 'cedula', cédula: 'cedula', documento: 'cedula', cc: 'cedula',
+  'no_cedula': 'cedula', 'no cedula': 'cedula', 'no_cédula': 'cedula', 'no cédula': 'cedula',
   telefono: 'telefono', teléfono: 'telefono', celular: 'telefono',
   municipio: 'municipio', ciudad: 'municipio',
-  puesto_votacion: 'puesto_votacion', puesto: 'puesto_votacion', 'puesto de votacion': 'puesto_votacion', 'puesto de votación': 'puesto_votacion',
+  puesto_votacion: 'puesto_votacion', puesto: 'puesto_votacion',
+  'puesto de votacion': 'puesto_votacion', 'puesto de votación': 'puesto_votacion',
+  'puesto_de_votacion': 'puesto_votacion', 'puesto_de_votación': 'puesto_votacion',
   mesa: 'mesa', numero_mesa: 'mesa', 'número de mesa': 'mesa',
   amigo_referido: 'amigo_referido', referido: 'amigo_referido', referido_por: 'amigo_referido', 'referido por': 'amigo_referido',
 }
@@ -2344,7 +2688,14 @@ function parsearExcel(file) {
       try {
         const wb = XLSX.read(e.target.result, { type: 'array', cellDates: true })
         const ws = wb.Sheets[wb.SheetNames[0]]
-        const rows = XLSX.utils.sheet_to_json(ws, { defval: '' })
+        // Detect header row: skip title/LIDER rows, find first row with "NOMBRE" or known field
+        const range = XLSX.utils.decode_range(ws['!ref'] || 'A1')
+        let headerRow = 0
+        for (let r = range.s.r; r <= Math.min(range.s.r + 5, range.e.r); r++) {
+          const cell = ws[XLSX.utils.encode_cell({ r, c: 1 })] // column B
+          if (cell && /nombre/i.test(String(cell.v))) { headerRow = r; break }
+        }
+        const rows = XLSX.utils.sheet_to_json(ws, { defval: '', range: headerRow })
         resolve(rows)
       } catch (err) { reject(err) }
     }
@@ -2515,13 +2866,16 @@ function initExcelVotantes() {
 }
 
 function descargarFormatoVotantes() {
-  const encabezados = [['nombre_completo', 'cedula', 'telefono', 'puesto_votacion', 'mesa']]
   const wb = XLSX.utils.book_new()
-  const ws = XLSX.utils.aoa_to_sheet(encabezados)
-
-  // Ancho de columnas
-  ws['!cols'] = encabezados[0].map(() => ({ wch: 22 }))
-
+  const filas = [
+    ['ORG. SOCIAL IMPULSO CIUDADANO', '', '', '', '', ''],
+    ['LIDER:', '', '', '', '', ''],
+    ['No', 'NOMBRE', 'No CEDULA', 'TELEFONO', 'PUESTO DE VOTACION', 'MESA'],
+    ...Array.from({ length: 50 }, (_, i) => [i + 1, '', '', '', '', '']),
+  ]
+  const ws = XLSX.utils.aoa_to_sheet(filas)
+  ws['!cols'] = [{ wch: 5 }, { wch: 30 }, { wch: 15 }, { wch: 15 }, { wch: 32 }, { wch: 8 }]
+  ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }]
   XLSX.utils.book_append_sheet(wb, ws, 'Votantes')
   XLSX.writeFile(wb, 'formato_votantes.xlsx')
 }

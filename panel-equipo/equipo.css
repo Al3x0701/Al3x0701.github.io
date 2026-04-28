@@ -803,55 +803,62 @@ select {
   -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--borde-glass);
   border-radius: var(--radio);
-  padding: 1.75rem;
+  padding: 1rem 1.25rem;
   display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.9rem;
   color: var(--color-dark);
   position: relative;
   overflow: hidden;
   box-shadow: var(--sombra);
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
 .kpi:hover {
-  transform: translateY(-5px);
+  transform: translateY(-3px);
   box-shadow: var(--sombra-premium);
   border-color: var(--color-primary);
 }
 
-/* Variantes de color para KPIs (Sutiles) */
-.kpi-total .kpi-valor { color: var(--color-dark); }
-.kpi-exito .kpi-valor { color: var(--exito); }
-.kpi-aviso .kpi-valor { color: var(--aviso); }
-.kpi-error .kpi-valor { color: var(--error); }
-
 .kpi-icono {
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
-  background: rgba(0, 0, 0, 0.03);
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba(0,0,0,0.03);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.kpi-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
 }
 
 .kpi-valor {
   font-family: var(--fuente-titulo);
-  font-size: 2.8rem;
-  font-weight: 700;
+  font-size: 1.75rem;
+  font-weight: 800;
   line-height: 1;
   color: var(--color-dark);
 }
 
 .kpi-etiqueta {
-  font-size: 0.85rem;
+  font-size: 0.72rem;
   font-weight: 700;
   color: var(--texto-sec);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
 }
+
+/* Variantes de color para KPIs */
+.kpi-total .kpi-valor { color: var(--color-dark); }
+.kpi-exito .kpi-valor { color: var(--exito); }
+.kpi-aviso .kpi-valor { color: var(--aviso); }
+.kpi-error .kpi-valor { color: var(--error); }
 
 /* ==============================================
    GRILLA DE DOS COLUMNAS
@@ -1659,17 +1666,17 @@ select {
 
 /* KPIs compactos para el mapa */
 .kpi-fila.kpi-compacto .kpi {
-  padding: 1.1rem 1.25rem;
-  gap: 0.45rem;
+  padding: 0.85rem 1rem;
+  gap: 0.7rem;
 }
 
 .kpi-fila.kpi-compacto .kpi-valor {
-  font-size: 1.9rem;
+  font-size: 1.5rem;
 }
 
 .kpi-fila.kpi-compacto .kpi-icono {
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
 }
 
 /* Ondas de selección al hacer clic en municipio */
@@ -2722,4 +2729,302 @@ select {
 .mapa-puesto-tooltip span {
   font-size: 0.75rem;
   color: #94a3b8;
+}
+
+/* ── Dashboard dona municipios ── */
+.dash-dona-card {
+  margin-bottom: 1.5rem;
+}
+.dash-dona-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+.dash-dona-total-badge {
+  background: #f1f5f9;
+  color: var(--texto-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.3rem 0.85rem;
+  border-radius: 999px;
+}
+.dash-dona-body { width: 100%; }
+.dash-dona-wrap {
+  display: flex;
+  align-items: center;
+  gap: 2.5rem;
+  flex-wrap: wrap;
+}
+.dash-dona-centro {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.dash-dona-centro span:first-child {
+  font-size: 1.9rem;
+  font-weight: 800;
+  color: var(--color-dark);
+  line-height: 1;
+}
+.dash-dona-centro span:last-child {
+  font-size: 0.72rem;
+  color: var(--texto-muted);
+  margin-top: 0.2rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.dash-dona-leyenda {
+  flex: 1;
+  min-width: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+.dash-dona-leyenda-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+}
+.dash-dona-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.dash-dona-leyenda-nombre {
+  flex: 1;
+  color: var(--color-dark);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dash-dona-leyenda-val {
+  font-weight: 700;
+  color: var(--color-dark);
+  min-width: 28px;
+  text-align: right;
+}
+.dash-dona-leyenda-pct {
+  color: var(--texto-muted);
+  min-width: 36px;
+  text-align: right;
+  font-size: 0.75rem;
+}
+
+/* ── Grid dona + calendario ── */
+.dash-mid-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .dash-mid-grid { grid-template-columns: 1fr; }
+}
+
+/* ── Calendario ── */
+.dash-calendario-card { height: 100%; }
+
+.cal-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+.cal-titulo {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--color-dark);
+}
+.cal-nav-btn {
+  background: #f1f5f9;
+  border: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  color: var(--color-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+.cal-nav-btn:hover { background: #e2e8f0; }
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: 0.5rem;
+}
+.cal-dia-header {
+  text-align: center;
+  font-size: 0.58rem;
+  font-weight: 700;
+  color: var(--texto-muted);
+  text-transform: uppercase;
+  padding-bottom: 2px;
+}
+.cal-celda {
+  height: 26px;
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: default;
+  transition: background 0.12s;
+  position: relative;
+  gap: 1px;
+}
+.cal-celda:hover:not(.cal-vacia) { background: #f1f5f9; }
+.cal-vacia { pointer-events: none; }
+.cal-num {
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: var(--color-dark);
+  line-height: 1;
+}
+.cal-hoy {
+  background: var(--color-primary) !important;
+}
+.cal-hoy .cal-num { font-weight: 800; color: var(--color-dark); }
+.cal-con-evento:not(.cal-hoy) { background: #eef2ff; }
+.cal-con-evento:not(.cal-hoy) .cal-num { color: #6366f1; font-weight: 700; }
+
+.cal-puntos {
+  display: flex;
+  gap: 1px;
+}
+.cal-punto {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+}
+
+/* Lista próximos eventos */
+.cal-proximos {
+  border-top: 1px solid #f1f5f9;
+  padding-top: 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.cal-proximo-item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+.cal-proximo-fecha {
+  width: 30px;
+  height: 30px;
+  background: #eef2ff;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.cal-proximo-dia {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #6366f1;
+  line-height: 1;
+}
+.cal-proximo-mes {
+  font-size: 0.55rem;
+  font-weight: 700;
+  color: #a5b4fc;
+  text-transform: uppercase;
+}
+.cal-proximo-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  min-width: 0;
+}
+.cal-proximo-nombre {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-dark);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cal-proximo-meta {
+  font-size: 0.67rem;
+  color: var(--texto-muted);
+}
+
+/* ── Ranking puestos de votación ── */
+.ranking-puesto-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+.ranking-puesto-item:last-child { border-bottom: none; }
+
+.ranking-puesto-num {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: #f1f5f9;
+  color: var(--texto-muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.ranking-puesto-item:nth-child(1) .ranking-puesto-num { background:#fef9c3;color:#92400e; }
+.ranking-puesto-item:nth-child(2) .ranking-puesto-num { background:#f1f5f9;color:#475569; }
+.ranking-puesto-item:nth-child(3) .ranking-puesto-num { background:#fff7ed;color:#c2410c; }
+
+.ranking-puesto-info { flex: 1; min-width: 0; }
+
+.ranking-puesto-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.3rem;
+}
+.ranking-puesto-nombre {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-dark);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ranking-puesto-val {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--color-dark);
+  flex-shrink: 0;
+}
+.ranking-puesto-barra-bg {
+  height: 5px;
+  background: #f1f5f9;
+  border-radius: 999px;
+  overflow: hidden;
+}
+.ranking-puesto-barra-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.4s ease;
 }
