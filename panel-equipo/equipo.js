@@ -1779,25 +1779,49 @@ function iniciarFiltrosConsolidado() {
 ============================================== */
 
 function iniciarExportarExcel() {
-  document.getElementById('btn-exportar').addEventListener('click', async () => {
-    // Cargar SheetJS solo cuando se necesite
+  const modal     = document.getElementById('modal-exportar-excel')
+  const btnAbrir  = document.getElementById('btn-exportar')
+  const btnCerrar = document.getElementById('btn-cerrar-modal-exportar')
+  const btnCancel = document.getElementById('btn-cancelar-exportar')
+  const btnConfirm= document.getElementById('btn-confirmar-exportar')
+
+  const abrirModal = () => {
+    const tabActiva = document.querySelector('#sec-consolidado .pestana.activa')?.dataset.tab
+    const esReuniones = tabActiva === 'con-reuniones'
+    document.getElementById('export-cols-votantes').style.display  = esReuniones ? 'none' : 'block'
+    document.getElementById('export-cols-reuniones').style.display = esReuniones ? 'block' : 'none'
+    document.getElementById('export-tipo-label').textContent = esReuniones ? 'Lista de reuniones' : 'Lista de votantes'
+    modal.style.display = 'flex'
+  }
+
+  const cerrarModal = () => { modal.style.display = 'none' }
+
+  btnAbrir.addEventListener('click', () => {
     if (!window.XLSX) {
       const script = document.createElement('script')
       script.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'
-      script.onload = () => exportarExcel()
+      script.onload = abrirModal
       document.head.appendChild(script)
     } else {
-      exportarExcel()
+      abrirModal()
     }
+  })
+
+  btnCerrar.addEventListener('click', cerrarModal)
+  btnCancel.addEventListener('click', cerrarModal)
+  modal.addEventListener('click', e => { if (e.target === modal) cerrarModal() })
+
+  btnConfirm.addEventListener('click', () => {
+    exportarExcel()
+    cerrarModal()
   })
 }
 
 function exportarExcel() {
-  // Determinar qué pestaña está activa en consolidado
-  const tabActiva = document.querySelector('#sec-consolidado .pestana.activa')?.dataset.tab
+  const tabActiva   = document.querySelector('#sec-consolidado .pestana.activa')?.dataset.tab
   const esReuniones = tabActiva === 'con-reuniones'
 
-  const estado = document.getElementById('filtro-estado').value
+  const estado    = document.getElementById('filtro-estado').value
   const municipio = document.getElementById('filtro-municipio').value.toLowerCase()
 
   const filtrar = (arr) => arr.filter(x => {
@@ -1807,36 +1831,41 @@ function exportarExcel() {
   })
 
   let datos, nombreHoja, nombreArchivo
+
   if (esReuniones) {
-    datos = filtrar(datosReuniones).map(r => ({
-      Nombre: r.nombre_completo,
-      Cédula: r.cedula,
-      Teléfono: r.telefono || '',
-      Municipio: r.municipio || '',
-      'Fecha Reunión': r.fecha_reunion || '',
-      'Referido por': r.amigo_referido,
-      Estado: r.estado,
-      Comentario: r.comentario_rechazo || '',
-    }))
-    nombreHoja = 'Reuniones'
+    const cols = new Set([...document.querySelectorAll('#export-cols-reuniones input[name="export-col-r"]:checked')].map(c => c.value))
+    datos = filtrar(datosReuniones).map(r => {
+      const row = {}
+      if (cols.has('Nombre'))       row['Nombre']        = r.nombre_completo
+      if (cols.has('Cédula'))       row['Cédula']        = r.cedula
+      if (cols.has('Teléfono'))     row['Teléfono']      = r.telefono || ''
+      if (cols.has('Municipio'))    row['Municipio']     = r.municipio || ''
+      if (cols.has('Fecha Reunión'))row['Fecha Reunión'] = r.fecha_reunion || ''
+      if (cols.has('Referido'))     row['Referido por']  = r.amigo_referido
+      if (cols.has('Estado'))       row['Estado']        = r.estado
+      return row
+    })
+    nombreHoja    = 'Reuniones'
     nombreArchivo = `reuniones_${hoy()}.xlsx`
   } else {
-    datos = filtrar(datosVotantes).map(v => ({
-      Nombre: v.nombre_completo,
-      Cédula: v.cedula,
-      Teléfono: v.telefono || '',
-      Municipio: v.municipio,
-      Puesto: v.puesto_votacion,
-      Mesa: v.mesa,
-      'Referido por': v.amigo_referido,
-      Estado: v.estado,
-      Comentario: v.comentario_rechazo || '',
-    }))
-    nombreHoja = 'Votantes'
+    const cols = new Set([...document.querySelectorAll('#export-cols-votantes input[name="export-col"]:checked')].map(c => c.value))
+    datos = filtrar(datosVotantes).map(v => {
+      const row = {}
+      if (cols.has('Nombre'))    row['Nombre']             = v.nombre_completo
+      if (cols.has('Cédula'))    row['Cédula']             = v.cedula
+      if (cols.has('Teléfono'))  row['Teléfono']           = v.telefono || ''
+      if (cols.has('Municipio')) row['Municipio']          = v.municipio
+      if (cols.has('Puesto'))    row['Puesto de votación'] = v.puesto_votacion
+      if (cols.has('Mesa'))      row['Mesa']               = v.mesa
+      if (cols.has('Referido'))  row['Referido por']       = v.amigo_referido
+      if (cols.has('Estado'))    row['Estado']             = v.estado
+      return row
+    })
+    nombreHoja    = 'Votantes'
     nombreArchivo = `votantes_${hoy()}.xlsx`
   }
 
-  const hoja = XLSX.utils.json_to_sheet(datos)
+  const hoja  = XLSX.utils.json_to_sheet(datos)
   const libro = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(libro, hoja, nombreHoja)
   XLSX.writeFile(libro, nombreArchivo)

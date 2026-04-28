@@ -3028,3 +3028,33 @@ select {
   border-radius: 999px;
   transition: width 0.4s ease;
 }
+
+/* ── Modal Exportar Excel ── */
+.export-cols-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem 1rem;
+}
+.export-col-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--color-dark);
+  cursor: pointer;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  transition: background 0.12s, border-color 0.12s;
+}
+.export-col-item:hover { background: #f8fafc; }
+.export-col-item input[type="checkbox"] {
+  width: 16px; height: 16px;
+  accent-color: var(--color-accent);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.export-col-item:has(input:checked) {
+  background: #fefce8;
+  border-color: var(--color-accent);
+}
