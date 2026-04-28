@@ -3028,3 +3028,26 @@ select {
   border-radius: 999px;
   transition: width 0.4s ease;
 }
+
+/* ── Badges de estado de evento ── */
+.evento-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+.evento-badge.activo    { background: #dcfce7; color: #15803d; }
+.evento-badge.finalizado,
+.evento-badge.expirado  { background: #f1f5f9; color: #64748b; }
+.evento-badge.proximo   { background: #eff6ff; color: #2563eb; }
+
+.evento-card-finalizado { opacity: 0.72; }
+.evento-card-finalizado .evento-nombre { color: var(--texto-muted); }
+
+/* ── Override colores badge evento ── */
+.evento-badge.agendado  { background: #fef9c3; color: #854d0e; }
+.evento-badge.activo    { background: #dcfce7; color: #15803d; }
+.evento-badge.finalizado,
+.evento-badge.expirado  { background: #f1f5f9; color: #64748b; }

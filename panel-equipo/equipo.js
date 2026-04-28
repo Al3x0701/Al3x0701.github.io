@@ -1180,21 +1180,55 @@ async function cargarEventos() {
   }
 
   wrap.style.cssText = ''
+
+  const ahora = new Date()
+
+  function estadoEvento(ev) {
+    if (!ev.fecha || !ev.hora_inicio || !ev.hora_cierre) return 'sin-horario'
+    const inicio  = new Date(`${ev.fecha}T${ev.hora_inicio}`)
+    const cierre  = new Date(`${ev.fecha}T${ev.hora_cierre}`)
+    const desde   = new Date(inicio.getTime() - 60 * 60 * 1000)
+    const hasta   = new Date(cierre.getTime() + 2 * 60 * 60 * 1000)
+    if (ahora < desde)   return 'proximo'
+    if (ahora <= cierre) return 'activo'
+    if (ahora <= hasta)  return 'finalizado'
+    return 'expirado'
+  }
+
   wrap.innerHTML = data.map(ev => {
     const responsables = Array.isArray(ev.responsables) ? ev.responsables.join(', ') : ev.responsables
     const fecha = ev.fecha ? new Date(ev.fecha + 'T00:00:00').toLocaleDateString('es-CO', { day:'2-digit', month:'long', year:'numeric' }) : '—'
+    const estado = estadoEvento(ev)
+    const registroDeshabilitado = estado === 'finalizado' || estado === 'expirado'
+
+    const badgeEstadoEvento = estado === 'activo'
+      ? `<span class="evento-badge activo">● En evento</span>`
+      : (estado === 'finalizado' || estado === 'expirado')
+      ? `<span class="evento-badge finalizado">✓ Finalizado</span>`
+      : estado === 'proximo' || estado === 'sin-horario'
+      ? `<span class="evento-badge agendado">◎ Agendado</span>`
+      : ''
+
+    const btnRegistro = registroDeshabilitado
+      ? `<button class="btn btn-primario" disabled style="font-size:0.78rem;padding:0.3rem 0.75rem;opacity:0.45;cursor:not-allowed" title="El registro ya está cerrado">
+           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+           Registro
+         </button>`
+      : `<button class="btn-registro-evento btn btn-primario" data-id="${ev.id}" data-nombre="${ev.nombre_evento}" data-responsables='${JSON.stringify(Array.isArray(ev.responsables) ? ev.responsables : [])}' style="font-size:0.78rem;padding:0.3rem 0.75rem">
+           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+           Registro
+         </button>`
+
     return `
-      <div class="evento-card">
+      <div class="evento-card${estado === 'finalizado' || estado === 'expirado' ? ' evento-card-finalizado' : ''}">
         <div class="evento-card-header">
           <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap">
             <span class="evento-nombre">${ev.nombre_evento}</span>
             <span class="evento-municipio">${ev.municipio || ''}</span>
+            ${badgeEstadoEvento}
           </div>
           <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
-            <button class="btn-registro-evento btn btn-primario" data-id="${ev.id}" data-nombre="${ev.nombre_evento}" data-responsables='${JSON.stringify(Array.isArray(ev.responsables) ? ev.responsables : [])}' style="font-size:0.78rem;padding:0.3rem 0.75rem">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
-              Registro
-            </button>
+            ${btnRegistro}
             <button class="btn-stats-evento btn btn-secundario" data-id="${ev.id}" data-nombre="${ev.nombre_evento}" style="font-size:0.78rem;padding:0.3rem 0.75rem">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
               Estadísticas
