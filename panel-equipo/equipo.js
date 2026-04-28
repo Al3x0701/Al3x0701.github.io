@@ -32,43 +32,33 @@ let mapaCirculos = []        // [{circle, radioBase, key}] para escalar con zoom
    ARRANQUE: cuando carga la página
 ============================================== */
 document.addEventListener('DOMContentLoaded', async () => {
-  try { iniciarNavegacion() }      catch(e) { console.error('iniciarNavegacion', e) }
-  try { iniciarMenuMovil() }       catch(e) { console.error('iniciarMenuMovil', e) }
-  try { iniciarMenuConfig() }      catch(e) { console.error('iniciarMenuConfig', e) }
-  try { iniciarPestanas() }        catch(e) { console.error('iniciarPestanas', e) }
-  try { iniciarFiltrosConsolidado() } catch(e) { console.error('iniciarFiltrosConsolidado', e) }
-  try { iniciarExportarExcel() }   catch(e) { console.error('iniciarExportarExcel', e) }
+  iniciarNavegacion()
+  iniciarMenuMovil()
+  iniciarMenuConfig()
+  iniciarPestanas()
+  iniciarFiltrosConsolidado()
+  iniciarExportarExcel()
 
   // Cerrar sesión
-  document.getElementById('btn-logout')?.addEventListener('click', async () => {
+  document.getElementById('btn-logout').addEventListener('click', async () => {
     await db.auth.signOut()
   })
 
-  // Escuchar cambios de sesión
-  db.auth.onAuthStateChange(async (evento, session) => {
-    if (evento === 'SIGNED_IN' && !usuarioActual) await iniciarApp(session.user)
-    if (evento === 'SIGNED_OUT') mostrarLogin()
-    if (evento === 'TOKEN_REFRESHED' && session) {
-      usuarioActual = session.user
-      const secActiva = document.querySelector('.seccion.activa')?.id?.replace('sec-', '')
-      if (secActiva && ['dashboard', 'consolidado', 'votantes', 'reuniones', 'aprobaciones'].includes(secActiva)) {
-        cargarSeccion(secActiva)
-      }
-    }
-  })
-
-  // Carga inicial: getSession() resuelve con la sesión en caché
-  try {
-    const { data: { session } } = await db.auth.getSession()
-    if (session) {
-      await iniciarApp(session.user)
-    } else {
-      mostrarLogin()
-    }
-  } catch(e) {
-    console.error('getSession error', e)
+  // Carga inicial: getSession() resuelve de inmediato con la sesión en caché
+  const { data: { session } } = await db.auth.getSession()
+  if (session) {
+    await iniciarApp(session.user)
+  } else {
     mostrarLogin()
   }
+
+  // Escuchar cambios de sesión posteriores a la carga inicial
+  db.auth.onAuthStateChange(async (evento, session) => {
+    if (evento === 'SIGNED_IN') await iniciarApp(session.user)
+    if (evento === 'SIGNED_OUT') mostrarLogin()
+    // TOKEN_REFRESHED: sesión renovada silenciosamente, solo actualizamos el usuario
+    if (evento === 'TOKEN_REFRESHED' && session) usuarioActual = session.user
+  })
 })
 
 
@@ -158,26 +148,6 @@ async function iniciarApp(user) {
 
   // Pre-cargar usuarios para los selects de referidos
   cargarSelectsReferidos()
-}
-
-// Muestra un banner de error con botón "Reintentar" dentro de la sección indicada
-function mostrarErrorSeccion(seccionId, reintentar) {
-  const sec = document.getElementById(seccionId)
-  if (!sec) return
-  // Evitar duplicar el banner
-  if (sec.querySelector('.error-conexion-banner')) return
-  const banner = document.createElement('div')
-  banner.className = 'error-conexion-banner'
-  banner.innerHTML = `
-    <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-    <span>No se pudieron cargar los datos. Verifica tu conexión.</span>
-    <button class="btn-reintentar-conexion">Reintentar</button>
-  `
-  banner.querySelector('.btn-reintentar-conexion').addEventListener('click', () => {
-    banner.remove()
-    reintentar()
-  })
-  sec.prepend(banner)
 }
 
 async function cargarSelectsReferidos() {
@@ -517,11 +487,7 @@ async function cargarDashboard() {
     { data: eventosDB }
   ] = await Promise.all([qR, qV, db.from('eventos').select('nombre_evento, fecha, hora_inicio, hora_cierre, municipio')])
 
-  if (errR || errV) {
-    console.error('Error cargando dashboard:', errR || errV)
-    mostrarErrorSeccion('sec-dashboard', () => cargarDashboard())
-    return
-  }
+  if (errR || errV) { console.error('Error cargando dashboard:', errR || errV); return }
 
   const r = reuniones || []
   const v = votantes || []
@@ -1606,11 +1572,7 @@ async function cargarConsolidado() {
     db.from('lista_votantes').select('*').order('created_at', { ascending: false }),
   ])
 
-  if (errR || errV) {
-    console.error('Error cargando consolidado:', errR || errV)
-    mostrarErrorSeccion('sec-consolidado', () => cargarConsolidado())
-    return
-  }
+  if (errR || errV) { console.error('Error cargando consolidado:', errR || errV); return }
 
   datosReuniones = r || []
   datosVotantes  = v || []
@@ -1817,50 +1779,25 @@ function iniciarFiltrosConsolidado() {
 ============================================== */
 
 function iniciarExportarExcel() {
-  const modal     = document.getElementById('modal-exportar-excel')
-  const btnAbrir  = document.getElementById('btn-exportar')
-  const btnCerrar = document.getElementById('btn-cerrar-modal-exportar')
-  const btnCancel = document.getElementById('btn-cancelar-exportar')
-  const btnConfirm= document.getElementById('btn-confirmar-exportar')
-  if (!modal || !btnAbrir || !btnCerrar || !btnCancel || !btnConfirm) return
-
-  const abrirModal = () => {
-    const tabActiva = document.querySelector('#sec-consolidado .pestana.activa')?.dataset.tab
-    const esReuniones = tabActiva === 'con-reuniones'
-    document.getElementById('export-cols-votantes').style.display  = esReuniones ? 'none' : 'block'
-    document.getElementById('export-cols-reuniones').style.display = esReuniones ? 'block' : 'none'
-    document.getElementById('export-tipo-label').textContent = esReuniones ? 'Lista de reuniones' : 'Lista de votantes'
-    modal.style.display = 'flex'
-  }
-
-  const cerrarModal = () => { modal.style.display = 'none' }
-
-  btnAbrir.addEventListener('click', () => {
+  document.getElementById('btn-exportar').addEventListener('click', async () => {
+    // Cargar SheetJS solo cuando se necesite
     if (!window.XLSX) {
       const script = document.createElement('script')
       script.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'
-      script.onload = abrirModal
+      script.onload = () => exportarExcel()
       document.head.appendChild(script)
     } else {
-      abrirModal()
+      exportarExcel()
     }
-  })
-
-  btnCerrar.addEventListener('click', cerrarModal)
-  btnCancel.addEventListener('click', cerrarModal)
-  modal.addEventListener('click', e => { if (e.target === modal) cerrarModal() })
-
-  btnConfirm.addEventListener('click', () => {
-    exportarExcel()
-    cerrarModal()
   })
 }
 
 function exportarExcel() {
-  const tabActiva   = document.querySelector('#sec-consolidado .pestana.activa')?.dataset.tab
+  // Determinar qué pestaña está activa en consolidado
+  const tabActiva = document.querySelector('#sec-consolidado .pestana.activa')?.dataset.tab
   const esReuniones = tabActiva === 'con-reuniones'
 
-  const estado    = document.getElementById('filtro-estado').value
+  const estado = document.getElementById('filtro-estado').value
   const municipio = document.getElementById('filtro-municipio').value.toLowerCase()
 
   const filtrar = (arr) => arr.filter(x => {
@@ -1870,41 +1807,36 @@ function exportarExcel() {
   })
 
   let datos, nombreHoja, nombreArchivo
-
   if (esReuniones) {
-    const cols = new Set([...document.querySelectorAll('#export-cols-reuniones input[name="export-col-r"]:checked')].map(c => c.value))
-    datos = filtrar(datosReuniones).map(r => {
-      const row = {}
-      if (cols.has('Nombre'))       row['Nombre']        = r.nombre_completo
-      if (cols.has('Cédula'))       row['Cédula']        = r.cedula
-      if (cols.has('Teléfono'))     row['Teléfono']      = r.telefono || ''
-      if (cols.has('Municipio'))    row['Municipio']     = r.municipio || ''
-      if (cols.has('Fecha Reunión'))row['Fecha Reunión'] = r.fecha_reunion || ''
-      if (cols.has('Referido'))     row['Referido por']  = r.amigo_referido
-      if (cols.has('Estado'))       row['Estado']        = r.estado
-      return row
-    })
-    nombreHoja    = 'Reuniones'
+    datos = filtrar(datosReuniones).map(r => ({
+      Nombre: r.nombre_completo,
+      Cédula: r.cedula,
+      Teléfono: r.telefono || '',
+      Municipio: r.municipio || '',
+      'Fecha Reunión': r.fecha_reunion || '',
+      'Referido por': r.amigo_referido,
+      Estado: r.estado,
+      Comentario: r.comentario_rechazo || '',
+    }))
+    nombreHoja = 'Reuniones'
     nombreArchivo = `reuniones_${hoy()}.xlsx`
   } else {
-    const cols = new Set([...document.querySelectorAll('#export-cols-votantes input[name="export-col"]:checked')].map(c => c.value))
-    datos = filtrar(datosVotantes).map(v => {
-      const row = {}
-      if (cols.has('Nombre'))    row['Nombre']             = v.nombre_completo
-      if (cols.has('Cédula'))    row['Cédula']             = v.cedula
-      if (cols.has('Teléfono'))  row['Teléfono']           = v.telefono || ''
-      if (cols.has('Municipio')) row['Municipio']          = v.municipio
-      if (cols.has('Puesto'))    row['Puesto de votación'] = v.puesto_votacion
-      if (cols.has('Mesa'))      row['Mesa']               = v.mesa
-      if (cols.has('Referido'))  row['Referido por']       = v.amigo_referido
-      if (cols.has('Estado'))    row['Estado']             = v.estado
-      return row
-    })
-    nombreHoja    = 'Votantes'
+    datos = filtrar(datosVotantes).map(v => ({
+      Nombre: v.nombre_completo,
+      Cédula: v.cedula,
+      Teléfono: v.telefono || '',
+      Municipio: v.municipio,
+      Puesto: v.puesto_votacion,
+      Mesa: v.mesa,
+      'Referido por': v.amigo_referido,
+      Estado: v.estado,
+      Comentario: v.comentario_rechazo || '',
+    }))
+    nombreHoja = 'Votantes'
     nombreArchivo = `votantes_${hoy()}.xlsx`
   }
 
-  const hoja  = XLSX.utils.json_to_sheet(datos)
+  const hoja = XLSX.utils.json_to_sheet(datos)
   const libro = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(libro, hoja, nombreHoja)
   XLSX.writeFile(libro, nombreArchivo)
