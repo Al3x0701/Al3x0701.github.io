@@ -32,39 +32,43 @@ let mapaCirculos = []        // [{circle, radioBase, key}] para escalar con zoom
    ARRANQUE: cuando carga la página
 ============================================== */
 document.addEventListener('DOMContentLoaded', async () => {
-  iniciarNavegacion()
-  iniciarMenuMovil()
-  iniciarMenuConfig()
-  iniciarPestanas()
-  iniciarFiltrosConsolidado()
-  iniciarExportarExcel()
+  try { iniciarNavegacion() }      catch(e) { console.error('iniciarNavegacion', e) }
+  try { iniciarMenuMovil() }       catch(e) { console.error('iniciarMenuMovil', e) }
+  try { iniciarMenuConfig() }      catch(e) { console.error('iniciarMenuConfig', e) }
+  try { iniciarPestanas() }        catch(e) { console.error('iniciarPestanas', e) }
+  try { iniciarFiltrosConsolidado() } catch(e) { console.error('iniciarFiltrosConsolidado', e) }
+  try { iniciarExportarExcel() }   catch(e) { console.error('iniciarExportarExcel', e) }
 
   // Cerrar sesión
-  document.getElementById('btn-logout').addEventListener('click', async () => {
+  document.getElementById('btn-logout')?.addEventListener('click', async () => {
     await db.auth.signOut()
   })
 
-  // Carga inicial: getSession() resuelve con la sesión en caché
-  const { data: { session } } = await db.auth.getSession()
-  if (session) {
-    await iniciarApp(session.user)
-  } else {
-    mostrarLogin()
-  }
-
-  // Escuchar cambios de sesión posteriores a la carga inicial
+  // Escuchar cambios de sesión
   db.auth.onAuthStateChange(async (evento, session) => {
     if (evento === 'SIGNED_IN' && !usuarioActual) await iniciarApp(session.user)
     if (evento === 'SIGNED_OUT') mostrarLogin()
     if (evento === 'TOKEN_REFRESHED' && session) {
       usuarioActual = session.user
-      // Token renovado: recargar la sección activa si depende de datos de BD
       const secActiva = document.querySelector('.seccion.activa')?.id?.replace('sec-', '')
       if (secActiva && ['dashboard', 'consolidado', 'votantes', 'reuniones', 'aprobaciones'].includes(secActiva)) {
         cargarSeccion(secActiva)
       }
     }
   })
+
+  // Carga inicial: getSession() resuelve con la sesión en caché
+  try {
+    const { data: { session } } = await db.auth.getSession()
+    if (session) {
+      await iniciarApp(session.user)
+    } else {
+      mostrarLogin()
+    }
+  } catch(e) {
+    console.error('getSession error', e)
+    mostrarLogin()
+  }
 })
 
 
@@ -1818,6 +1822,7 @@ function iniciarExportarExcel() {
   const btnCerrar = document.getElementById('btn-cerrar-modal-exportar')
   const btnCancel = document.getElementById('btn-cancelar-exportar')
   const btnConfirm= document.getElementById('btn-confirmar-exportar')
+  if (!modal || !btnAbrir || !btnCerrar || !btnCancel || !btnConfirm) return
 
   const abrirModal = () => {
     const tabActiva = document.querySelector('#sec-consolidado .pestana.activa')?.dataset.tab
