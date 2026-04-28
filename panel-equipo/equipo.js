@@ -846,6 +846,7 @@ let _votantesPagina = 1
 const _VOTANTES_POR_PAGINA = 13
 
 async function cargarVotantes() {
+  renderEquipo._cache = null  // invalidar caché de usuarios al recargar
   const esAdmin = ['owner', 'admin'].includes(perfilActual?.rol)
   let q = db.from('lista_votantes').select('*').order('created_at', { ascending: false })
   if (!esAdmin) q = q.eq('subido_por', usuarioActual.id)
@@ -853,23 +854,102 @@ async function cargarVotantes() {
 
   _votantesData = error ? [] : (data || [])
   _votantesPagina = 1
-  renderTablaVotantes()
   renderGraficoVotantes()
 
-  // Conectar buscador y tabs de gráfico (una sola vez)
-  const input = document.getElementById('buscador-votantes')
-  if (input && !input.dataset.connected) {
-    input.dataset.connected = '1'
-    input.addEventListener('input', () => {
-      _votantesPagina = 1
-      renderTablaVotantes()
-    })
+  // Cargar usuarios del equipo y renderizar acordeón
+  await renderEquipo()
+
+  // Conectar buscador equipo (una sola vez)
+  const inputEquipo = document.getElementById('buscador-equipo')
+  if (inputEquipo && !inputEquipo.dataset.connected) {
+    inputEquipo.dataset.connected = '1'
+    inputEquipo.addEventListener('input', renderEquipo)
+  }
+
+  // Tabs de gráfico (una sola vez)
+  if (!document.getElementById('filtro-referido-grafico')?.dataset.connected) {
     iniciarGraficoVotantes()
   } else {
-    // En recargas posteriores, solo repoblar el selector y re-renderizar
     poblarSelectorReferidoGrafico()
     renderGraficoVotantes()
   }
+}
+
+async function renderEquipo() {
+  const wrap = document.getElementById('equipo-lista')
+  if (!wrap) return
+
+  const q = (document.getElementById('buscador-equipo')?.value || '').toLowerCase().trim()
+
+  // Cargar usuarios solo la primera vez o si no están en caché
+  if (!renderEquipo._cache) {
+    const { data } = await db.from('usuarios').select('id, nombre_completo, rol, municipio, activo').eq('activo', true).order('nombre_completo')
+    const JERARQUIA = { owner: 0, admin: 1, lider: 2, amigo: 3 }
+    renderEquipo._cache = (data || []).sort((a, b) => {
+      const rA = JERARQUIA[a.rol] ?? 9, rB = JERARQUIA[b.rol] ?? 9
+      return rA !== rB ? rA - rB : a.nombre_completo.localeCompare(b.nombre_completo)
+    })
+  }
+
+  const usuarios = q
+    ? renderEquipo._cache.filter(u => u.nombre_completo.toLowerCase().includes(q))
+    : renderEquipo._cache
+
+  if (!usuarios.length) {
+    wrap.innerHTML = '<p class="tabla-vacia" style="padding:2rem;text-align:center">Sin miembros encontrados.</p>'
+    return
+  }
+
+  wrap.innerHTML = usuarios.map(u => {
+    const votantes = _votantesData.filter(v => v.amigo_referido === u.nombre_completo)
+    const aprobados = votantes.filter(v => v.estado === 'aprobado').length
+    const pendientes = votantes.filter(v => v.estado === 'pendiente').length
+    const iniciales = u.nombre_completo.split(' ').slice(0, 2).map(p => p[0]).join('').toUpperCase()
+    const COLORES_ROL = { owner: '#facc15', admin: '#f97316', lider: '#6366f1', amigo: '#10b981' }
+    const color = COLORES_ROL[u.rol] || '#94a3b8'
+
+    return `
+      <div class="equipo-miembro" data-id="${u.id}">
+        <div class="equipo-miembro-header" onclick="toggleMiembro('${u.id}')">
+          <div class="equipo-avatar" style="background:${color}20;color:${color}">${iniciales}</div>
+          <div class="equipo-info">
+            <span class="equipo-nombre">${u.nombre_completo}</span>
+            <span class="equipo-rol">${u.rol}${u.municipio ? ' · ' + u.municipio : ''}</span>
+          </div>
+          <div class="equipo-stats">
+            <span class="equipo-stat-badge total">${votantes.length} votante${votantes.length !== 1 ? 's' : ''}</span>
+            ${aprobados ? `<span class="equipo-stat-badge aprobado">${aprobados} ✓</span>` : ''}
+            ${pendientes ? `<span class="equipo-stat-badge pendiente">${pendientes} ⏳</span>` : ''}
+          </div>
+          <svg class="equipo-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="equipo-votantes" id="votantes-${u.id}" style="display:none">
+          ${votantes.length ? `
+            <table class="tabla" style="margin:0">
+              <thead><tr><th>Nombre</th><th>Cédula</th><th>Municipio</th><th>Puesto</th><th>Mesa</th><th>Estado</th></tr></thead>
+              <tbody>
+                ${votantes.map(v => `<tr>
+                  <td>${v.nombre_completo}</td>
+                  <td>${v.cedula}</td>
+                  <td>${v.municipio || '—'}</td>
+                  <td>${v.puesto_votacion || '—'}</td>
+                  <td>${v.mesa || '—'}</td>
+                  <td>${badgeEstado(v.estado)}</td>
+                </tr>`).join('')}
+              </tbody>
+            </table>` : '<p class="tabla-vacia" style="padding:1rem 1.5rem">Sin votantes referidos aún.</p>'}
+        </div>
+      </div>`
+  }).join('')
+}
+
+function toggleMiembro(id) {
+  const panel = document.getElementById(`votantes-${id}`)
+  const header = panel?.previousElementSibling
+  if (!panel) return
+  const abierto = panel.style.display !== 'none'
+  panel.style.display = abierto ? 'none' : 'block'
+  header?.querySelector('.equipo-chevron')?.style.setProperty('transform', abierto ? '' : 'rotate(180deg)')
 }
 
 function renderTablaVotantes() {

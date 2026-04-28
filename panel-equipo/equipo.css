@@ -3051,3 +3051,49 @@ select {
 .evento-badge.activo    { background: #dcfce7; color: #15803d; }
 .evento-badge.finalizado,
 .evento-badge.expirado  { background: #f1f5f9; color: #64748b; }
+
+/* ── Mi Equipo acordeón ── */
+.equipo-miembro {
+  border-bottom: 1px solid #f1f5f9;
+}
+.equipo-miembro:last-child { border-bottom: none; }
+
+.equipo-miembro-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.9rem 1.25rem;
+  cursor: pointer;
+  transition: background 0.12s;
+  border-radius: 8px;
+}
+.equipo-miembro-header:hover { background: #f8fafc; }
+
+.equipo-avatar {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.85rem; font-weight: 800;
+  flex-shrink: 0;
+}
+
+.equipo-info { flex: 1; min-width: 0; }
+.equipo-nombre { display: block; font-size: 0.9rem; font-weight: 700; color: var(--color-dark); }
+.equipo-rol { font-size: 0.75rem; color: var(--texto-muted); text-transform: capitalize; }
+
+.equipo-stats { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.equipo-stat-badge {
+  font-size: 0.72rem; font-weight: 700;
+  padding: 0.18rem 0.55rem;
+  border-radius: 999px;
+}
+.equipo-stat-badge.total    { background: #f1f5f9; color: #475569; }
+.equipo-stat-badge.aprobado { background: #dcfce7; color: #15803d; }
+.equipo-stat-badge.pendiente{ background: #fef9c3; color: #854d0e; }
+
+.equipo-chevron { flex-shrink: 0; color: var(--texto-muted); transition: transform 0.2s; }
+
+.equipo-votantes {
+  padding: 0 1.25rem 1rem;
+  border-top: 1px solid #f1f5f9;
+}
