@@ -940,6 +940,14 @@ async function renderEquipo() {
             ${aprobados ? `<span class="equipo-stat-badge aprobado">${aprobados} ✓</span>` : ''}
             ${pendientes ? `<span class="equipo-stat-badge pendiente">${pendientes} ⏳</span>` : ''}
           </div>
+          <button class="equipo-btn-descargar" title="Descargar lista de votantes"
+            onclick="event.stopPropagation(); descargarVotantesMiembro('${u.id}', '${u.nombre_completo.replace(/'/g, "\\'")}')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+          </button>
           <svg class="equipo-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
         <div class="equipo-votantes" id="votantes-${u.id}" style="display:none"></div>
@@ -952,6 +960,38 @@ async function renderEquipo() {
       renderEquipo()
     })
   })
+}
+
+function descargarVotantesMiembro(id, nombre) {
+  const votantes = _votantesData.filter(v => v.amigo_referido === nombre)
+  if (!votantes.length) return
+
+  const doExport = () => {
+    const datos = votantes.map(v => ({
+      Nombre:        v.nombre_completo,
+      Cédula:        v.cedula,
+      Teléfono:      v.telefono || '',
+      Municipio:     v.municipio || '',
+      Puesto:        v.puesto_votacion || '',
+      Mesa:          v.mesa || '',
+      Estado:        v.estado || '',
+      Comentario:    v.comentario_rechazo || '',
+    }))
+    const hoja  = XLSX.utils.json_to_sheet(datos)
+    const libro = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(libro, hoja, 'Votantes')
+    const archivo = `votantes_${nombre.replace(/\s+/g, '_').toLowerCase()}_${hoy()}.xlsx`
+    XLSX.writeFile(libro, archivo)
+  }
+
+  if (!window.XLSX) {
+    const script = document.createElement('script')
+    script.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'
+    script.onload = doExport
+    document.head.appendChild(script)
+  } else {
+    doExport()
+  }
 }
 
 const _miembroPagina = {}
@@ -1766,13 +1806,17 @@ function filaAprobacionReunion(r) {
   </tr>`
 }
 
+const _votantesAprobacionCache = {}
+
 function filaAprobacionVotante(v) {
+  _votantesAprobacionCache[v.id] = v
+  const esAdmin = ['owner', 'admin'].includes(perfilActual?.rol)
   const acciones = v.estado === 'pendiente'
     ? `<div class="acciones-grupo">
         <button class="btn btn-exito" onclick="aprobar('lista_votantes','${v.id}')">✓ Aprobar</button>
-        <div class="rechazo-fila">
-          <input type="text" id="motivo-${v.id}" placeholder="Motivo rechazo">
-          <button class="btn btn-peligro" onclick="rechazar('lista_votantes','${v.id}')">✕</button>
+        <div style="display:flex;gap:0.4rem">
+          ${esAdmin ? `<button class="btn btn-secundario" onclick="abrirEditarVotanteApro('${v.id}')">✎ Editar</button>` : ''}
+          <button class="btn btn-peligro" onclick="rechazar('lista_votantes','${v.id}')">✕ Rechazar</button>
         </div>
        </div>`
     : `<span style="font-size:0.75rem;color:var(--texto-muted)">${v.comentario_rechazo || '—'}</span>`
@@ -1796,14 +1840,59 @@ async function aprobar(tabla, id) {
 }
 
 async function rechazar(tabla, id) {
-  const motivo = document.getElementById(`motivo-${id}`)?.value?.trim()
-  if (!motivo) { alert('Escribe un motivo de rechazo.'); return }
+  const motivo = (document.getElementById(`motivo-${id}`)?.value?.trim())
+    || prompt('Motivo de rechazo (opcional):') || ''
 
   await db.from(tabla).update({
     estado: 'rechazado',
     aprobado_por: usuarioActual.id,
-    comentario_rechazo: motivo,
+    comentario_rechazo: motivo || null,
   }).eq('id', id)
+  await cargarAprobaciones()
+}
+
+function abrirEditarVotanteApro(id) {
+  const v = _votantesAprobacionCache[id]
+  if (!v) return
+  document.getElementById('editar-apro-id').value        = v.id
+  document.getElementById('editar-apro-nombre').value    = v.nombre_completo || ''
+  document.getElementById('editar-apro-cedula').value    = v.cedula || ''
+  document.getElementById('editar-apro-telefono').value  = v.telefono || ''
+  document.getElementById('editar-apro-municipio').value = v.municipio || ''
+  document.getElementById('editar-apro-puesto').value    = v.puesto_votacion || ''
+  document.getElementById('editar-apro-mesa').value      = v.mesa || ''
+  document.getElementById('editar-apro-alerta').style.display = 'none'
+  document.getElementById('modal-editar-votante-apro').style.display = 'flex'
+}
+
+function cerrarEditarVotanteApro() {
+  document.getElementById('modal-editar-votante-apro').style.display = 'none'
+}
+
+async function guardarEdicionVotanteApro(e) {
+  e.preventDefault()
+  const id      = document.getElementById('editar-apro-id').value
+  const alerta  = document.getElementById('editar-apro-alerta')
+  const btn     = e.target.querySelector('[type=submit]')
+  btn.disabled  = true
+
+  const { error } = await db.from('lista_votantes').update({
+    nombre_completo: document.getElementById('editar-apro-nombre').value.trim(),
+    cedula:          document.getElementById('editar-apro-cedula').value.trim(),
+    telefono:        document.getElementById('editar-apro-telefono').value.trim() || null,
+    municipio:       document.getElementById('editar-apro-municipio').value,
+    puesto_votacion: document.getElementById('editar-apro-puesto').value.trim(),
+    mesa:            document.getElementById('editar-apro-mesa').value.trim(),
+  }).eq('id', id)
+
+  btn.disabled = false
+  if (error) {
+    alerta.textContent = '❌ Error al guardar: ' + error.message
+    alerta.className = 'alerta alerta-error'
+    alerta.style.display = 'block'
+    return
+  }
+  cerrarEditarVotanteApro()
   await cargarAprobaciones()
 }
 
@@ -2029,67 +2118,91 @@ function iniciarFiltrosConsolidado() {
 ============================================== */
 
 function iniciarExportarExcel() {
-  document.getElementById('btn-exportar').addEventListener('click', async () => {
-    // Cargar SheetJS solo cuando se necesite
-    if (!window.XLSX) {
-      const script = document.createElement('script')
-      script.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'
-      script.onload = () => exportarExcel()
-      document.head.appendChild(script)
-    } else {
-      exportarExcel()
-    }
+  document.getElementById('btn-exportar').addEventListener('click', () => {
+    abrirModalExportarConsolidado()
   })
 }
 
-function exportarExcel() {
-  // Determinar qué pestaña está activa en consolidado
+function abrirModalExportarConsolidado() {
+  // Pre-seleccionar dataset según pestaña activa
   const tabActiva = document.querySelector('#sec-consolidado .pestana.activa')?.dataset.tab
-  const esReuniones = tabActiva === 'con-reuniones'
+  const dataset = tabActiva === 'con-reuniones' ? 'reuniones' : 'votantes'
+  const radio = document.querySelector(`input[name="export-dataset"][value="${dataset}"]`)
+  if (radio) { radio.checked = true; onExportDatasetChange() }
+  document.getElementById('modal-exportar-consolidado').style.display = 'flex'
+}
 
-  const estado = document.getElementById('filtro-estado').value
+function cerrarModalExportarConsolidado() {
+  document.getElementById('modal-exportar-consolidado').style.display = 'none'
+}
+
+function onExportDatasetChange() {
+  const dataset = document.querySelector('input[name="export-dataset"]:checked')?.value
+  document.getElementById('export-cols-votantes').style.display =
+    (dataset === 'votantes' || dataset === 'ambos') ? 'block' : 'none'
+  document.getElementById('export-cols-reuniones').style.display =
+    (dataset === 'reuniones' || dataset === 'ambos') ? 'block' : 'none'
+}
+
+function confirmarExportarConsolidado() {
+  const dataset = document.querySelector('input[name="export-dataset"]:checked')?.value || 'votantes'
+
+  const colsVotantes = [...document.querySelectorAll('input[name="col-votantes"]:checked')].map(c => c.value)
+  const colsReuniones = [...document.querySelectorAll('input[name="col-reuniones"]:checked')].map(c => c.value)
+
+  const estado    = document.getElementById('filtro-estado').value
   const municipio = document.getElementById('filtro-municipio').value.toLowerCase()
-
-  const filtrar = (arr) => arr.filter(x => {
+  const filtrar   = arr => arr.filter(x => {
     if (estado && x.estado !== estado) return false
     if (municipio && !x.municipio?.toLowerCase().includes(municipio)) return false
     return true
   })
 
-  let datos, nombreHoja, nombreArchivo
-  if (esReuniones) {
-    datos = filtrar(datosReuniones).map(r => ({
-      Nombre: r.nombre_completo,
-      Cédula: r.cedula,
-      Teléfono: r.telefono || '',
-      Municipio: r.municipio || '',
-      'Fecha Reunión': r.fecha_reunion || '',
-      'Referido por': r.amigo_referido,
-      Estado: r.estado,
-      Comentario: r.comentario_rechazo || '',
-    }))
-    nombreHoja = 'Reuniones'
-    nombreArchivo = `reuniones_${hoy()}.xlsx`
-  } else {
-    datos = filtrar(datosVotantes).map(v => ({
-      Nombre: v.nombre_completo,
-      Cédula: v.cedula,
-      Teléfono: v.telefono || '',
-      Municipio: v.municipio,
-      Puesto: v.puesto_votacion,
-      Mesa: v.mesa,
-      'Referido por': v.amigo_referido,
-      Estado: v.estado,
-      Comentario: v.comentario_rechazo || '',
-    }))
-    nombreHoja = 'Votantes'
-    nombreArchivo = `votantes_${hoy()}.xlsx`
+  const mapVotante = v => {
+    const fila = {}
+    const mapaV = {
+      'Nombre': v.nombre_completo, 'Cédula': v.cedula, 'Teléfono': v.telefono || '',
+      'Municipio': v.municipio, 'Puesto': v.puesto_votacion, 'Mesa': v.mesa,
+      'Referido por': v.amigo_referido, 'Estado': v.estado, 'Comentario': v.comentario_rechazo || '',
+    }
+    colsVotantes.forEach(c => { fila[c] = mapaV[c] ?? '' })
+    return fila
+  }
+  const mapReunion = r => {
+    const fila = {}
+    const mapaR = {
+      'Nombre': r.nombre_completo, 'Cédula': r.cedula, 'Teléfono': r.telefono || '',
+      'Municipio': r.municipio || '', 'Fecha Reunión': r.fecha_reunion || '',
+      'Referido por': r.amigo_referido, 'Estado': r.estado, 'Comentario': r.comentario_rechazo || '',
+    }
+    colsReuniones.forEach(c => { fila[c] = mapaR[c] ?? '' })
+    return fila
   }
 
-  const hoja = XLSX.utils.json_to_sheet(datos)
-  const libro = XLSX.utils.book_new()
-  XLSX.utils.book_append_sheet(libro, hoja, nombreHoja)
-  XLSX.writeFile(libro, nombreArchivo)
+  const doExport = () => {
+    const libro = XLSX.utils.book_new()
+    if (dataset === 'votantes' || dataset === 'ambos') {
+      const datos = filtrar(datosVotantes).map(mapVotante)
+      XLSX.utils.book_append_sheet(libro, XLSX.utils.json_to_sheet(datos), 'Votantes')
+    }
+    if (dataset === 'reuniones' || dataset === 'ambos') {
+      const datos = filtrar(datosReuniones).map(mapReunion)
+      XLSX.utils.book_append_sheet(libro, XLSX.utils.json_to_sheet(datos), 'Reuniones')
+    }
+    const nombre = dataset === 'ambos' ? `consolidado_${hoy()}.xlsx`
+      : dataset === 'reuniones' ? `reuniones_${hoy()}.xlsx` : `votantes_${hoy()}.xlsx`
+    XLSX.writeFile(libro, nombre)
+    cerrarModalExportarConsolidado()
+  }
+
+  if (!window.XLSX) {
+    const script = document.createElement('script')
+    script.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'
+    script.onload = doExport
+    document.head.appendChild(script)
+  } else {
+    doExport()
+  }
 }
 
 
@@ -2611,6 +2724,9 @@ async function cargarMapa() {
 
     mapaCirculos.push({ circle, radioBase, key: k, intensidad })
 
+    // Ocultar si el toggle está activo y no tiene votantes
+    if (_ocultarSinDatos && intensidad === 0) circle.remove()
+
     const nombre = s.nombre || nombreMunicipio
     circle.on('click', () => {
       mostrarPanelMapa(nombre, s)
@@ -2857,6 +2973,22 @@ function navegarBuscador(e) {
 
   items.forEach((el, i) => el.classList.toggle('activo', i === _buscadorIndiceActivo))
   if (items[_buscadorIndiceActivo]) items[_buscadorIndiceActivo].scrollIntoView({ block: 'nearest' })
+}
+
+let _ocultarSinDatos = true   // por defecto: ocultar municipios sin votantes
+
+function toggleMunicipiosSinDatos() {
+  _ocultarSinDatos = !_ocultarSinDatos
+  const btn = document.getElementById('btn-toggle-sin-datos')
+  btn?.classList.toggle('activo', _ocultarSinDatos)
+  document.getElementById('ico-ojo-abierto').style.display  = _ocultarSinDatos ? '' : 'none'
+  document.getElementById('ico-ojo-cerrado').style.display  = _ocultarSinDatos ? 'none' : ''
+  mapaCirculos.forEach(({ circle, intensidad }) => {
+    if (intensidad === 0) {
+      if (_ocultarSinDatos) circle.remove()
+      else circle.addTo(mapaLeaflet)
+    }
+  })
 }
 
 function limpiarBuscadorMapa() {

@@ -24,8 +24,8 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 
 
-  <link rel="stylesheet" href="equipo.css?v=10">
-  <script src="equipo.js?v=10" defer></script>
+  <link rel="stylesheet" href="equipo.css?v=11">
+  <script src="equipo.js?v=11" defer></script>
 </head>
 
 <body>
@@ -550,15 +550,15 @@
           </div>
 
           <div class="pestanas">
-            <button class="pestana activa" data-tab="apro-reuniones">
-              Reuniones <span class="badge" id="badge-apro-r">0</span>
-            </button>
-            <button class="pestana" data-tab="apro-votantes">
+            <button class="pestana activa" data-tab="apro-votantes">
               Votantes <span class="badge" id="badge-apro-v">0</span>
+            </button>
+            <button class="pestana" data-tab="apro-reuniones">
+              Reuniones <span class="badge" id="badge-apro-r">0</span>
             </button>
           </div>
 
-          <div id="apro-reuniones" class="tab-contenido activo">
+          <div id="apro-reuniones" class="tab-contenido">
             <div class="tarjeta">
               <div class="tabla-contenedor">
                 <table class="tabla">
@@ -583,7 +583,7 @@
             </div>
           </div>
 
-          <div id="apro-votantes" class="tab-contenido">
+          <div id="apro-votantes" class="tab-contenido activo">
             <div class="tarjeta">
               <div class="tabla-contenedor">
                 <table class="tabla">
@@ -1086,6 +1086,21 @@
                   <span class="mapa-leyenda-color" style="background:#f97316"></span><span>Alta</span>
                   <span class="mapa-leyenda-color" style="background:#dc2626"></span><span>Muy alta</span>
                 </div>
+                <button class="mapa-toggle-sin-datos activo" id="btn-toggle-sin-datos"
+                  title="Mostrar/ocultar municipios sin votantes"
+                  onclick="toggleMunicipiosSinDatos()">
+                  <svg id="ico-ojo-abierto" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                  <svg id="ico-ojo-cerrado" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                    <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                    <line x1="1" y1="1" x2="23" y2="23"/>
+                  </svg>
+                  <!-- ojo abierto = ocultando sin datos (activo por defecto); ojo cerrado = mostrando todos -->
+                  Sin votantes
+                </button>
               </div>
             </div>
 
@@ -1296,6 +1311,66 @@
             <div style="display:flex;gap:0.75rem;margin-top:1.25rem">
               <button type="submit" class="btn btn-primario">Guardar registro</button>
               <button type="button" class="btn btn-secundario" id="modal-cancelar-votante">Cancelar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- ── MODAL EDITAR VOTANTE (aprobaciones) ── -->
+      <div class="modal-overlay" id="modal-editar-votante-apro" style="display:none">
+        <div class="modal-caja" style="max-width:560px">
+          <div class="modal-cabecera">
+            <h2 class="modal-titulo">Editar Votante</h2>
+            <button class="modal-cerrar" type="button" onclick="cerrarEditarVotanteApro()">&times;</button>
+          </div>
+          <form id="form-editar-votante-apro" onsubmit="guardarEdicionVotanteApro(event)">
+            <input type="hidden" id="editar-apro-id">
+            <div class="form-grilla">
+              <div class="campo">
+                <label>Nombre completo *</label>
+                <input type="text" id="editar-apro-nombre" placeholder="Ej. Juan Pérez" required>
+              </div>
+              <div class="campo">
+                <label>Cédula *</label>
+                <input type="text" id="editar-apro-cedula" placeholder="Ej. 1234567890" required>
+              </div>
+              <div class="campo">
+                <label>Teléfono</label>
+                <input type="tel" id="editar-apro-telefono" placeholder="Ej. 3001234567">
+              </div>
+              <div class="campo">
+                <label>Municipio *</label>
+                <select id="editar-apro-municipio" required>
+                  <option value="">— Selecciona —</option>
+                  <option>Alcalá</option><option>Andalucía</option><option>Ansermanuevo</option>
+                  <option>Argelia</option><option>Bolívar</option><option>Buenaventura</option>
+                  <option>Buga</option><option>Bugalagrande</option><option>Caicedonia</option>
+                  <option>Cali</option><option>Calima</option><option>Candelaria</option>
+                  <option>Cartago</option><option>Dagua</option><option>El Cairo</option>
+                  <option>El Cerrito</option><option>El Dovio</option><option>El Águila</option>
+                  <option>Florida</option><option>Ginebra</option><option>Guacarí</option>
+                  <option>Jamundí</option><option>La Cumbre</option><option>La Unión</option>
+                  <option>La Victoria</option><option>Obando</option><option>Palmira</option>
+                  <option>Pradera</option><option>Restrepo</option><option>Riofrío</option>
+                  <option>Roldanillo</option><option>San Pedro</option><option>Sevilla</option>
+                  <option>Toro</option><option>Trujillo</option><option>Tuluá</option>
+                  <option>Ulloa</option><option>Versalles</option><option>Vijes</option>
+                  <option>Yotoco</option><option>Yumbo</option><option>Zarzal</option>
+                </select>
+              </div>
+              <div class="campo">
+                <label>Puesto de votación *</label>
+                <input type="text" id="editar-apro-puesto" placeholder="Ej. Colegio San José" required>
+              </div>
+              <div class="campo">
+                <label>Mesa *</label>
+                <input type="text" id="editar-apro-mesa" placeholder="Ej. 5" required>
+              </div>
+            </div>
+            <div id="editar-apro-alerta" class="alerta" style="display:none;margin-top:1rem"></div>
+            <div style="display:flex;gap:0.75rem;margin-top:1.25rem">
+              <button type="submit" class="btn btn-primario">Guardar cambios</button>
+              <button type="button" class="btn btn-secundario" onclick="cerrarEditarVotanteApro()">Cancelar</button>
             </div>
           </form>
         </div>
@@ -1519,6 +1594,63 @@
             <div id="excel-alerta-votantes" class="alerta" style="display:none;margin-top:0.75rem"></div>
           </div>
 
+        </div>
+      </div>
+
+      <!-- ── MODAL EXPORTAR CONSOLIDADO ── -->
+      <div class="modal-overlay" id="modal-exportar-consolidado" style="display:none">
+        <div class="modal-caja" style="max-width:500px">
+          <div class="modal-cabecera">
+            <h2 class="modal-titulo">Exportar Excel</h2>
+            <button class="modal-cerrar" type="button" onclick="cerrarModalExportarConsolidado()">&times;</button>
+          </div>
+
+          <p class="export-seccion-label">¿Qué datos exportar?</p>
+          <div class="export-radio-grupo" id="export-dataset-grupo">
+            <label class="export-radio-label">
+              <input type="radio" name="export-dataset" value="votantes" checked onchange="onExportDatasetChange()"> Votantes
+            </label>
+            <label class="export-radio-label">
+              <input type="radio" name="export-dataset" value="reuniones" onchange="onExportDatasetChange()"> Reuniones
+            </label>
+            <label class="export-radio-label">
+              <input type="radio" name="export-dataset" value="ambos" onchange="onExportDatasetChange()"> Ambos
+            </label>
+          </div>
+
+          <div id="export-cols-votantes">
+            <p class="export-seccion-label">Columnas — Votantes</p>
+            <div class="export-cols-grid">
+              <label class="export-col-check"><input type="checkbox" name="col-votantes" value="Nombre" checked> Nombre</label>
+              <label class="export-col-check"><input type="checkbox" name="col-votantes" value="Cédula" checked> Cédula</label>
+              <label class="export-col-check"><input type="checkbox" name="col-votantes" value="Teléfono" checked> Teléfono</label>
+              <label class="export-col-check"><input type="checkbox" name="col-votantes" value="Municipio" checked> Municipio</label>
+              <label class="export-col-check"><input type="checkbox" name="col-votantes" value="Puesto" checked> Puesto de Votación</label>
+              <label class="export-col-check"><input type="checkbox" name="col-votantes" value="Mesa" checked> Mesa</label>
+              <label class="export-col-check"><input type="checkbox" name="col-votantes" value="Referido por" checked> Referido por</label>
+              <label class="export-col-check"><input type="checkbox" name="col-votantes" value="Estado" checked> Estado</label>
+              <label class="export-col-check"><input type="checkbox" name="col-votantes" value="Comentario"> Comentario</label>
+            </div>
+          </div>
+
+          <div id="export-cols-reuniones" style="display:none">
+            <p class="export-seccion-label">Columnas — Reuniones</p>
+            <div class="export-cols-grid">
+              <label class="export-col-check"><input type="checkbox" name="col-reuniones" value="Nombre" checked> Nombre</label>
+              <label class="export-col-check"><input type="checkbox" name="col-reuniones" value="Cédula" checked> Cédula</label>
+              <label class="export-col-check"><input type="checkbox" name="col-reuniones" value="Teléfono" checked> Teléfono</label>
+              <label class="export-col-check"><input type="checkbox" name="col-reuniones" value="Municipio" checked> Municipio</label>
+              <label class="export-col-check"><input type="checkbox" name="col-reuniones" value="Fecha Reunión" checked> Fecha Reunión</label>
+              <label class="export-col-check"><input type="checkbox" name="col-reuniones" value="Referido por" checked> Referido por</label>
+              <label class="export-col-check"><input type="checkbox" name="col-reuniones" value="Estado" checked> Estado</label>
+              <label class="export-col-check"><input type="checkbox" name="col-reuniones" value="Comentario"> Comentario</label>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:0.75rem;justify-content:flex-end;margin-top:1.5rem">
+            <button class="btn btn-secundario" type="button" onclick="cerrarModalExportarConsolidado()">Cancelar</button>
+            <button class="btn btn-exito" type="button" onclick="confirmarExportarConsolidado()">⬇ Exportar</button>
+          </div>
         </div>
       </div>
 

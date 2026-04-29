@@ -3108,6 +3108,28 @@ select {
 .votantes-graficos-col { display: flex; flex-direction: column; }
 .votantes-graficos-col .grafico-bloque { padding: 1.25rem; }
 
+/* Botón descarga por miembro */
+.equipo-btn-descargar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 7px;
+  background: #f8fafc;
+  color: #64748b;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+  margin-right: 0.25rem;
+}
+.equipo-btn-descargar:hover {
+  border-color: #facc15;
+  background: #fefce8;
+  color: #854d0e;
+}
+
 /* Miembro activo */
 .equipo-miembro-header.activo {
   background: #fefce8;
@@ -3118,3 +3140,66 @@ select {
 @media (max-width: 900px) {
   .votantes-layout { grid-template-columns: 1fr; }
 }
+
+/* ── Toggle sin datos en mapa ── */
+.mapa-toggle-sin-datos {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-left: 0.75rem;
+  padding: 0.3rem 0.65rem;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 999px;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+.mapa-toggle-sin-datos.activo {
+  border-color: #facc15;
+  background: #fefce8;
+  color: #854d0e;
+}
+
+/* ── Modal exportar consolidado ── */
+.export-seccion-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #475569;
+  margin: 1.1rem 0 0.6rem;
+}
+.export-radio-grupo { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+.export-radio-label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 0.45rem 0.85rem;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 8px;
+  transition: border-color 0.15s, background 0.15s;
+}
+.export-radio-label:has(input:checked) {
+  border-color: #facc15;
+  background: #fefce8;
+}
+.export-radio-label input { accent-color: #facc15; }
+.export-cols-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem 0.75rem;
+}
+.export-col-check {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+.export-col-check input { accent-color: #facc15; }
