@@ -7,7 +7,7 @@
   <title>Panel de Equipo — Impulso Ciudadano</title>
 
   <!-- Fuentes -->
-  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600;700&display=swap"
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600;700&family=Nunito:wght@900&display=swap"
     rel="stylesheet">
 
   <!-- Supabase (librería oficial vía CDN) -->
@@ -24,8 +24,8 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 
 
-  <link rel="stylesheet" href="equipo.css?v=11">
-  <script src="equipo.js?v=11" defer></script>
+  <link rel="stylesheet" href="equipo.css?v=12">
+  <script src="equipo.js?v=12" defer></script>
 </head>
 
 <body>
@@ -80,10 +80,9 @@
     <!-- SIDEBAR -->
     <aside id="sidebar">
       <a href="../index.html" class="sidebar-logo" title="Ir a la página pública">
-        <div class="logo-marca">IC</div>
-        <div class="logo-texto">
-          <span class="logo-nombre">Impulso</span>
-          <span class="logo-sub">Ciudadano</span>
+        <div class="sidebar-logo-texto">
+          <span class="logo-impulso">IMPULSO</span>
+          <span class="logo-ciudadano">CIUDADANO</span>
         </div>
       </a>
 
@@ -558,6 +557,12 @@
             </button>
           </div>
 
+          <div class="filtros-barra" style="margin-bottom:1rem">
+            <input type="text" id="buscador-apro-votantes" placeholder="Buscar por nombre, cédula o referido…"
+              oninput="filtrarAprobacionesVotantes(this.value)"
+              style="max-width:340px;border:1px solid var(--borde);border-radius:8px;padding:0.5rem 0.75rem;font-size:0.875rem;outline:none;width:100%">
+          </div>
+
           <div id="apro-reuniones" class="tab-contenido">
             <div class="tarjeta">
               <div class="tabla-contenedor">
@@ -600,13 +605,12 @@
                     </tr>
                   </thead>
                   <tbody id="tabla-apro-votantes-body">
-                    <tr>
-                      <td colspan="8" class="tabla-vacia">Cargando...</td>
-                    </tr>
+                    <tr><td colspan="8" class="tabla-vacia">Cargando...</td></tr>
                   </tbody>
                 </table>
               </div>
             </div>
+            <div id="apro-votantes-paginacion" class="paginacion-wrap" style="margin-top:0.75rem"></div>
           </div>
         </section>
 
@@ -1098,8 +1102,16 @@
                     <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
                     <line x1="1" y1="1" x2="23" y2="23"/>
                   </svg>
-                  <!-- ojo abierto = ocultando sin datos (activo por defecto); ojo cerrado = mostrando todos -->
                   Sin votantes
+                </button>
+                <button class="mapa-toggle-sin-datos" id="btn-toggle-puestos"
+                  title="Mostrar/ocultar centros de votación"
+                  onclick="togglePuestosVotacion()">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="10" r="4"/>
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+                  </svg>
+                  Centros de votación
                 </button>
               </div>
             </div>
@@ -1444,72 +1456,102 @@
             <h2 class="modal-titulo">Crear Evento</h2>
             <button class="modal-cerrar" id="modal-cerrar-evento" type="button">&times;</button>
           </div>
-          <form id="form-evento-nuevo">
-            <div class="form-grilla">
-              <div class="campo campo-completo">
-                <label>Nombre del evento *</label>
-                <input type="text" name="nombre_evento" placeholder="Ej. Reunión comunitaria sector norte" required>
-              </div>
-              <div class="campo campo-completo">
-                <label>Responsables *</label>
-                <div class="multiselect-wrap" id="responsables-wrap">
-                  <div class="multiselect-display" id="responsables-display" tabindex="0">
-                    <span class="multiselect-placeholder">— Selecciona responsables —</span>
-                  </div>
-                  <div class="multiselect-dropdown" id="responsables-dropdown">
-                    <div class="multiselect-search-wrap">
-                      <input type="text" class="multiselect-search" id="responsables-search" placeholder="Buscar...">
-                    </div>
-                    <div class="multiselect-opciones" id="responsables-opciones">
-                      <p style="padding:0.5rem 0.75rem;color:var(--texto-muted);font-size:0.85rem">Cargando usuarios…</p>
-                    </div>
-                  </div>
+          <!-- Columna mapa (izquierda en modo expandido) -->
+          <div class="modal-mapa-col">
+            <div class="mapa-ubicacion-wrap">
+              <div id="mapa-ubicacion-evento" class="mapa-ubicacion-evento"></div>
+              <button type="button" class="mapa-fullscreen-btn" id="btn-fullscreen-mapa-evento"
+                onclick="toggleFullscreenMapaEvento()" title="Ampliar mapa">
+                <svg id="ico-fullscreen-abrir" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/>
+                  <line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>
+                </svg>
+                <svg id="ico-fullscreen-cerrar" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:none">
+                  <polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/>
+                  <line x1="10" y1="14" x2="3" y2="21"/><line x1="21" y1="3" x2="14" y2="10"/>
+                </svg>
+              </button>
+            </div>
+            <p id="ubicacion-seleccionada" class="ubicacion-seleccionada-texto" style="display:none"></p>
+          </div>
+          <!-- Columna formulario (derecha en modo expandido) -->
+          <div class="modal-form-col">
+            <form id="form-evento-nuevo">
+              <div class="form-grilla">
+                <div class="campo campo-completo">
+                  <label>Nombre del evento *</label>
+                  <input type="text" name="nombre_evento" placeholder="Ej. Reunión comunitaria sector norte" required>
                 </div>
-                <input type="hidden" name="responsables" id="input-responsables">
+                <div class="campo campo-completo">
+                  <label>Responsables *</label>
+                  <div class="multiselect-wrap" id="responsables-wrap">
+                    <div class="multiselect-display" id="responsables-display" tabindex="0">
+                      <span class="multiselect-placeholder">— Selecciona responsables —</span>
+                    </div>
+                    <div class="multiselect-dropdown" id="responsables-dropdown">
+                      <div class="multiselect-search-wrap">
+                        <input type="text" class="multiselect-search" id="responsables-search" placeholder="Buscar...">
+                      </div>
+                      <div class="multiselect-opciones" id="responsables-opciones">
+                        <p style="padding:0.5rem 0.75rem;color:var(--texto-muted);font-size:0.85rem">Cargando usuarios…</p>
+                      </div>
+                    </div>
+                  </div>
+                  <input type="hidden" name="responsables" id="input-responsables">
+                </div>
+                <div class="campo campo-completo">
+                  <label>Ciudad / Municipio *</label>
+                  <select name="municipio_evento" required>
+                    <option value="">— Selecciona —</option>
+                    <option>Alcalá</option><option>Andalucía</option><option>Ansermanuevo</option>
+                    <option>Argelia</option><option>Bolívar</option><option>Buenaventura</option>
+                    <option>Buga</option><option>Bugalagrande</option><option>Caicedonia</option>
+                    <option>Cali</option><option>Calima</option><option>Candelaria</option>
+                    <option>Cartago</option><option>Dagua</option><option>El Cairo</option>
+                    <option>El Cerrito</option><option>El Dovio</option><option>El Águila</option>
+                    <option>Florida</option><option>Ginebra</option><option>Guacarí</option>
+                    <option>Jamundí</option><option>La Cumbre</option><option>La Unión</option>
+                    <option>La Victoria</option><option>Obando</option><option>Palmira</option>
+                    <option>Pradera</option><option>Restrepo</option><option>Riofrío</option>
+                    <option>Roldanillo</option><option>San Pedro</option><option>Sevilla</option>
+                    <option>Toro</option><option>Trujillo</option><option>Tuluá</option>
+                    <option>Ulloa</option><option>Versalles</option><option>Vijes</option>
+                    <option>Yotoco</option><option>Yumbo</option><option>Zarzal</option>
+                  </select>
+                </div>
+                <div class="campo">
+                  <label>Fecha *</label>
+                  <input type="date" name="fecha_evento" required>
+                </div>
+                <div class="campo">
+                  <label>Hora de inicio *</label>
+                  <input type="time" name="hora_inicio" required>
+                </div>
+                <div class="campo">
+                  <label>Hora de cierre *</label>
+                  <input type="time" name="hora_cierre" required>
+                </div>
+                <div class="campo campo-completo">
+                  <label>Ubicar en el mapa</label>
+                  <div class="ubicacion-buscador-wrap">
+                    <input type="text" id="ubicacion-buscador-input" placeholder="Buscar para navegar el mapa…" autocomplete="off">
+                    <ul id="ubicacion-sugerencias" class="ubicacion-sugerencias" style="display:none"></ul>
+                  </div>
+                  <input type="hidden" name="lat" id="ubicacion-lat">
+                  <input type="hidden" name="lng" id="ubicacion-lng">
+                </div>
+                <div class="campo campo-completo">
+                  <label>Dirección del evento *</label>
+                  <input type="text" name="direccion_evento" id="ubicacion-direccion-valor" placeholder="Ej. Casa de Josefa, Cancha del barrio…" required>
+                </div>
               </div>
-              <div class="campo campo-completo">
-                <label>Ciudad / Municipio *</label>
-                <select name="municipio_evento" required>
-                  <option value="">— Selecciona —</option>
-                  <option>Alcalá</option><option>Andalucía</option><option>Ansermanuevo</option>
-                  <option>Argelia</option><option>Bolívar</option><option>Buenaventura</option>
-                  <option>Buga</option><option>Bugalagrande</option><option>Caicedonia</option>
-                  <option>Cali</option><option>Calima</option><option>Candelaria</option>
-                  <option>Cartago</option><option>Dagua</option><option>El Cairo</option>
-                  <option>El Cerrito</option><option>El Dovio</option><option>El Águila</option>
-                  <option>Florida</option><option>Ginebra</option><option>Guacarí</option>
-                  <option>Jamundí</option><option>La Cumbre</option><option>La Unión</option>
-                  <option>La Victoria</option><option>Obando</option><option>Palmira</option>
-                  <option>Pradera</option><option>Restrepo</option><option>Riofrío</option>
-                  <option>Roldanillo</option><option>San Pedro</option><option>Sevilla</option>
-                  <option>Toro</option><option>Trujillo</option><option>Tuluá</option>
-                  <option>Ulloa</option><option>Versalles</option><option>Vijes</option>
-                  <option>Yotoco</option><option>Yumbo</option><option>Zarzal</option>
-                </select>
+              <div id="evento-nuevo-alerta" class="alerta" style="display:none;margin-top:1rem"></div>
+              <div style="display:flex;gap:0.75rem;margin-top:1.25rem">
+                <button type="submit" class="btn btn-primario">Guardar evento</button>
+                <button type="button" class="btn btn-secundario" id="modal-cancelar-evento">Cancelar</button>
               </div>
-              <div class="campo">
-                <label>Fecha *</label>
-                <input type="date" name="fecha_evento" required>
-              </div>
-              <div class="campo">
-                <label>Hora de inicio *</label>
-                <input type="time" name="hora_inicio" required>
-              </div>
-              <div class="campo">
-                <label>Hora de cierre *</label>
-                <input type="time" name="hora_cierre" required>
-              </div>
-              <div class="campo campo-completo">
-                <label>Dirección del evento *</label>
-                <input type="text" name="direccion_evento" placeholder="Ej. Calle 5 # 12-34, barrio Centro" required>
-              </div>
-            </div>
-            <div id="evento-nuevo-alerta" class="alerta" style="display:none;margin-top:1rem"></div>
-            <div style="display:flex;gap:0.75rem;margin-top:1.25rem">
-              <button type="submit" class="btn btn-primario">Guardar evento</button>
-              <button type="button" class="btn btn-secundario" id="modal-cancelar-evento">Cancelar</button>
-            </div>
-          </form>
+            </form>
+          </div>
         </div>
       </div>
 
@@ -1594,6 +1636,27 @@
             <div id="excel-alerta-votantes" class="alerta" style="display:none;margin-top:0.75rem"></div>
           </div>
 
+        </div>
+      </div>
+
+      <!-- ── MODAL CONFIRMAR DESACTIVAR USUARIO ── -->
+      <div class="modal-overlay" id="modal-confirmar-desactivar" style="display:none">
+        <div class="modal-caja modal-confirmar-caja">
+          <div class="modal-confirmar-icono">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/><circle cx="12" cy="17" r="1" fill="#f97316"/>
+            </svg>
+          </div>
+          <h2 class="modal-confirmar-titulo">Desactivar usuario</h2>
+          <p class="modal-confirmar-texto">
+            ¿Estás seguro? Los datos de este usuario (votantes y reuniones)
+            <strong>dejarán de reflejarse</strong> en analíticas, gráficos y listas generales
+            hasta que lo vuelvas a activar.<br><br>
+            El perfil y todos sus registros se conservan.
+          </p>
+          <button class="btn modal-confirmar-btn-peligro" id="btn-confirmar-desactivar">Desactivar</button>
+          <button class="btn modal-confirmar-btn-cancelar" onclick="cerrarModalDesactivar()">Cancelar</button>
         </div>
       </div>
 

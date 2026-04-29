@@ -22,6 +22,7 @@ let perfilActual = null   // datos de la tabla usuarios
 let tabActiva = {}     // pestaña activa por sección
 let datosReuniones = []     // caché de reuniones (consolidados)
 let datosVotantes = []     // caché de votantes (consolidados)
+let _nombresUsuariosActivos = null  // Set de nombres de usuarios activos (null = sin filtro cargado)
 let mapaLeaflet = null       // instancia Leaflet (se inicializa una sola vez)
 let mapaSeleccion = null     // marcador de selección activo
 let mapaCirculos = []        // [{circle, radioBase, key}] para escalar con zoom
@@ -644,13 +645,27 @@ function renderCalendarioDash(eventos) {
 
   if (proximos.length) {
     html += `<div class="cal-proximos">`
+    const ahora = new Date()
     proximos.forEach(ev => {
       const [,, dia] = ev.fecha.split('-')
+      const inicio = new Date(`${ev.fecha}T${ev.hora_inicio || '00:00'}`)
+      const fin    = new Date(`${ev.fecha}T${ev.hora_cierre || '23:59'}`)
+      let estadoLabel, estadoClass
+      if (ahora >= inicio && ahora <= fin) {
+        estadoLabel = 'En curso'; estadoClass = 'cal-estado-activo'
+      } else if (ahora < inicio) {
+        estadoLabel = 'Programado'; estadoClass = 'cal-estado-proximo'
+      } else {
+        estadoLabel = 'Finalizado'; estadoClass = 'cal-estado-fin'
+      }
       html += `
         <div class="cal-proximo-item">
-          <div class="cal-proximo-fecha">
-            <span class="cal-proximo-dia">${parseInt(dia)}</span>
-            <span class="cal-proximo-mes">${meses[_calMes].slice(0,3)}</span>
+          <div class="cal-proximo-top">
+            <div class="cal-proximo-fecha">
+              <span class="cal-proximo-dia">${parseInt(dia)}</span>
+              <span class="cal-proximo-mes">${meses[_calMes].slice(0,3)}</span>
+            </div>
+            <span class="cal-estado-badge ${estadoClass}">${estadoLabel}</span>
           </div>
           <div class="cal-proximo-info">
             <span class="cal-proximo-nombre">${ev.nombre_evento}</span>
@@ -842,10 +857,24 @@ document.getElementById('form-reunion').addEventListener('submit', async (e) => 
 
 /* Estado local de votantes para filtro + paginación */
 let _votantesData = []
+let _duplicadosCedula = {}   // { cedula: [v1, v2, ...] }
 let _votantesPagina = 1
 const _VOTANTES_POR_PAGINA = 13
 
+async function obtenerNombresActivos() {
+  if (_nombresUsuariosActivos) return _nombresUsuariosActivos
+  const { data } = await db.from('usuarios').select('nombre_completo').eq('activo', true)
+  _nombresUsuariosActivos = new Set((data || []).map(u => u.nombre_completo))
+  return _nombresUsuariosActivos
+}
+
+function filtrarPorActivos(arr) {
+  if (!_nombresUsuariosActivos) return arr
+  return arr.filter(x => !x.amigo_referido || _nombresUsuariosActivos.has(x.amigo_referido))
+}
+
 async function cargarVotantes() {
+  _nombresUsuariosActivos = null  // refrescar al recargar votantes
   renderEquipo._cache = null  // invalidar caché de usuarios al recargar
   _equipoPagina = 1
   const esAdmin = ['owner', 'admin'].includes(perfilActual?.rol)
@@ -853,7 +882,15 @@ async function cargarVotantes() {
   if (!esAdmin) q = q.eq('subido_por', usuarioActual.id)
   const { data, error } = await q
 
-  _votantesData = error ? [] : (data || [])
+  await obtenerNombresActivos()
+  _votantesData = filtrarPorActivos(error ? [] : (data || []))
+  // Construir mapa de cédulas duplicadas
+  _duplicadosCedula = {}
+  _votantesData.forEach(v => {
+    if (!v.cedula) return
+    if (!_duplicadosCedula[v.cedula]) _duplicadosCedula[v.cedula] = []
+    _duplicadosCedula[v.cedula].push(v)
+  })
   _votantesPagina = 1
   renderGraficoVotantes()
 
@@ -1074,7 +1111,7 @@ function renderVotantesMiembro(id, pag) {
       <thead><tr><th>Nombre</th><th>Cédula</th><th>Municipio</th><th>Puesto</th><th>Mesa</th><th>Estado</th></tr></thead>
       <tbody>
         ${pagina.map(v => `<tr>
-          <td>${v.nombre_completo}</td>
+          <td style="display:flex;align-items:center;gap:0.4rem">${v.nombre_completo}${iconoAlertaDuplicado(v)}</td>
           <td>${v.cedula}</td>
           <td>${v.municipio || '—'}</td>
           <td>${v.puesto_votacion || '—'}</td>
@@ -1312,10 +1349,14 @@ function renderGraficoVotantes() { renderGraficosVotantes() }
 /* ==============================================
    EVENTOS
 ============================================== */
+let _mapaEvento = null
+let _markerEvento = null
+let _ubicacionTimer = null
+
 function iniciarModalEvento() {
-  const overlay  = document.getElementById('modal-crear-evento')
-  const btnAbrir = document.getElementById('btn-abrir-evento')
-  const btnCerrar = document.getElementById('modal-cerrar-evento')
+  const overlay    = document.getElementById('modal-crear-evento')
+  const btnAbrir   = document.getElementById('btn-abrir-evento')
+  const btnCerrar  = document.getElementById('modal-cerrar-evento')
   const btnCancelar = document.getElementById('modal-cancelar-evento')
   if (!overlay) return
 
@@ -1324,15 +1365,119 @@ function iniciarModalEvento() {
   const abrir = () => {
     overlay.style.display = 'flex'
     document.getElementById('form-evento-nuevo').reset()
+    document.getElementById('ubicacion-buscador-input').value = ''
+    document.getElementById('ubicacion-sugerencias').style.display = 'none'
     resetMultiselect()
     document.getElementById('evento-nuevo-alerta').style.display = 'none'
+    // Inicializar mapa con retardo para que el modal esté visible
+    setTimeout(iniciarMapaEvento, 150)
   }
-  const cerrar = () => { overlay.style.display = 'none' }
+  const cerrar = () => {
+    overlay.style.display = 'none'
+    if (_mapaEvento) { _mapaEvento.remove(); _mapaEvento = null; _markerEvento = null }
+  }
 
   btnAbrir.addEventListener('click', abrir)
   btnCerrar.addEventListener('click', cerrar)
   btnCancelar.addEventListener('click', cerrar)
   overlay.addEventListener('click', (e) => { if (e.target === overlay) cerrar() })
+
+  // Buscador del mapa — solo navega el mapa, no toca el campo de dirección
+  document.getElementById('ubicacion-buscador-input').addEventListener('input', (e) => {
+    clearTimeout(_ubicacionTimer)
+    const q = e.target.value.trim()
+    if (q.length < 3) { document.getElementById('ubicacion-sugerencias').style.display = 'none'; return }
+    _ubicacionTimer = setTimeout(() => buscarUbicacion(q), 400)
+  })
+}
+
+function toggleFullscreenMapaEvento() {
+  const overlay   = document.getElementById('modal-crear-evento')
+  const abrirIco  = document.getElementById('ico-fullscreen-abrir')
+  const cerrarIco = document.getElementById('ico-fullscreen-cerrar')
+  const expandido = overlay.classList.toggle('mapa-expandido')
+  abrirIco.style.display  = expandido ? 'none' : ''
+  cerrarIco.style.display = expandido ? '' : 'none'
+  // Esperar a que el CSS aplique antes de recalcular el tamaño del mapa
+  requestAnimationFrame(() => { setTimeout(() => { _mapaEvento?.invalidateSize() }, 50) })
+}
+
+function iniciarMapaEvento() {
+  const contenedor = document.getElementById('mapa-ubicacion-evento')
+  if (!contenedor) return
+  if (_mapaEvento) { _mapaEvento.invalidateSize(); return }
+
+  // Centro por defecto: Valle del Cauca
+  _mapaEvento = L.map('mapa-ubicacion-evento', { zoomControl: true, scrollWheelZoom: true })
+    .setView([4.0, -76.3], 8)
+
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; CARTO', subdomains: 'abcd', maxZoom: 18,
+  }).addTo(_mapaEvento)
+
+  // Clic en mapa → pone el pin, reverse geocode y muestra dirección en el buscador
+  _mapaEvento.on('click', async (e) => {
+    const { lat, lng } = e.latlng
+    colocarPinEvento(lat, lng)
+    setUbicacionEvento(lat, lng)
+    document.getElementById('ubicacion-buscador-input').value = 'Obteniendo dirección…'
+    try {
+      const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=es`)
+      const data = await resp.json()
+      document.getElementById('ubicacion-buscador-input').value = data.display_name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`
+    } catch {
+      document.getElementById('ubicacion-buscador-input').value = `${lat.toFixed(5)}, ${lng.toFixed(5)}`
+    }
+  })
+}
+
+async function buscarUbicacion(q) {
+  const lista = document.getElementById('ubicacion-sugerencias')
+  lista.innerHTML = '<li style="color:var(--texto-muted)">Buscando…</li>'
+  lista.style.display = 'block'
+
+  const resp = await fetch(
+    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&countrycodes=co&limit=5&accept-language=es`
+  )
+  const resultados = await resp.json()
+
+  if (!resultados.length) {
+    lista.innerHTML = '<li style="color:var(--texto-muted)">Sin resultados.</li>'
+    return
+  }
+
+  lista.innerHTML = resultados.map((r, i) =>
+    `<li onclick="seleccionarUbicacion(${r.lat},${r.lon},'${r.display_name.replace(/'/g, "&#39;")}')">${r.display_name}</li>`
+  ).join('')
+}
+
+function seleccionarUbicacion(lat, lng, dir) {
+  document.getElementById('ubicacion-sugerencias').style.display = 'none'
+  document.getElementById('ubicacion-buscador-input').value = dir
+  colocarPinEvento(lat, lng)
+  // Solo guarda lat/lng, NO sobreescribe el nombre del evento
+  document.getElementById('ubicacion-lat').value = lat
+  document.getElementById('ubicacion-lng').value = lng
+  _mapaEvento?.setView([lat, lng], 15)
+}
+
+function colocarPinEvento(lat, lng) {
+  if (!_mapaEvento) return
+  if (_markerEvento) _markerEvento.setLatLng([lat, lng])
+  else {
+    _markerEvento = L.marker([lat, lng], {
+      icon: L.divIcon({
+        className: '',
+        html: `<div style="width:14px;height:14px;background:#7c3aed;border-radius:50%;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.3)"></div>`,
+        iconSize: [14, 14], iconAnchor: [7, 7],
+      })
+    }).addTo(_mapaEvento)
+  }
+}
+
+function setUbicacionEvento(lat, lng) {
+  document.getElementById('ubicacion-lat').value = lat
+  document.getElementById('ubicacion-lng').value = lng
 }
 
 document.getElementById('form-evento-nuevo').addEventListener('submit', async (e) => {
@@ -1360,6 +1505,8 @@ document.getElementById('form-evento-nuevo').addEventListener('submit', async (e
     direccion:        form.direccion_evento.value.trim(),
     creado_por:       usuarioActual.id,
   }
+  if (form.lat.value) datos.lat = parseFloat(form.lat.value)
+  if (form.lng.value) datos.lng = parseFloat(form.lng.value)
 
   const { error } = await db.from('eventos').insert([datos])
 
@@ -1781,9 +1928,57 @@ async function cargarAprobaciones() {
     '<tr><td colspan="7" class="tabla-vacia">Sin registros.</td></tr>'
 
   // Tabla votantes
-  const tbodyV = document.getElementById('tabla-apro-votantes-body')
-  tbodyV.innerHTML = v.length ? v.map(v => filaAprobacionVotante(v)).join('') :
-    '<tr><td colspan="8" class="tabla-vacia">Sin registros.</td></tr>'
+  _aprobacionVotantesTodos = v
+  const buscador = document.getElementById('buscador-apro-votantes')
+  if (buscador) buscador.value = ''
+  renderAprobacionesVotantes(v)
+}
+
+let _aprobacionVotantesTodos = []
+let _aprobacionVotantesFiltrados = []
+let _aprobacionVotantesPag = 1
+const _APRO_V_POR_PAG = 6
+
+function filtrarAprobacionesVotantes(q) {
+  const texto = q.toLowerCase().trim()
+  _aprobacionVotantesFiltrados = texto
+    ? _aprobacionVotantesTodos.filter(v =>
+        v.nombre_completo?.toLowerCase().includes(texto) ||
+        v.cedula?.toLowerCase().includes(texto) ||
+        v.amigo_referido?.toLowerCase().includes(texto)
+      )
+    : _aprobacionVotantesTodos
+  _aprobacionVotantesPag = 1
+  renderAprobacionesVotantes()
+}
+
+function renderAprobacionesVotantes(lista) {
+  if (lista !== undefined) { _aprobacionVotantesFiltrados = lista; _aprobacionVotantesPag = 1 }
+  // Excluir aprobados
+  const sinAprobados = _aprobacionVotantesFiltrados.filter(v => v.estado !== 'aprobado')
+  const total   = sinAprobados.length
+  const paginas = Math.ceil(total / _APRO_V_POR_PAG) || 1
+  _aprobacionVotantesPag = Math.min(_aprobacionVotantesPag, paginas)
+  const desde   = (_aprobacionVotantesPag - 1) * _APRO_V_POR_PAG
+  const pagina  = sinAprobados.slice(desde, desde + _APRO_V_POR_PAG)
+
+  const tbody = document.getElementById('tabla-apro-votantes-body')
+  tbody.innerHTML = pagina.length
+    ? pagina.map(v => filaAprobacionVotante(v)).join('')
+    : '<tr><td colspan="8" class="tabla-vacia">Sin registros pendientes.</td></tr>'
+
+  const paginacion = document.getElementById('apro-votantes-paginacion')
+  if (!paginacion) return
+  if (paginas <= 1) { paginacion.innerHTML = ''; return }
+  paginacion.innerHTML = `<div class="paginacion">
+    <button class="pag-btn" onclick="_aprobacionVotantesPag--;renderAprobacionesVotantes()" ${_aprobacionVotantesPag === 1 ? 'disabled' : ''}>&#8592;</button>
+    ${paginasVisibles(_aprobacionVotantesPag, paginas).map(p => p === '…'
+      ? `<span class="pag-ellipsis">…</span>`
+      : `<button class="pag-btn ${p === _aprobacionVotantesPag ? 'activo' : ''}" onclick="_aprobacionVotantesPag=${p};renderAprobacionesVotantes()">${p}</button>`
+    ).join('')}
+    <button class="pag-btn" onclick="_aprobacionVotantesPag++;renderAprobacionesVotantes()" ${_aprobacionVotantesPag === paginas ? 'disabled' : ''}>&#8594;</button>
+    <span class="pag-info">${desde + 1}–${Math.min(desde + _APRO_V_POR_PAG, total)} de ${total}</span>
+  </div>`
 }
 
 function filaAprobacionReunion(r) {
@@ -1822,7 +2017,8 @@ function filaAprobacionVotante(v) {
     : `<span style="font-size:0.75rem;color:var(--texto-muted)">${v.comentario_rechazo || '—'}</span>`
 
   return `<tr>
-    <td>${v.nombre_completo}</td><td>${v.cedula}</td>
+    <td style="display:flex;align-items:center;gap:0.4rem">${v.nombre_completo}${iconoAlertaDuplicado(v)}</td>
+    <td>${v.cedula}</td>
     <td>${v.municipio}</td><td>${v.puesto_votacion}</td><td>${v.mesa}</td>
     <td>${v.amigo_referido}</td>
     <td>${badgeEstado(v.estado)}</td>
@@ -1913,8 +2109,9 @@ async function cargarConsolidado() {
 
   if (errR || errV) { console.error('Error cargando consolidado:', errR || errV); return }
 
-  datosReuniones = r || []
-  datosVotantes  = v || []
+  await obtenerNombresActivos()
+  datosReuniones = filtrarPorActivos(r || [])
+  datosVotantes  = filtrarPorActivos(v || [])
   renderConsolidado()
   renderGraficosConsolidado()
 }
@@ -2401,24 +2598,55 @@ async function cargarUsuarios() {
     return
   }
 
-  tbody.innerHTML = items.map(u => `
-    <tr>
+  tbody.innerHTML = items.map(u => {
+    const activo   = u.activo !== false   // null/undefined = activo por defecto
+    const esToggleable = ['lider', 'amigo'].includes(u.rol)
+    const estadoHTML = esToggleable
+      ? `<button class="toggle-activo-btn ${activo ? 'activo' : 'inactivo'}"
+           onclick="toggleActivoUsuario('${u.id}', ${activo})"
+           title="${activo ? 'Clic para desactivar' : 'Clic para activar'}">
+           <span class="toggle-activo-dot"></span>
+           ${activo ? 'Activo' : 'Inactivo'}
+         </button>`
+      : `<span class="toggle-activo-btn activo" style="cursor:default;pointer-events:none">
+           <span class="toggle-activo-dot"></span>Activo
+         </span>`
+    return `<tr class="${activo ? '' : 'usuario-inactivo'}">
       <td>${u.nombre_completo}</td>
       <td>${u.email}</td>
       <td><span class="estado-badge estado-${u.rol}">${u.rol}</span></td>
       <td>${u.municipio || '—'}</td>
       <td>${u.telefono || '—'}</td>
-      <td>
-        <button class="btn btn-peligro btn-sm" onclick="desactivarUsuario('${u.id}', ${u.activo})">
-          ${u.activo ? 'Desactivar' : 'Activar'}
-        </button>
-      </td>
-    </tr>`).join('')
+      <td>${estadoHTML}</td>
+    </tr>`
+  }).join('')
 }
 
-async function desactivarUsuario(id, activo) {
-  if (!confirm(`¿${activo ? 'Desactivar' : 'Activar'} este usuario?`)) return
-  await db.from('usuarios').update({ activo: !activo }).eq('id', id)
+async function toggleActivoUsuario(id, activoActual) {
+  if (activoActual) {
+    abrirModalDesactivar(id)
+  } else {
+    await _aplicarToggleUsuario(id, false)
+  }
+}
+
+function abrirModalDesactivar(id) {
+  const modal = document.getElementById('modal-confirmar-desactivar')
+  modal.style.display = 'flex'
+  document.getElementById('btn-confirmar-desactivar').onclick = async () => {
+    cerrarModalDesactivar()
+    await _aplicarToggleUsuario(id, true)
+  }
+}
+
+function cerrarModalDesactivar() {
+  document.getElementById('modal-confirmar-desactivar').style.display = 'none'
+}
+
+async function _aplicarToggleUsuario(id, activoActual) {
+  await db.from('usuarios').update({ activo: !activoActual }).eq('id', id)
+  _nombresUsuariosActivos = null
+  renderEquipo._cache     = null
   await cargarUsuarios()
 }
 
@@ -2638,11 +2866,13 @@ async function cargarMapa() {
     { data: votantes },
     { data: eventos },
     { data: solicitudes },
+    { data: eventosGeo },
   ] = await Promise.all([
     db.from('lista_reuniones').select('municipio, estado'),
     db.from('lista_votantes').select('municipio, estado, puesto_votacion'),
     db.from('noticias_eventos').select('titulo, municipio, fecha_evento').eq('tipo', 'evento'),
     db.from('solicitudes').select('municipio, estado, tipo'),
+    db.from('eventos').select('nombre_evento, municipio, fecha, hora_inicio, hora_cierre, lat, lng').not('lat', 'is', null),
   ])
 
   // 2. Agregar por municipio
@@ -2752,6 +2982,34 @@ async function cargarMapa() {
     }
   })
 
+  // 6b. Marcadores de eventos con coordenadas (azul=próximo, verde=activo)
+  const ahora = new Date()
+  ;(eventosGeo || []).forEach(ev => {
+    if (!ev.lat || !ev.lng) return
+    const fechaHoraInicio = new Date(`${ev.fecha}T${ev.hora_inicio}`)
+    const fechaHoraFin    = new Date(`${ev.fecha}T${ev.hora_cierre}`)
+    const activo   = ahora >= fechaHoraInicio && ahora <= fechaHoraFin
+    const proximo  = ahora < fechaHoraInicio
+    if (!activo && !proximo) return  // evento pasado: no mostrar
+
+    const color = activo ? '#22c55e' : '#3b82f6'
+    const tam = 18
+    const icon = L.divIcon({
+      className: '',
+      html: `<div class="evento-pin-wrap">
+               <div class="evento-pin-onda" style="background:${color};animation-delay:0s"></div>
+               <div class="evento-pin-onda" style="background:${color};animation-delay:0.5s"></div>
+               <div class="evento-pin-dot" style="background:${color}"></div>
+             </div>`,
+      iconSize: [tam * 2, tam * 2],
+      iconAnchor: [tam, tam],
+    })
+    const marker = L.marker([ev.lat, ev.lng], { icon, zIndexOffset: 500 }).addTo(mapaLeaflet)
+    const estado = activo ? '🟢 En curso' : '🔵 Próximo'
+    marker.bindPopup(`<div class="mapa-popup-titulo">${ev.nombre_evento}</div>
+      <div class="mapa-popup-fecha">${estado} · ${ev.fecha} ${ev.hora_inicio}–${ev.hora_cierre}</div>`)
+  })
+
     // 6. Marcadores de eventos (círculo pequeño morado encima)
     ; (eventos || []).forEach(ev => {
       const k = normMunicipio(ev.municipio)
@@ -2768,13 +3026,15 @@ async function cargarMapa() {
         .bindPopup(`<div class="mapa-popup-titulo">${ev.titulo || 'Evento'}</div><div class="mapa-popup-fecha">${fecha} · ${ev.municipio}</div>`)
     })
 
-  // 7. Marcadores de puestos de votación
+  // 7. Marcadores de puestos de votación (visibles solo con zoom > 11)
   const votosPorPuesto = {}
   ;(votantes || []).forEach(v => {
     if (!v.puesto_votacion) return
     const k = normPuesto(v.puesto_votacion)
     votosPorPuesto[k] = (votosPorPuesto[k] || 0) + 1
   })
+
+  const marcadoresPuestos = []
 
   Object.entries(PUESTOS_VOTACION_COORDS).forEach(([nombreNorm, coords]) => {
     const votos = votosPorPuesto[normPuesto(nombreNorm)] || 0
@@ -2787,7 +3047,7 @@ async function cargarMapa() {
       color: '#fff',
       weight: 2,
       pane: 'markerPane',
-    }).addTo(mapaLeaflet)
+    })
 
     circle.bindTooltip(
       `<div class="mapa-puesto-tooltip">
@@ -2798,7 +3058,12 @@ async function cargarMapa() {
     )
     circle.on('mouseover', function () { this.openTooltip() })
     circle.on('mouseout',  function () { this.closeTooltip() })
+
+    if (_mostrarPuestos) circle.addTo(mapaLeaflet)
+    marcadoresPuestos.push(circle)
   })
+
+  window._marcadoresPuestos = marcadoresPuestos
 
   // Recalcular tamaño por si el contenedor estaba oculto al inicializar
   guardarStatsParaBuscador(stats)
@@ -2976,6 +3241,7 @@ function navegarBuscador(e) {
 }
 
 let _ocultarSinDatos = true   // por defecto: ocultar municipios sin votantes
+let _mostrarPuestos  = false  // por defecto: centros de votación ocultos
 
 function toggleMunicipiosSinDatos() {
   _ocultarSinDatos = !_ocultarSinDatos
@@ -2988,6 +3254,16 @@ function toggleMunicipiosSinDatos() {
       if (_ocultarSinDatos) circle.remove()
       else circle.addTo(mapaLeaflet)
     }
+  })
+}
+
+function togglePuestosVotacion() {
+  _mostrarPuestos = !_mostrarPuestos
+  const btn = document.getElementById('btn-toggle-puestos')
+  btn?.classList.toggle('activo', _mostrarPuestos)
+  ;(window._marcadoresPuestos || []).forEach(m => {
+    if (_mostrarPuestos) m.addTo(mapaLeaflet)
+    else mapaLeaflet.removeLayer(m)
   })
 }
 
@@ -3005,6 +3281,47 @@ function limpiarBuscadorMapa() {
 /* ==============================================
    UTILIDADES
 ============================================== */
+
+function iconoAlertaDuplicado(v) {
+  const otros = (_duplicadosCedula[v.cedula] || []).filter(o => o.id !== v.id)
+  if (!otros.length) return ''
+  return `<button class="alerta-duplicado-btn" onclick="mostrarConflictoDuplicado(event,'${v.cedula}','${v.id}')" title="Cédula duplicada">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="#f97316" stroke="#f97316" stroke-width="0">
+      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+      <line x1="12" y1="9" x2="12" y2="13" stroke="white" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="12" cy="17" r="1" fill="white"/>
+    </svg>
+  </button>`
+}
+
+function mostrarConflictoDuplicado(e, cedula, idActual) {
+  e.stopPropagation()
+  const otros = (_duplicadosCedula[cedula] || []).filter(o => o.id !== idActual)
+  if (!otros.length) return
+
+  let pop = document.getElementById('duplicado-popover')
+  if (!pop) {
+    pop = document.createElement('div')
+    pop.id = 'duplicado-popover'
+    pop.className = 'duplicado-popover'
+    document.body.appendChild(pop)
+    document.addEventListener('click', () => { pop.style.display = 'none' }, { capture: true })
+  }
+
+  pop.innerHTML = `
+    <div class="dup-pop-titulo">⚠️ Cédula duplicada: <strong>${cedula}</strong></div>
+    ${otros.map(o => `
+      <div class="dup-pop-item">
+        <span class="dup-pop-nombre">${o.nombre_completo}</span>
+        <span class="dup-pop-ref">Referido por: ${o.amigo_referido || '—'}</span>
+        <span class="dup-pop-estado">${o.estado}</span>
+      </div>`).join('')}`
+
+  const rect = e.currentTarget.getBoundingClientRect()
+  pop.style.display = 'block'
+  pop.style.top  = (rect.bottom + window.scrollY + 6) + 'px'
+  pop.style.left = Math.min(rect.left + window.scrollX, window.innerWidth - 260) + 'px'
+}
 
 function badgeEstado(estado) {
   return `<span class="estado-badge estado-${estado}">${estado}</span>`
