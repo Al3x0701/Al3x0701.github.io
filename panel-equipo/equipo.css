@@ -3972,3 +3972,173 @@ select {
 .export-col-check input {
   accent-color: #facc15;
 }
+
+/* ==============================================
+   RESPONSIVE COMPLEMENTARIO — 900px
+============================================== */
+@media (max-width: 900px) {
+  /* Calendario: 4 eventos → 2 columnas */
+  .cal-proximos {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Perfil grid → 1 columna */
+  .perfil-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Modales: quitar padding excesivo */
+  .modal-caja {
+    padding: 1.75rem;
+  }
+
+  /* Leyenda del mapa: permitir wrap */
+  .mapa-leyenda {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  /* Botones toggle mapa: wrap */
+  .mapa-leyenda > .mapa-toggle-sin-datos {
+    margin-top: 0.25rem;
+  }
+}
+
+/* ==============================================
+   RESPONSIVE COMPLEMENTARIO — 768px
+============================================== */
+@media (max-width: 768px) {
+  /* Calendario: 4 eventos → 2 columnas */
+  .cal-proximos {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Modales: casi full width */
+  .modal-overlay {
+    padding: 0.75rem;
+  }
+
+  .modal-caja {
+    padding: 1.25rem;
+    max-height: 95vh;
+    border-radius: 12px;
+  }
+
+  /* Grilla exportar consolidado → 2 columnas */
+  .export-cols-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Mapa leyenda: column */
+  .mapa-leyenda {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .mapa-leyenda-escala {
+    flex-wrap: wrap;
+  }
+
+  /* Botones toggle mapa uno al lado del otro */
+  .mapa-leyenda-controles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  /* Aprobaciones acciones: column */
+  .apro-acciones {
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  /* Buscador mapa: full width */
+  .mapa-buscador-wrap {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* KPI compacto → 2 columnas a 768px también */
+  .kpi-fila.kpi-compacto {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  /* Perfil grid */
+  .perfil-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Votantes lista equipo: ocultar columnas menos importantes */
+  .equipo-btn-descargar {
+    font-size: 0.72rem;
+    padding: 0.3rem 0.5rem;
+  }
+}
+
+/* ==============================================
+   RESPONSIVE COMPLEMENTARIO — 480px
+============================================== */
+@media (max-width: 480px) {
+  /* Calendario: 4 eventos → 1 columna */
+  .cal-proximos {
+    grid-template-columns: 1fr;
+  }
+
+  /* Modales: full width sin margen */
+  .modal-overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .modal-caja {
+    border-radius: 16px 16px 0 0;
+    max-height: 92vh;
+    padding: 1.25rem 1rem;
+  }
+
+  /* Grilla exportar → 1 columna */
+  .export-cols-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Topbar: ocultar texto del usuario si hay poco espacio */
+  .topbar-usuario-nombre {
+    display: none;
+  }
+
+  /* Pestañas aprobaciones: scroll horizontal */
+  .pestanas {
+    gap: 0.25rem;
+  }
+
+  .pestana {
+    font-size: 0.78rem;
+    padding: 0.45rem 0.75rem;
+  }
+
+  /* Acciones tabla: column */
+  .acciones-grupo {
+    align-items: stretch;
+  }
+
+  .acciones-grupo .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Mapa leyenda: compactar */
+  .mapa-leyenda-label {
+    font-size: 0.7rem;
+  }
+
+  .mapa-toggle-sin-datos {
+    font-size: 0.72rem;
+    padding: 0.3rem 0.6rem;
+  }
+
+  /* Toggle usuario: solo punto sin texto */
+  .toggle-activo-label {
+    display: none;
+  }
+}
