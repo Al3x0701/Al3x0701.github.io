@@ -2015,6 +2015,16 @@ select {
   grid-template-columns: repeat(3, 1fr);
 }
 
+/* KPI de 4 columnas */
+.kpi-fila.kpi-4col {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+/* KPI de 5 columnas (Dashboard principal) */
+.kpi-fila.kpi-5col {
+  grid-template-columns: repeat(5, 1fr);
+}
+
 /* ==============================================
    OVERLAY SIDEBAR MÓVIL
 ============================================== */
@@ -2093,21 +2103,24 @@ select {
     font-size: 1.5rem;
   }
 
-  /* KPIs */
-  .kpi-fila {
+  /* KPIs — todas las variantes a 2 columnas en tablet */
+  .kpi-fila,
+  .kpi-fila.kpi-3col,
+  .kpi-fila.kpi-4col,
+  .kpi-fila.kpi-5col {
     grid-template-columns: 1fr 1fr;
   }
 
   .kpi {
-    padding: 1.25rem;
+    padding: 1rem;
   }
 
   .kpi-valor {
-    font-size: 2.2rem;
+    font-size: 1.9rem;
   }
 
   .kpi-fila.kpi-compacto .kpi-valor {
-    font-size: 1.6rem;
+    font-size: 1.5rem;
   }
 
   /* Grillas */
@@ -2220,13 +2233,34 @@ select {
     padding: 0.75rem;
   }
 
-  .kpi-fila {
-    grid-template-columns: 1fr;
+  /* KPIs — 1 columna en móvil pequeño, compacto/3col → 2 cols */
+  .kpi-fila,
+  .kpi-fila.kpi-4col,
+  .kpi-fila.kpi-5col {
+    grid-template-columns: 1fr 1fr;
   }
 
   .kpi-fila.kpi-compacto,
   .kpi-fila.kpi-3col {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .kpi {
+    padding: 0.85rem 0.9rem;
+    gap: 0.6rem;
+  }
+
+  .kpi-valor {
+    font-size: 1.6rem;
+  }
+
+  .kpi-icono {
+    width: 32px;
+    height: 32px;
+  }
+
+  .kpi-etiqueta {
+    font-size: 0.72rem;
   }
 
   .pagina-titulo {
