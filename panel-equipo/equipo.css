@@ -1496,6 +1496,13 @@ select {
   z-index: 0;
 }
 
+.mapa-leyenda-controles {
+  display: flex;
+  flex-direction: row;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
 .mapa-leyenda {
   display: flex;
   align-items: center;
@@ -3628,6 +3635,133 @@ select {
   .votantes-layout {
     grid-template-columns: 1fr;
   }
+}
+
+/* ── Aprobaciones acordeón por referido ── */
+.apro-acordeon-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.apro-ref-card {
+  border-radius: 12px;
+  border: 1px solid var(--borde);
+  background: var(--bg-tarjeta);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  overflow: hidden;
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.apro-ref-card.abierto {
+  border-color: rgba(124,58,237,0.3);
+  box-shadow: 0 4px 16px rgba(124,58,237,0.08);
+}
+
+.apro-ref-header {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 1rem 1.25rem;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
+}
+
+.apro-ref-header:hover {
+  background: rgba(124,58,237,0.04);
+}
+
+.apro-ref-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: rgba(124,58,237,0.1);
+  color: #7c3aed;
+  font-size: 0.85rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  letter-spacing: 0.5px;
+}
+
+.apro-ref-card.abierto .apro-ref-avatar {
+  background: rgba(124,58,237,0.18);
+}
+
+.apro-ref-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.apro-ref-nombre {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--color-dark);
+}
+
+.apro-ref-card.abierto .apro-ref-nombre {
+  color: #7c3aed;
+}
+
+.apro-ref-sub {
+  font-size: 0.75rem;
+  color: var(--texto-muted);
+}
+
+.apro-ref-badges {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.apro-ref-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+}
+
+.apro-badge-pend {
+  background: #fef9c3;
+  color: #854d0e;
+}
+
+.apro-badge-rech {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.apro-ref-chevron {
+  color: var(--texto-muted);
+  flex-shrink: 0;
+  transition: transform 0.2s;
+}
+
+.apro-ref-card.abierto .apro-ref-chevron {
+  transform: rotate(180deg);
+  color: #7c3aed;
+}
+
+.apro-ref-body {
+  border-top: 1px solid var(--borde);
+  background: #fafafa;
+}
+
+.apro-ref-body .tabla-contenedor {
+  padding: 0.75rem 1rem 1rem;
+}
+
+.apro-ref-body .tabla {
+  font-size: 0.8rem;
 }
 
 /* ── Mapa picker ubicación evento ── */

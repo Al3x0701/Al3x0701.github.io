@@ -557,12 +557,6 @@
             </button>
           </div>
 
-          <div class="filtros-barra" style="margin-bottom:1rem">
-            <input type="text" id="buscador-apro-votantes" placeholder="Buscar por nombre, cédula o referido…"
-              oninput="filtrarAprobacionesVotantes(this.value)"
-              style="max-width:340px;border:1px solid var(--borde);border-radius:8px;padding:0.5rem 0.75rem;font-size:0.875rem;outline:none;width:100%">
-          </div>
-
           <div id="apro-reuniones" class="tab-contenido">
             <div class="tarjeta">
               <div class="tabla-contenedor">
@@ -579,9 +573,7 @@
                     </tr>
                   </thead>
                   <tbody id="tabla-apro-reuniones-body">
-                    <tr>
-                      <td colspan="7" class="tabla-vacia">Cargando...</td>
-                    </tr>
+                    <tr><td colspan="7" class="tabla-vacia">Cargando...</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -589,28 +581,9 @@
           </div>
 
           <div id="apro-votantes" class="tab-contenido activo">
-            <div class="tarjeta">
-              <div class="tabla-contenedor">
-                <table class="tabla">
-                  <thead>
-                    <tr>
-                      <th>Nombre</th>
-                      <th>Cédula</th>
-                      <th>Municipio</th>
-                      <th>Puesto</th>
-                      <th>Mesa</th>
-                      <th>Referido por</th>
-                      <th>Estado</th>
-                      <th>Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody id="tabla-apro-votantes-body">
-                    <tr><td colspan="8" class="tabla-vacia">Cargando...</td></tr>
-                  </tbody>
-                </table>
-              </div>
+            <div id="apro-votantes-acordeon">
+              <p class="tabla-vacia" style="padding:2rem;text-align:center">Cargando...</p>
             </div>
-            <div id="apro-votantes-paginacion" class="paginacion-wrap" style="margin-top:0.75rem"></div>
           </div>
         </section>
 
@@ -944,7 +917,17 @@
 
           <!-- Tabla de usuarios -->
           <div class="tarjeta">
-            <h2 class="tarjeta-titulo">Miembros del equipo</h2>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1rem;flex-wrap:wrap">
+              <h2 class="tarjeta-titulo" style="margin:0">Miembros del equipo</h2>
+              <div style="position:relative;flex:1;min-width:200px;max-width:320px">
+                <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2">
+                  <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input type="text" id="buscador-usuarios" placeholder="Buscar por nombre…"
+                  style="width:100%;padding:0.5rem 0.75rem 0.5rem 2rem;border:1px solid var(--borde);border-radius:8px;font-size:0.85rem;background:var(--bg-input);color:var(--color-dark)"
+                  oninput="filtrarUsuarios(this.value)">
+              </div>
+            </div>
             <div class="tabla-contenedor">
               <table class="tabla">
                 <thead>

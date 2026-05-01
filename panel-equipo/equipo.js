@@ -1927,58 +1927,83 @@ async function cargarAprobaciones() {
   tbodyR.innerHTML = r.length ? r.map(r => filaAprobacionReunion(r)).join('') :
     '<tr><td colspan="7" class="tabla-vacia">Sin registros.</td></tr>'
 
-  // Tabla votantes
-  _aprobacionVotantesTodos = v
-  const buscador = document.getElementById('buscador-apro-votantes')
-  if (buscador) buscador.value = ''
-  renderAprobacionesVotantes(v)
+  // Acordeón votantes por referido
+  _aprobacionVotantesTodos = v.filter(x => x.estado !== 'aprobado')
+  renderAprobacionesAcordeon()
 }
 
 let _aprobacionVotantesTodos = []
-let _aprobacionVotantesFiltrados = []
-let _aprobacionVotantesPag = 1
-const _APRO_V_POR_PAG = 6
+let _aprobacionAcordeonAbierto = null
 
-function filtrarAprobacionesVotantes(q) {
-  const texto = q.toLowerCase().trim()
-  _aprobacionVotantesFiltrados = texto
-    ? _aprobacionVotantesTodos.filter(v =>
-        v.nombre_completo?.toLowerCase().includes(texto) ||
-        v.cedula?.toLowerCase().includes(texto) ||
-        v.amigo_referido?.toLowerCase().includes(texto)
-      )
-    : _aprobacionVotantesTodos
-  _aprobacionVotantesPag = 1
-  renderAprobacionesVotantes()
+function renderAprobacionesAcordeon() {
+  const wrap = document.getElementById('apro-votantes-acordeon')
+  if (!wrap) return
+
+  if (!_aprobacionVotantesTodos.length) {
+    wrap.innerHTML = '<p class="tabla-vacia" style="padding:2rem;text-align:center">Sin votantes pendientes de aprobación.</p>'
+    return
+  }
+
+  // Agrupar por referido
+  const grupos = {}
+  _aprobacionVotantesTodos.forEach(v => {
+    const ref = v.amigo_referido || 'Sin referido'
+    if (!grupos[ref]) grupos[ref] = []
+    grupos[ref].push(v)
+  })
+
+  wrap.innerHTML = `<div class="apro-acordeon-lista">${Object.entries(grupos).map(([referido, lista]) => {
+    const pendientes = lista.filter(v => v.estado === 'pendiente').length
+    const rechazados = lista.filter(v => v.estado === 'rechazado').length
+    const iniciales  = referido.split(' ').slice(0, 2).map(p => p[0] || '').join('').toUpperCase()
+    const id = 'apro-ref-' + referido.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '')
+
+    return `
+      <div class="apro-ref-card" data-apro-ref="${referido}">
+        <div class="apro-ref-header" onclick="toggleAprobacionRef('${id}')">
+          <div class="apro-ref-avatar">${iniciales}</div>
+          <div class="apro-ref-info">
+            <span class="apro-ref-nombre">${referido}</span>
+            <span class="apro-ref-sub">${lista.length} votante${lista.length !== 1 ? 's' : ''} por revisar</span>
+          </div>
+          <div class="apro-ref-badges">
+            ${pendientes ? `<span class="apro-ref-badge apro-badge-pend">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              ${pendientes} pendiente${pendientes !== 1 ? 's' : ''}
+            </span>` : ''}
+            ${rechazados ? `<span class="apro-ref-badge apro-badge-rech">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+              ${rechazados} rechazado${rechazados !== 1 ? 's' : ''}
+            </span>` : ''}
+          </div>
+          <svg class="apro-ref-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="apro-ref-body" id="${id}" style="display:none">
+          <div class="tabla-contenedor">
+            <table class="tabla">
+              <thead><tr>
+                <th>Nombre</th><th>Cédula</th><th>Municipio</th>
+                <th>Puesto</th><th>Mesa</th><th>Estado</th><th>Acciones</th>
+              </tr></thead>
+              <tbody>${lista.map(v => filaAprobacionVotante(v)).join('')}</tbody>
+            </table>
+          </div>
+        </div>
+      </div>`
+  }).join('')}</div>`
 }
 
-function renderAprobacionesVotantes(lista) {
-  if (lista !== undefined) { _aprobacionVotantesFiltrados = lista; _aprobacionVotantesPag = 1 }
-  // Excluir aprobados
-  const sinAprobados = _aprobacionVotantesFiltrados.filter(v => v.estado !== 'aprobado')
-  const total   = sinAprobados.length
-  const paginas = Math.ceil(total / _APRO_V_POR_PAG) || 1
-  _aprobacionVotantesPag = Math.min(_aprobacionVotantesPag, paginas)
-  const desde   = (_aprobacionVotantesPag - 1) * _APRO_V_POR_PAG
-  const pagina  = sinAprobados.slice(desde, desde + _APRO_V_POR_PAG)
-
-  const tbody = document.getElementById('tabla-apro-votantes-body')
-  tbody.innerHTML = pagina.length
-    ? pagina.map(v => filaAprobacionVotante(v)).join('')
-    : '<tr><td colspan="8" class="tabla-vacia">Sin registros pendientes.</td></tr>'
-
-  const paginacion = document.getElementById('apro-votantes-paginacion')
-  if (!paginacion) return
-  if (paginas <= 1) { paginacion.innerHTML = ''; return }
-  paginacion.innerHTML = `<div class="paginacion">
-    <button class="pag-btn" onclick="_aprobacionVotantesPag--;renderAprobacionesVotantes()" ${_aprobacionVotantesPag === 1 ? 'disabled' : ''}>&#8592;</button>
-    ${paginasVisibles(_aprobacionVotantesPag, paginas).map(p => p === '…'
-      ? `<span class="pag-ellipsis">…</span>`
-      : `<button class="pag-btn ${p === _aprobacionVotantesPag ? 'activo' : ''}" onclick="_aprobacionVotantesPag=${p};renderAprobacionesVotantes()">${p}</button>`
-    ).join('')}
-    <button class="pag-btn" onclick="_aprobacionVotantesPag++;renderAprobacionesVotantes()" ${_aprobacionVotantesPag === paginas ? 'disabled' : ''}>&#8594;</button>
-    <span class="pag-info">${desde + 1}–${Math.min(desde + _APRO_V_POR_PAG, total)} de ${total}</span>
-  </div>`
+function toggleAprobacionRef(id) {
+  const panel  = document.getElementById(id)
+  const card   = panel?.closest('.apro-ref-card')
+  if (!panel) return
+  const abierto = panel.style.display !== 'none'
+  document.querySelectorAll('.apro-ref-body').forEach(p => { p.style.display = 'none' })
+  document.querySelectorAll('.apro-ref-card').forEach(c => c.classList.remove('abierto'))
+  if (!abierto) {
+    panel.style.display = 'block'
+    card?.classList.add('abierto')
+  }
 }
 
 function filaAprobacionReunion(r) {
@@ -2020,7 +2045,6 @@ function filaAprobacionVotante(v) {
     <td style="display:flex;align-items:center;gap:0.4rem">${v.nombre_completo}${iconoAlertaDuplicado(v)}</td>
     <td>${v.cedula}</td>
     <td>${v.municipio}</td><td>${v.puesto_votacion}</td><td>${v.mesa}</td>
-    <td>${v.amigo_referido}</td>
     <td>${badgeEstado(v.estado)}</td>
     <td>${acciones}</td>
   </tr>`
@@ -2573,6 +2597,8 @@ document.getElementById('form-evento').addEventListener('submit', async (e) => {
    GESTIÓN DE USUARIOS
 ============================================== */
 
+let _usuariosData = []
+
 async function cargarUsuarios() {
   const { data, error } = await db
     .from('usuarios')
@@ -2586,15 +2612,31 @@ async function cargarUsuarios() {
   }
 
   const JERARQUIA = { owner: 0, admin: 1, lider: 2, amigo: 3 }
-  const items = (data || []).sort((a, b) => {
+  _usuariosData = (data || []).sort((a, b) => {
     const rA = JERARQUIA[a.rol] ?? 99
     const rB = JERARQUIA[b.rol] ?? 99
     if (rA !== rB) return rA - rB
     return (a.nombre_completo || '').localeCompare(b.nombre_completo || '', 'es')
   })
 
+  const q = document.getElementById('buscador-usuarios')?.value || ''
+  renderUsuariosTabla(q)
+}
+
+function filtrarUsuarios(q) {
+  renderUsuariosTabla(q)
+}
+
+function renderUsuariosTabla(q = '') {
+  const tbody = document.getElementById('tabla-usuarios-body')
+  const termino = q.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+
+  const items = termino
+    ? _usuariosData.filter(u => (u.nombre_completo || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').includes(termino))
+    : _usuariosData
+
   if (!items.length) {
-    tbody.innerHTML = '<tr><td colspan="6" class="tabla-vacia">Sin usuarios.</td></tr>'
+    tbody.innerHTML = `<tr><td colspan="6" class="tabla-vacia">${termino ? 'Sin resultados para "' + q + '"' : 'Sin usuarios.'}</td></tr>`
     return
   }
 
@@ -2834,8 +2876,47 @@ const CENTROIDES_VDC = {
 // Coordenadas de puestos de votación conocidos
 // Clave: nombre exacto tal como aparece en lista_votantes (case-insensitive match)
 const PUESTOS_VOTACION_COORDS = {
-  'colegio cardenas mirriñao': [3.5459649031378686, -76.29660686953302],
-  'esc. harold edder zamorano': [3.556195217147753, -76.30078643220871],
+  'colegio cardenas mirriñao':           [3.5459649031378686, -76.29660686953302],
+  'esc. harold edder zamorano':          [3.556195217147753,  -76.30078643220871],
+  'salon comunal barrio alameda':        [3.557190870518176,  -76.29033684047783],
+  'universidad nal. sede palmira':       [3.5116704673945054, -76.30732059724613],
+  'universidad nacional sede palmira':   [3.5116704673945054, -76.30732059724613],
+  'i.e. la milagrosa':                   [3.5304355018532596, -76.29829859128058],
+  'ie la milagrosa':                     [3.5304355018532596, -76.29829859128058],
+  'i.e. humberto raffo rivera':          [3.537406651715151,  -76.291364314308],
+  'ie humberto raffo rivera':            [3.537406651715151,  -76.291364314308],
+  'esc. eduardo santos':                 [3.5593391329462083, -76.28860175676697],
+  'esc eduardo santos':                  [3.5593391329462083, -76.28860175676697],
+  'esc. jose manuel groot':              [3.5550671012724417, -76.29770297899735],
+  'esc jose manuel groot':               [3.5550671012724417, -76.29770297899735],
+  'esc. gregorio hernandez':             [3.531502619184235,  -76.30069963030729],
+  'esc gregorio hernandez':              [3.531502619184235,  -76.30069963030729],
+  'esc popular modelo':                  [3.5285542148675284, -76.29527456800147],
+  'i.e. mater dei':                      [3.5243237947699724, -76.29175732557792],
+  'ie mater dei':                        [3.5243237947699724, -76.29175732557792],
+  'esc. juan pablo ii':                  [3.5417637481398123, -76.3122154650053],
+  'esc juan pablo ii':                   [3.5417637481398123, -76.3122154650053],
+  'esc. mercedes abrego':                [3.532601829143572,  -76.28574921440658],
+  'esc mercedes abrego':                 [3.532601829143572,  -76.28574921440658],
+  'universidad del valle palmira':       [3.5526792350293688, -76.2988329945174],
+  'esc. paulo vi':                       [3.5348536895201343, -76.28771077560117],
+  'esc paulo vi':                        [3.5348536895201343, -76.28771077560117],
+  'esc. susana lopez de valencia':       [3.510573918866954,  -76.2994253791292],
+  'esc susana lopez de valencia':        [3.510573918866954,  -76.2994253791292],
+  'esc. tulio raffo':                    [3.534630537926319,  -76.31375048410901],
+  'esc tulio raffo':                     [3.534630537926319,  -76.31375048410901],
+  'coliseo de ferias':                   [3.518166767245737,  -76.29573892177385],
+  'inst. educ. francisco miranda':       [3.4856384390819,    -76.20929380726227],
+  'ie francisco miranda':                [3.4856384390819,    -76.20929380726227],
+  'esc. maria antonia penagos':          [3.515068177997427,  -76.3039541256416],
+  'esc maria antonia penagos':           [3.515068177997427,  -76.3039541256416],
+  '07 - casa de justicia':               [3.5486379808989157, -76.31543845145123],
+  'casa de justicia':                    [3.5486379808989157, -76.31543845145123],
+  'esc ricardo nieto':                   [3.544443825548113,  -76.30286192220295],
+  'esc. carlos arturo rodriguez':        [3.5451801112648056, -76.30447707117636],
+  'esc carlos arturo rodriguez':         [3.5451801112648056, -76.30447707117636],
+  'esc. enelia rivera':                  [3.5284617516270083, -76.31005901517361],
+  'esc enelia rivera':                   [3.5284617516270083, -76.31005901517361],
 }
 
 function normPuesto(nombre) {
