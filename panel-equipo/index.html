@@ -1064,14 +1064,15 @@
                 <ul id="mapa-buscador-lista" class="mapa-buscador-lista" style="display:none"></ul>
               </div>
               <div id="mapa-leaflet"></div>
+              <div id="mapa-zoom-indicator" style="display:none">Zoom <span id="mapa-zoom-valor">8</span></div>
               <div class="mapa-leyenda">
                 <span class="mapa-leyenda-label">Actividad:</span>
                 <div class="mapa-leyenda-escala">
-                  <span class="mapa-leyenda-color" style="background:#f1f5f9"></span><span>Sin datos</span>
-                  <span class="mapa-leyenda-color" style="background:#fef9c3"></span><span>Baja</span>
-                  <span class="mapa-leyenda-color" style="background:#facc15"></span><span>Media</span>
-                  <span class="mapa-leyenda-color" style="background:#f97316"></span><span>Alta</span>
-                  <span class="mapa-leyenda-color" style="background:#dc2626"></span><span>Muy alta</span>
+                  <span class="mapa-leyenda-color" style="background:#cbd5e1"></span><span>Sin datos</span>
+                  <span class="mapa-leyenda-color" style="background:#a5b4fc"></span><span>Baja</span>
+                  <span class="mapa-leyenda-color" style="background:#818cf8"></span><span>Media</span>
+                  <span class="mapa-leyenda-color" style="background:#6366f1"></span><span>Alta</span>
+                  <span class="mapa-leyenda-color" style="background:#4f46e5"></span><span>Muy alta</span>
                 </div>
                 <div class="mapa-leyenda-controles">
                   <button class="mapa-toggle-sin-datos activo" id="btn-toggle-sin-datos"
@@ -1087,15 +1088,6 @@
                       <line x1="1" y1="1" x2="23" y2="23"/>
                     </svg>
                     Sin votantes
-                  </button>
-                  <button class="mapa-toggle-sin-datos" id="btn-toggle-puestos"
-                    title="Mostrar/ocultar centros de votación"
-                    onclick="togglePuestosVotacion()">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <circle cx="12" cy="10" r="4"/>
-                      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
-                    </svg>
-                    Centros de votación
                   </button>
                 </div>
               </div>
@@ -1240,7 +1232,7 @@
             </div>
             <input type="hidden" id="registro-manual-evento-id">
             <div id="registro-manual-alerta" class="alerta" style="display:none;margin-top:1rem"></div>
-            <div style="display:flex;gap:0.75rem;margin-top:1.25rem">
+            <div class="modal-acciones">
               <button type="submit" class="btn btn-primario">Registrar asistencia</button>
               <button type="button" class="btn btn-secundario" id="modal-cancelar-registro-evento">Cancelar</button>
             </div>
@@ -1305,7 +1297,7 @@
               </div>
             </div>
             <div id="votante-alerta" class="alerta" style="display:none;margin-top:1rem"></div>
-            <div style="display:flex;gap:0.75rem;margin-top:1.25rem">
+            <div class="modal-acciones">
               <button type="submit" class="btn btn-primario">Guardar registro</button>
               <button type="button" class="btn btn-secundario" id="modal-cancelar-votante">Cancelar</button>
             </div>
@@ -1365,7 +1357,7 @@
               </div>
             </div>
             <div id="editar-apro-alerta" class="alerta" style="display:none;margin-top:1rem"></div>
-            <div style="display:flex;gap:0.75rem;margin-top:1.25rem">
+            <div class="modal-acciones">
               <button type="submit" class="btn btn-primario">Guardar cambios</button>
               <button type="button" class="btn btn-secundario" onclick="cerrarEditarVotanteApro()">Cancelar</button>
             </div>
@@ -1426,7 +1418,7 @@
               </div>
             </div>
             <div id="usuario-alerta" class="alerta" style="display:none;margin-top:1rem"></div>
-            <div style="display:flex;gap:0.75rem;margin-top:1.25rem">
+            <div class="modal-acciones">
               <button type="submit" class="btn btn-primario">Crear usuario</button>
               <button type="button" class="btn btn-secundario" id="modal-cancelar-usuario">Cancelar</button>
             </div>
@@ -1531,7 +1523,7 @@
                 </div>
               </div>
               <div id="evento-nuevo-alerta" class="alerta" style="display:none;margin-top:1rem"></div>
-              <div style="display:flex;gap:0.75rem;margin-top:1.25rem">
+              <div class="modal-acciones">
                 <button type="submit" class="btn btn-primario">Guardar evento</button>
                 <button type="button" class="btn btn-secundario" id="modal-cancelar-evento">Cancelar</button>
               </div>

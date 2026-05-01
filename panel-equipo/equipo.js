@@ -2932,12 +2932,22 @@ function normMunicipio(nombre) {
     .replace(/santiago de /g, '')
 }
 
+// Paleta suave y elegante para el mapa electoral
 function colorIntensidad(valor) {
-  if (!valor || valor === 0) return '#f1f5f9'
-  if (valor <= 10) return '#fef9c3'
-  if (valor <= 30) return '#facc15'
-  if (valor <= 60) return '#f97316'
-  return '#dc2626'
+  if (!valor || valor === 0) return '#cbd5e1'   // gris azulado neutro
+  if (valor <= 10) return '#a5b4fc'             // violeta suave
+  if (valor <= 30) return '#818cf8'             // índigo medio
+  if (valor <= 60) return '#6366f1'             // índigo vivo
+  return '#4f46e5'                              // índigo profundo
+}
+
+// Color del borde (más vivo que el relleno)
+function borderColorIntensidad(valor) {
+  if (!valor || valor === 0) return '#94a3b8'
+  if (valor <= 10) return '#818cf8'
+  if (valor <= 30) return '#6366f1'
+  if (valor <= 60) return '#4f46e5'
+  return '#3730a3'
 }
 
 async function cargarMapa() {
@@ -2950,7 +2960,7 @@ async function cargarMapa() {
     { data: eventosGeo },
   ] = await Promise.all([
     db.from('lista_reuniones').select('municipio, estado'),
-    db.from('lista_votantes').select('municipio, estado, puesto_votacion'),
+    db.from('lista_votantes').select('municipio, estado, puesto_votacion, nombre_completo, cedula, amigo_referido'),
     db.from('noticias_eventos').select('titulo, municipio, fecha_evento').eq('tipo', 'evento'),
     db.from('solicitudes').select('municipio, estado, tipo'),
     db.from('eventos').select('nombre_evento, municipio, fecha, hora_inicio, hora_cierre, lat, lng').not('lat', 'is', null),
@@ -2986,7 +2996,7 @@ async function cargarMapa() {
   // 4. Inicializar Leaflet solo una vez
   if (!mapaLeaflet) {
     mapaLeaflet = L.map('mapa-leaflet', { zoomControl: true, scrollWheelZoom: true })
-      .setView([4.0, -76.3], 8)
+      .setView([4.0, -76.3], 9)
 
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
       attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
@@ -2994,11 +3004,17 @@ async function cargarMapa() {
       maxZoom: 18,
     }).addTo(mapaLeaflet)
 
+    mapaLeaflet.on('zoomstart', () => {
+      mapaCirculos.forEach(({ circle }) => circle.setStyle({ opacity: 0, fillOpacity: 0 }))
+    })
     mapaLeaflet.on('zoomend', () => {
       const zoom = mapaLeaflet.getZoom()
-      mapaCirculos.forEach(({ circle, radioBase }) => {
-        circle.setRadius(radioBase * Math.pow(0.5, zoom - 8))
+      mapaCirculos.forEach(({ circle, radioBase, intensidad }) => {
+        circle.setRadius(radioBase * Math.pow(0.5, Math.min(zoom, 14) - 8))
+        circle.setStyle({ opacity: 1, fillOpacity: intensidad === 0 ? 0.12 : 0.22 })
       })
+      const ind = document.getElementById('mapa-zoom-valor')
+      if (ind) ind.textContent = zoom
     })
   } else {
     const capasAEliminar = []
@@ -3017,43 +3033,55 @@ async function cargarMapa() {
     const nombreMunicipio = k.replace(/(^|\s)\S/g, l => l.toUpperCase())
     const s = stats[k] || { nombre: nombreMunicipio, reuniones: [], votantes: [], eventos: [], solicitudes: [] }
     const intensidad = s.reuniones.length + s.votantes.length
-    // ~611 m/px a zoom 8 → radioBase fija el tamaño en píxeles a cualquier zoom
     const nombreMostrar = s.nombre || nombreMunicipio
-    const pxBase = Math.max(32, nombreMostrar.length * 2.6) + (intensidad > 0 ? Math.min(intensidad * 0.4, 14) : 0)
-    const radioBase = Math.round(pxBase * 611)
-    const radio = radioBase * Math.pow(0.5, zoomActual - 8)
-    const color = colorIntensidad(intensidad)
 
-    const borderColor = intensidad === 0 ? '#94a3b8' : color
+    // Tamaño más uniforme: rango compacto entre 28px y 46px base
+    const pxBase = Math.max(28, Math.min(nombreMostrar.length * 2.4, 38) + Math.min(intensidad * 0.25, 8))
+    const radioBase = Math.round(pxBase * 611)
+    const radio = radioBase * Math.pow(0.5, Math.min(zoomActual, 14) - 8)
+
+    const fillColor   = colorIntensidad(intensidad)
+    const strokeColor = borderColorIntensidad(intensidad)
+
+    // Relleno muy translúcido con borde de color vivo
     const circle = L.circle(coords, {
-      radius: radio,
-      fillColor: color,
-      fillOpacity: intensidad === 0 ? 0.45 : 0.85,
-      color: borderColor,
-      weight: intensidad === 0 ? 1 : 2,
+      radius:      radio,
+      fillColor:   fillColor,
+      fillOpacity: intensidad === 0 ? 0.12 : 0.22,
+      color:       strokeColor,
+      weight:      intensidad === 0 ? 1 : 1.8,
     }).addTo(mapaLeaflet)
 
     mapaCirculos.push({ circle, radioBase, key: k, intensidad })
 
-    // Ocultar si el toggle está activo y no tiene votantes
     if (_ocultarSinDatos && intensidad === 0) circle.remove()
 
     const nombre = s.nombre || nombreMunicipio
     circle.on('click', () => {
       mostrarPanelMapa(nombre, s)
-      mostrarSeleccionMapa(coords, color)
+      mostrarSeleccionMapa(coords, strokeColor)
     })
-    circle.on('mouseover', () => circle.setStyle({ fillOpacity: 1, weight: 3 }))
-    circle.on('mouseout', () => circle.setStyle({ fillOpacity: intensidad === 0 ? 0.45 : 0.85, weight: intensidad === 0 ? 1 : 2 }))
-    circle.bindTooltip(nombre, { permanent: false, direction: 'top', className: 'mapa-tooltip' })
+    circle.on('dblclick', (e) => {
+      L.DomEvent.stopPropagation(e)
+      mapaLeaflet.flyTo(coords, 13, { duration: 1.2 })
+    })
+    circle.on('mouseover', () => circle.setStyle({ fillOpacity: intensidad === 0 ? 0.22 : 0.38, weight: 2.5 }))
+    circle.on('mouseout',  () => circle.setStyle({ fillOpacity: intensidad === 0 ? 0.12 : 0.22, weight: intensidad === 0 ? 1 : 1.8 }))
 
-    // Ondas animadas en municipios con actividad media-alta
-    if (intensidad >= 10) {
-      const tamOndaPx = intensidad >= 61 ? 38 : intensidad >= 31 ? 30 : 22
+    // Tooltip mejorado con conteo
+    const tooltipHTML = `<div class="mapa-tooltip-inner">
+      <span class="mapa-tooltip-nombre">${nombre}</span>
+      ${intensidad > 0 ? `<span class="mapa-tooltip-count">${intensidad} registro${intensidad !== 1 ? 's' : ''}</span>` : ''}
+    </div>`
+    circle.bindTooltip(tooltipHTML, { permanent: false, direction: 'top', className: 'mapa-tooltip', opacity: 1 })
+
+    // Ondas solo en municipios con actividad alta (>20), más suaves y lentas
+    if (intensidad >= 20) {
+      const tamOndaPx = intensidad >= 61 ? 34 : intensidad >= 31 ? 26 : 20
       const ondaIcon = L.divIcon({
         html: `<div class="mapa-onda-wrap" style="width:${tamOndaPx * 2}px;height:${tamOndaPx * 2}px">
-                 <div class="mapa-onda" style="background:${color};animation-delay:0s"></div>
-                 <div class="mapa-onda" style="background:${color};animation-delay:0.6s"></div>
+                 <div class="mapa-onda" style="background:${strokeColor};animation-delay:0s"></div>
+                 <div class="mapa-onda" style="background:${strokeColor};animation-delay:1.2s"></div>
                </div>`,
         className: '',
         iconSize: [tamOndaPx * 2, tamOndaPx * 2],
@@ -3107,48 +3135,195 @@ async function cargarMapa() {
         .bindPopup(`<div class="mapa-popup-titulo">${ev.titulo || 'Evento'}</div><div class="mapa-popup-fecha">${fecha} · ${ev.municipio}</div>`)
     })
 
-  // 7. Marcadores de puestos de votación (visibles solo con zoom > 11)
+  // 7. Marcadores de puestos de votación
   const votosPorPuesto = {}
+  const votantesPorPuesto = {}
   ;(votantes || []).forEach(v => {
     if (!v.puesto_votacion) return
     const k = normPuesto(v.puesto_votacion)
     votosPorPuesto[k] = (votosPorPuesto[k] || 0) + 1
+    if (!votantesPorPuesto[k]) votantesPorPuesto[k] = []
+    votantesPorPuesto[k].push(v)
+  })
+
+  // Deduplicar entradas con las mismas coordenadas: conservar la que tenga votantes
+  // (varias claves existen solo para cubrir distintas grafías del mismo puesto)
+  const puestosDedup = {}
+  Object.entries(PUESTOS_VOTACION_COORDS).forEach(([nombreNorm, coords]) => {
+    const coordKey = coords[0].toFixed(6) + ',' + coords[1].toFixed(6)
+    const k = normPuesto(nombreNorm)
+    const votos = votosPorPuesto[k] || 0
+    const existing = puestosDedup[coordKey]
+    if (!existing || votos > (votosPorPuesto[normPuesto(existing.nombre)] || 0)) {
+      puestosDedup[coordKey] = { nombre: nombreNorm, coords, k }
+    }
   })
 
   const marcadoresPuestos = []
 
-  Object.entries(PUESTOS_VOTACION_COORDS).forEach(([nombreNorm, coords]) => {
-    const votos = votosPorPuesto[normPuesto(nombreNorm)] || 0
+  Object.values(puestosDedup).forEach(({ nombre: nombreNorm, coords, k }) => {
+    const votos = votosPorPuesto[k] || 0
+    const lista = votantesPorPuesto[k] || []
     const nombre = nombreNorm.replace(/(^\w|\s\w)/g, c => c.toUpperCase())
 
-    const circle = L.circleMarker(coords, {
-      radius: 10,
-      fillColor: '#3b82f6',
-      fillOpacity: 0.9,
-      color: '#fff',
-      weight: 2,
-      pane: 'markerPane',
+    // Tamaño y color según cantidad de votantes
+    const radio      = votos === 0 ? 7 : Math.min(7 + votos * 0.8, 20)
+    const fillColor  = votos === 0 ? '#94a3b8' : votos <= 5 ? '#a5b4fc' : votos <= 15 ? '#6366f1' : '#4f46e5'
+    const strokeColor = votos === 0 ? '#64748b' : votos <= 5 ? '#818cf8' : votos <= 15 ? '#4f46e5' : '#3730a3'
+
+    // Marcador con badge de número
+    const icon = L.divIcon({
+      className: '',
+      html: `<div class="puesto-marker" style="width:${radio*2}px;height:${radio*2}px;background:${fillColor};border:2px solid ${strokeColor}">
+               ${votos > 0 ? `<span class="puesto-marker-badge">${votos}</span>` : ''}
+             </div>`,
+      iconSize: [radio * 2, radio * 2],
+      iconAnchor: [radio, radio],
     })
 
-    circle.bindTooltip(
-      `<div class="mapa-puesto-tooltip">
-        <strong>${nombre}</strong>
-        <span>${votos} voto${votos !== 1 ? 's' : ''} registrado${votos !== 1 ? 's' : ''}</span>
-       </div>`,
-      { permanent: false, direction: 'top', className: 'mapa-tooltip-puesto', opacity: 1 }
-    )
-    circle.on('mouseover', function () { this.openTooltip() })
-    circle.on('mouseout',  function () { this.closeTooltip() })
+    const marker = L.marker(coords, { icon, pane: 'markerPane' })
 
-    if (_mostrarPuestos) circle.addTo(mapaLeaflet)
-    marcadoresPuestos.push(circle)
+    marker.bindTooltip(
+      `<div class="mapa-tooltip-inner">
+        <span class="mapa-tooltip-nombre">${nombre}</span>
+        <span class="mapa-tooltip-count">${votos > 0 ? votos + ' votante' + (votos !== 1 ? 's' : '') + ' registrado' + (votos !== 1 ? 's' : '') : 'Sin votantes registrados'}</span>
+       </div>`,
+      { permanent: false, direction: 'top', className: 'mapa-tooltip', opacity: 1 }
+    )
+
+    marker.on('click', () => mostrarPanelPuesto(nombre, lista, votos))
+    marcadoresPuestos.push(marker)
   })
 
   window._marcadoresPuestos = marcadoresPuestos
 
-  // Recalcular tamaño por si el contenedor estaba oculto al inicializar
+  // Mostrar/ocultar puestos según zoom (mínimo zoom 13)
+  if (window._actualizarVisibilidadPuestos) {
+    mapaLeaflet.off('zoomend', window._actualizarVisibilidadPuestos)
+  }
+  window._actualizarVisibilidadPuestos = () => {
+    const zoom = mapaLeaflet.getZoom()
+    ;(window._marcadoresPuestos || []).forEach(m => {
+      if (zoom >= 13) m.addTo(mapaLeaflet)
+      else mapaLeaflet.removeLayer(m)
+    })
+  }
+  window._actualizarVisibilidadPuestos()
+  mapaLeaflet.on('zoomend', window._actualizarVisibilidadPuestos)
+
+  // Indicador de zoom
+  const zoomInd = document.getElementById('mapa-zoom-indicator')
+  const zoomVal = document.getElementById('mapa-zoom-valor')
+  if (zoomInd) { zoomInd.style.display = ''; zoomVal.textContent = mapaLeaflet.getZoom() }
+
+  // Recalcular tamaño — en móvil el contenedor puede estar aún animándose
   guardarStatsParaBuscador(stats)
-  setTimeout(() => mapaLeaflet.invalidateSize(), 150)
+  setTimeout(() => mapaLeaflet.invalidateSize(), 100)
+  setTimeout(() => mapaLeaflet.invalidateSize(), 400)
+}
+
+function mostrarPanelPuesto(nombre, lista, votos) {
+  const panel = document.getElementById('mapa-panel-lateral')
+  const panelNombre = document.getElementById('mapa-panel-nombre')
+  const panelContenido = document.getElementById('mapa-panel-contenido')
+  if (!panel) return
+
+  panelNombre.textContent = nombre
+  panelNombre.style.fontSize = '0.88rem'
+
+  if (votos === 0) {
+    panelContenido.innerHTML = `<p class="mapa-panel-vacio">Sin votantes registrados en este puesto.</p>`
+    panel.classList.add('visible')
+    return
+  }
+
+  // Agrupar por referido
+  const grupos = {}
+  lista.forEach(v => {
+    const ref = (v.amigo_referido || '').trim() || 'Sin referido'
+    if (!grupos[ref]) grupos[ref] = []
+    grupos[ref].push(v)
+  })
+
+  const POR_PAGINA = 8
+  const gruposHtml = Object.entries(grupos)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([ref, miembros], idx) => {
+      const gid = `ppg-${idx}`
+      const inicial = ref[0]?.toUpperCase() || '?'
+      const totalPags = Math.ceil(miembros.length / POR_PAGINA)
+
+      const renderPagina = (pag) => miembros
+        .slice(pag * POR_PAGINA, (pag + 1) * POR_PAGINA)
+        .map(v => {
+          const nombreCompleto = (v.nombre_completo || '').trim() || '—'
+          const ini = nombreCompleto[0]?.toUpperCase() || '?'
+          return `<div class="puesto-panel-votante">
+            <span class="puesto-panel-avatar">${ini}</span>
+            <div class="puesto-panel-info">
+              <span class="puesto-panel-nombre">${nombreCompleto}</span>
+              <span class="puesto-panel-doc">${v.cedula || '—'}</span>
+            </div>
+          </div>`
+        }).join('')
+
+      const tabs = totalPags > 1
+        ? `<div class="puesto-panel-tabs">${Array.from({ length: totalPags }, (_, i) =>
+            `<button class="puesto-panel-tab${i === 0 ? ' activo' : ''}" onclick="cambiarPaginaPuesto('${gid}',${i})">${i + 1}</button>`
+          ).join('')}</div>`
+        : ''
+
+      return `<div class="puesto-panel-grupo" id="${gid}">
+        <div class="puesto-panel-ref-header" onclick="this.closest('.puesto-panel-grupo').classList.toggle('abierto')">
+          <span class="puesto-panel-ref-avatar">${inicial}</span>
+          <span class="puesto-panel-ref-nombre">${ref}</span>
+          <span class="puesto-panel-ref-count">${miembros.length}</span>
+          <svg class="puesto-panel-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="puesto-panel-grupo-lista">
+          ${tabs}
+          <div class="puesto-panel-pagina">${renderPagina(0)}</div>
+        </div>
+      </div>`
+    }).join('')
+
+  // Guarda los datos de grupos para la paginación
+  window._puestoPanelGrupos = grupos
+
+  panelContenido.innerHTML = `
+    <p class="puesto-panel-total"><strong>${votos}</strong> votante${votos !== 1 ? 's' : ''} · <span>${Object.keys(grupos).length} referido${Object.keys(grupos).length !== 1 ? 's' : ''}</span></p>
+    <div class="puesto-panel-grupos">${gruposHtml}</div>`
+
+  panel.classList.add('visible')
+}
+
+function cambiarPaginaPuesto(gid, pag) {
+  const grupo = document.getElementById(gid)
+  if (!grupo) return
+  const refNombre = grupo.querySelector('.puesto-panel-ref-nombre')?.textContent?.trim()
+  if (!refNombre || !window._puestoPanelGrupos) return
+  const miembros = window._puestoPanelGrupos[refNombre] || []
+  const POR_PAGINA = 8
+
+  const pagDiv = grupo.querySelector('.puesto-panel-pagina')
+  if (!pagDiv) return
+  pagDiv.innerHTML = miembros
+    .slice(pag * POR_PAGINA, (pag + 1) * POR_PAGINA)
+    .map(v => {
+      const nombreCompleto = (v.nombre_completo || '').trim() || '—'
+      const ini = nombreCompleto[0]?.toUpperCase() || '?'
+      return `<div class="puesto-panel-votante">
+        <span class="puesto-panel-avatar">${ini}</span>
+        <div class="puesto-panel-info">
+          <span class="puesto-panel-nombre">${nombreCompleto}</span>
+          <span class="puesto-panel-doc">${v.cedula || '—'}</span>
+        </div>
+      </div>`
+    }).join('')
+
+  grupo.querySelectorAll('.puesto-panel-tab').forEach((btn, i) => {
+    btn.classList.toggle('activo', i === pag)
+  })
 }
 
 function mostrarSeleccionMapa(coords, color) {
@@ -3322,7 +3497,7 @@ function navegarBuscador(e) {
 }
 
 let _ocultarSinDatos = true   // por defecto: ocultar municipios sin votantes
-let _mostrarPuestos  = false  // por defecto: centros de votación ocultos
+let _mostrarPuestos  = true   // aparecen automáticamente a partir de zoom 13
 
 function toggleMunicipiosSinDatos() {
   _ocultarSinDatos = !_ocultarSinDatos
@@ -3338,15 +3513,6 @@ function toggleMunicipiosSinDatos() {
   })
 }
 
-function togglePuestosVotacion() {
-  _mostrarPuestos = !_mostrarPuestos
-  const btn = document.getElementById('btn-toggle-puestos')
-  btn?.classList.toggle('activo', _mostrarPuestos)
-  ;(window._marcadoresPuestos || []).forEach(m => {
-    if (_mostrarPuestos) m.addTo(mapaLeaflet)
-    else mapaLeaflet.removeLayer(m)
-  })
-}
 
 function limpiarBuscadorMapa() {
   document.getElementById('mapa-buscador').value = ''

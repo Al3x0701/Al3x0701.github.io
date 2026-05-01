@@ -1205,7 +1205,6 @@ select {
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
-  min-width: 180px;
 }
 
 .rechazo-fila {
@@ -1388,7 +1387,7 @@ select {
   flex: 1 1 0;
   min-width: 0;
   padding: 0 !important;
-  overflow: hidden;
+  overflow: visible;
   position: relative;
 }
 
@@ -1503,6 +1502,18 @@ select {
   flex-wrap: wrap;
 }
 
+/* Transición suave al reaparecer los círculos tras el zoom */
+#mapa-leaflet .leaflet-overlay-pane path {
+  transition: opacity 0.25s ease, fill-opacity 0.25s ease;
+  outline: none !important;
+}
+
+/* Quitar outline de foco en elementos del mapa */
+#mapa-leaflet path:focus,
+#mapa-leaflet .leaflet-interactive:focus {
+  outline: none !important;
+}
+
 .mapa-leyenda {
   display: flex;
   align-items: center;
@@ -1541,10 +1552,24 @@ select {
   flex-shrink: 0;
   display: none;
   padding: 1.25rem;
+  display: none;
+  flex-direction: column;
+  max-height: 100%;
+  overflow: hidden;
 }
 
+#mapa-panel-contenido {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 2px;
+  margin-top: 0.25rem;
+}
+#mapa-panel-contenido::-webkit-scrollbar { width: 4px; }
+#mapa-panel-contenido::-webkit-scrollbar-track { background: transparent; }
+#mapa-panel-contenido::-webkit-scrollbar-thumb { background: #fde68a; border-radius: 4px; }
+
 .mapa-panel.visible {
-  display: block;
+  display: flex;
 }
 
 .mapa-panel-header {
@@ -1849,7 +1874,7 @@ select {
   }
 }
 
-/* Ondas de actividad */
+/* Ondas de actividad — suaves y lentas */
 .mapa-onda-wrap {
   position: relative;
   border-radius: 50%;
@@ -1861,19 +1886,13 @@ select {
   inset: 0;
   border-radius: 50%;
   opacity: 0;
-  animation: mapa-onda-pulse 2s ease-out infinite;
+  animation: mapa-onda-pulse 3.6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 @keyframes mapa-onda-pulse {
-  0% {
-    transform: scale(0.6);
-    opacity: 0.55;
-  }
-
-  100% {
-    transform: scale(1.9);
-    opacity: 0;
-  }
+  0%   { transform: scale(0.75); opacity: 0.28; }
+  60%  { opacity: 0.08; }
+  100% { transform: scale(2.1);  opacity: 0; }
 }
 
 /* Marcadores de eventos en mapa electoral */
@@ -1903,19 +1922,246 @@ select {
 }
 
 .mapa-tooltip {
-  background: var(--color-dark) !important;
+  background: rgba(15, 23, 42, 0.92) !important;
+  backdrop-filter: blur(6px) !important;
   color: #fff !important;
-  border: none !important;
-  border-radius: 8px !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  border-radius: 10px !important;
   font-family: var(--fuente) !important;
-  font-size: 0.78rem !important;
-  font-weight: 600 !important;
-  padding: 0.3rem 0.6rem !important;
-  box-shadow: var(--sombra) !important;
+  padding: 0.45rem 0.75rem !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2) !important;
 }
 
 .mapa-tooltip::before {
-  border-top-color: var(--color-dark) !important;
+  border-top-color: rgba(15, 23, 42, 0.92) !important;
+}
+
+.mapa-tooltip-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.mapa-tooltip-nombre {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+#mapa-zoom-indicator {
+  position: absolute;
+  bottom: 28px;
+  left: 10px;
+  z-index: 800;
+  background: rgba(15,23,42,0.82);
+  backdrop-filter: blur(6px);
+  color: #a5b4fc;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.25rem 0.55rem;
+  border-radius: 6px;
+  pointer-events: none;
+  letter-spacing: 0.03em;
+}
+
+#mapa-zoom-indicator span {
+  color: #fff;
+}
+
+.mapa-tooltip-count {
+  font-size: 0.7rem;
+  color: #a5b4fc;
+  font-weight: 500;
+}
+
+/* ── Marcadores de puestos de votación ── */
+.puesto-marker {
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(79,70,229,0.35);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  position: relative;
+}
+.puesto-marker:hover {
+  transform: scale(1.18);
+  box-shadow: 0 4px 14px rgba(79,70,229,0.5);
+}
+.puesto-marker-badge {
+  font-size: 0.6rem;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1;
+  pointer-events: none;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+}
+
+/* ── Panel lateral de puesto de votación ── */
+.puesto-panel-total {
+  font-size: 0.78rem;
+  color: var(--texto-sec);
+  margin: 0.5rem 0 0.75rem;
+}
+.puesto-panel-total strong {
+  color: #6366f1;
+  font-size: 1.05rem;
+}
+.puesto-panel-total span {
+  color: var(--texto-sec);
+}
+.puesto-panel-grupos {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.puesto-panel-grupo {
+  border: 1px solid #fde68a;
+  border-radius: 10px;
+}
+.puesto-panel-ref-header {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.45rem 0.6rem;
+  background: linear-gradient(90deg, #fef9c3 0%, #fefce8 100%);
+  border-radius: 9px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
+}
+.puesto-panel-grupo.abierto .puesto-panel-ref-header {
+  border-radius: 9px 9px 0 0;
+  border-bottom: 1px solid #fde68a;
+}
+.puesto-panel-ref-header:hover { background: linear-gradient(90deg, #fde68a 0%, #fef9c3 100%); }
+.puesto-panel-ref-avatar {
+  width: 26px;
+  height: 26px;
+  min-width: 26px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.puesto-panel-ref-nombre {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #92400e;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.puesto-panel-ref-count {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #78350f;
+  background: #fde68a;
+  border-radius: 999px;
+  padding: 1px 7px;
+  min-width: 20px;
+  text-align: center;
+}
+.puesto-panel-chevron {
+  color: #d97706;
+  flex-shrink: 0;
+  transition: transform 0.25s ease;
+}
+.puesto-panel-grupo.abierto .puesto-panel-chevron {
+  transform: rotate(180deg);
+}
+.puesto-panel-grupo-lista {
+  display: none;
+  flex-direction: column;
+  gap: 0;
+  padding: 0.25rem 0.4rem 0.4rem;
+}
+.puesto-panel-grupo.abierto .puesto-panel-grupo-lista {
+  display: flex;
+}
+.puesto-panel-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  padding: 0.4rem 0 0.3rem;
+}
+.puesto-panel-tab {
+  min-width: 26px;
+  height: 26px;
+  padding: 0 0.4rem;
+  border-radius: 6px;
+  border: 1px solid #fde68a;
+  background: transparent;
+  color: #92400e;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.puesto-panel-tab:hover { background: #fef9c3; }
+.puesto-panel-tab.activo {
+  background: #f59e0b;
+  border-color: #d97706;
+  color: #fff;
+}
+.puesto-panel-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 360px;
+  overflow-y: auto;
+}
+.puesto-panel-votante {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.45rem 0.5rem;
+  border-radius: 8px;
+  background: var(--fondo-alt, #f8fafc);
+  transition: background 0.15s;
+}
+.puesto-panel-votante:hover { background: #ede9fe; }
+.puesto-panel-avatar {
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #818cf8, #4f46e5);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.puesto-panel-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.puesto-panel-nombre {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--texto);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.puesto-panel-doc {
+  font-size: 0.7rem;
+  color: var(--texto-sec);
+}
+.mapa-panel-vacio {
+  font-size: 0.82rem;
+  color: var(--texto-sec);
+  text-align: center;
+  margin-top: 1.5rem;
 }
 
 /* ==============================================
@@ -2059,6 +2305,11 @@ select {
 
   .mapa-panel {
     width: 100%;
+    max-height: 450px;
+  }
+
+  #mapa-panel-contenido {
+    max-height: 360px;
   }
 }
 
@@ -2114,7 +2365,8 @@ select {
   .kpi-fila,
   .kpi-fila.kpi-3col,
   .kpi-fila.kpi-4col,
-  .kpi-fila.kpi-5col {
+  .kpi-fila.kpi-5col,
+  .kpi-fila.kpi-compacto {
     grid-template-columns: 1fr 1fr;
   }
 
@@ -2180,9 +2432,9 @@ select {
     flex-shrink: 0;
   }
 
-  /* KPI 3 columnas → 1 columna en móvil */
+  /* KPI 3 columnas → 2 columnas en móvil (igual que las demás) */
   .kpi-fila.kpi-3col {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
   }
 
   /* Tablas */
@@ -2219,6 +2471,7 @@ select {
   /* Mapa */
   #mapa-leaflet {
     height: 360px;
+    min-height: 300px;
   }
 
   .mapa-leyenda-escala {
@@ -2230,6 +2483,50 @@ select {
   .dash-tarjeta-titulo-grupo {
     gap: 0.4rem;
   }
+
+  /* Encabezados con botones — evitar overflow */
+  .tarjeta-encabezado {
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+
+  /* Controles de tabla (título + búsqueda) */
+  .tabla-controles {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.6rem;
+  }
+  .tabla-controles input[type="text"],
+  .tabla-controles input[type="search"] {
+    width: 100%;
+  }
+
+  /* Split button Excel → ancho completo */
+  .split-btn-container {
+    width: 100%;
+  }
+  .container-btn-file {
+    flex: 1;
+    justify-content: center;
+  }
+
+  /* Modal crear evento — mapa más compacto en móvil */
+  #modal-crear-evento .mapa-ubicacion-evento {
+    height: 200px !important;
+  }
+
+  /* Publicaciones/Noticias */
+  .publicacion-card {
+    padding: 1rem;
+  }
+
+  /* Panel lateral del mapa en columna */
+  .mapa-panel {
+    max-height: 400px;
+  }
+  #mapa-panel-contenido {
+    max-height: 300px;
+  }
 }
 
 /* ==============================================
@@ -2240,15 +2537,12 @@ select {
     padding: 0.75rem;
   }
 
-  /* KPIs — 1 columna en móvil pequeño, compacto/3col → 2 cols */
+  /* KPIs — todas las variantes a 2 columnas en móvil pequeño */
   .kpi-fila,
+  .kpi-fila.kpi-3col,
   .kpi-fila.kpi-4col,
-  .kpi-fila.kpi-5col {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .kpi-fila.kpi-compacto,
-  .kpi-fila.kpi-3col {
+  .kpi-fila.kpi-5col,
+  .kpi-fila.kpi-compacto {
     grid-template-columns: 1fr 1fr;
   }
 
@@ -2280,11 +2574,49 @@ select {
 
   #mapa-leaflet {
     height: 280px;
+    min-height: 260px;
   }
 
   .acciones-grupo {
     flex-direction: column;
     gap: 0.4rem;
+  }
+
+  /* Modal full-width en móvil pequeño */
+  .modal-caja {
+    padding: 1.25rem 1rem;
+    border-radius: 16px;
+  }
+  .modal-overlay {
+    padding: 0.5rem;
+  }
+
+  /* Panel mapa más compacto en 480px */
+  .mapa-panel {
+    max-height: 320px;
+  }
+  #mapa-panel-contenido {
+    max-height: 240px;
+  }
+
+  /* Noticias/publicaciones */
+  .publicacion-card {
+    padding: 0.75rem 1rem;
+  }
+
+  /* Encabezados tarjeta en columna si hay botones */
+  .tarjeta-encabezado {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .tarjeta-encabezado .btn,
+  .tarjeta-encabezado button {
+    width: 100%;
+  }
+
+  /* Aprobaciones accordion padding */
+  .apro-ref-card {
+    padding: 0.75rem;
   }
 }
 
@@ -2414,6 +2746,13 @@ select {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 1.5rem;
+}
+
+.modal-acciones {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+  flex-wrap: wrap;
 }
 
 .modal-cerrar {
@@ -4242,6 +4581,36 @@ select {
     font-size: 0.72rem;
     padding: 0.3rem 0.5rem;
   }
+
+
+  /* Buscador de equipo/votantes: full width */
+  .buscador-wrap {
+    max-width: 100%;
+    flex: 1;
+  }
+
+  /* Pagina encabezado: apilar en móvil */
+  .pagina-encabezado {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .pagina-encabezado > div:last-child {
+    width: 100%;
+  }
+  .pagina-encabezado > div:last-child .btn,
+  .pagina-encabezado > div:last-child button {
+    flex: 1;
+  }
+
+  /* Botones de acción en modales (divs inline flex) */
+  .modal-acciones {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .modal-acciones .btn {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 /* ==============================================
@@ -4308,5 +4677,72 @@ select {
   /* Toggle usuario: solo punto sin texto */
   .toggle-activo-label {
     display: none;
+  }
+
+  /* Tabla: reducir min-width para no forzar scroll excesivo */
+  .tabla {
+    min-width: 360px;
+  }
+
+  .acciones-grupo {
+    width: 100%;
+  }
+
+  /* Buscador: siempre full width */
+  .buscador-wrap {
+    max-width: 100%;
+  }
+
+  /* Pagina encabezado */
+  .pagina-encabezado {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  .pagina-encabezado > div:last-child {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  .pagina-encabezado > div:last-child .btn,
+  .pagina-encabezado > div:last-child button {
+    flex: 1;
+    min-width: 120px;
+    justify-content: center;
+  }
+
+  /* Modal crear evento: mapa más corto y form con scroll */
+  #modal-crear-evento .mapa-ubicacion-evento {
+    height: 160px !important;
+  }
+  #modal-crear-evento .modal-form-col {
+    max-height: 320px;
+    overflow-y: auto;
+  }
+
+  /* Modal botones acción: apilar */
+  .modal-acciones {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .modal-acciones .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Split btn Excel: full width */
+  .split-btn-container {
+    width: 100%;
+    border-radius: 10px;
+  }
+  .container-btn-file {
+    border-radius: 10px 0 0 10px;
+    flex: 1;
+    justify-content: center;
+  }
+
+  /* Dona dashboard: reducir a 150px en móvil pequeño */
+  .dona-wrap {
+    width: 150px !important;
+    height: 150px !important;
   }
 }
